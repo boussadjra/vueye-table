@@ -1,4 +1,4 @@
-# vueye-table
+# Vueye Table
 
 ## Project setup
 ```

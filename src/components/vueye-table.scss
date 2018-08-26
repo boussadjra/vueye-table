@@ -1,0 +1,227 @@
+$custom_filter: sepia(100%) hue-rotate(158deg) saturate(9);
+
+@mixin forSmallScreens($media) {
+    @media (max-width: $media+px) { @content; }
+}
+
+.vet-container{
+    border-radius: 4px;
+    width: 100%;
+    height:auto;
+    box-shadow: 0 0 6px #000;
+    background:#fff;
+    color: #666;
+}
+
+.vet-header{
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    
+    padding:0px 20px 0 20px;
+    
+    box-shadow: 0px 1px 5px #444;
+    @include forSmallScreens(640){
+        flex-direction: column;
+        &>div{
+            margin-bottom: 10px;
+        }
+        
+    }
+    
+}
+
+.vet-header-search-container{
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items:center;
+    width:60%;
+    @include forSmallScreens(640){
+        width:80%;
+    }
+    .vet-header-search{
+        
+        border:none;
+        border-bottom:1px solid #6a6a6a;
+        
+        padding: 10px;
+        width: 340px;
+        background: transparent;
+        
+        &:focus{
+            outline: none;
+            border-bottom:2px solid;
+        }
+        &[placeholder]{
+            color:inherit;
+        }
+    }
+    
+    
+}
+
+.themes{
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    width: 100px;
+    &>div{
+        height: 16px;
+        width: 16px;
+        border-radius:2px;
+        cursor: pointer;
+    }
+    .light{
+        background: #fff;
+        border: 1px solid #000;
+      
+    }
+    
+    
+    .dark-1{
+        background: #201d31;
+        border: 2px solid #00ffff;    
+    }
+    .dark-2{
+        background: #201d31;
+        border: 2px solid #ffff00;    
+    }
+}
+.vet-header-btns,.vet-footer-pagination{
+    display: flex;
+    flex-direction: row;
+    justify-content: space-around;
+    align-items:center;
+    .icon{
+        margin-right: 10px;
+    }
+    
+}
+
+.icon{
+    cursor: pointer;
+}
+
+
+table {
+    font-weight: 300;
+    border-collapse: collapse;
+    width: 100%;
+}
+
+thead{  padding: 8px;}
+
+.tab-head-cell{
+    display: flex;
+    flex-direction: row;
+    align-items:center;
+    justify-content: center;
+    .tab-head-cell-icons{
+        display: flex;
+        flex-direction: column;
+        align-items:center;
+        .down-icon{
+            margin-top: -5px
+        }
+    }
+    &>span{
+        margin-right: 10px; 
+    }
+    
+}
+tr{
+    cursor: pointer;
+   
+}
+
+
+
+td{font-size: 12pt;font-weight: lighter; }
+
+td, th {
+    border-bottom: 1px solid #dddddd;
+    text-align: center;
+    padding: 15px;
+    
+}
+
+
+.vet-footer{
+    display:flex;
+    flex-direction: row;
+    justify-content: flex-end;
+    align-items: center;
+    
+    padding:40px;
+    
+    font-size: 11pt; 
+    
+    box-shadow: 0px -1px 5px #444;
+    &>div{
+        margin-right: 35px;
+    }
+    select{
+        
+        border-radius: 4px;
+        padding: 4px;
+    }
+}
+
+.container {
+    display: block;
+    position: relative;
+    padding-left: 35px;
+    margin-bottom: 12px;
+    cursor: pointer;
+    font-size: 22px;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
+/* Hide the browser's default checkbox */
+.container input {
+    position: absolute;
+    opacity: 0;
+    cursor: pointer;
+}
+
+/* Create a custom checkbox */
+.checkmark {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 18px;
+    width: 18px;
+    border-radius: 4px;
+    border: 2px solid;
+}
+
+
+/* Create the checkmark/indicator (hidden when not checked) */
+.checkmark:after {
+    content: "";
+    position: absolute;
+    display: none;
+}
+
+/* Show the checkmark when checked */
+.container input:checked ~ .checkmark:after {
+    display: block;
+}
+
+/* Style the checkmark/indicator */
+.container .checkmark:after {
+    left: 5px;
+    top: 0px;
+    width: 5px;
+    height: 13px;
+    border: solid currentColor;
+    border-width: 0 3px 3px 0;
+    -webkit-transform: rotate(45deg);
+    -ms-transform: rotate(45deg);
+    transform: rotate(45deg);
+}

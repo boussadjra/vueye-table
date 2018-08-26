@@ -1,28 +1,63 @@
 <template>
-  <div id="app">
-    <img alt="Vue logo" src="./assets/logo.png">
-    <HelloWorld msg="Welcome to Your Vue.js App"/>
-  </div>
+<div class="main-page">
+    <h1 style="font-family:futura">Vueye Table</h1>
+    <div class="main-container">
+        <vueye-table title="Users" :rows_data="user_data"></vueye-table>
+    </div>
+</div>
 </template>
 
 <script>
-import HelloWorld from './components/HelloWorld.vue'
-
+import VueyeTable from './components/VueyeTable.vue'
+ import todos from './assets/todos.json'
+import users from './assets/users.json'
 export default {
-  name: 'app',
-  components: {
-    HelloWorld
-  }
+    name: 'app',
+    data() {
+        return {
+            todo_attr: [
+                "todoId", "id", "title", "completed"
+            ],
+            todo_data: [],
+            user_attr:["id","name","phone"],
+            user_data:[]
+        }
+    },
+    components: {
+        VueyeTable
+    },
+    mounted() {
+        // console.log("app is mounted")
+        this.todo_data = todos;
+        this.user_data = users;
+
+        /*this.axios.get('https://jsonplaceholder.typicode.com/todos').then((response) => {
+        //console.log(response.data)
+    this.todo_data=response.data;
+    }).catch((err) =>{console.log(err)});*/
+    }
 }
 </script>
 
 <style lang="scss">
-#app {
-  font-family: 'Avenir', Helvetica, Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-align: center;
-  color: #2c3e50;
-  margin-top: 60px;
+body {
+    font-family: Arial, Helvetica, sans-serif;
+    background: #dbeae5;
+    height: 100vh;
+    margin: 0;
+    font-size: 12pt;
+}
+
+.main-page {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.main-container {
+    width: 95%;
+    height: 85vh;
+    background: #fafafa;
 }
 </style>

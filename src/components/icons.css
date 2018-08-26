@@ -1,0 +1,53 @@
+.icon{
+    width: 24px;
+    height: 24px;
+    background-size: 24px;
+    background-repeat: no-repeat;
+   
+}
+
+.small-icon{
+    width: 16px;
+    height: 16px;
+    background-size: 16px; 
+}
+
+
+.x-small-icon{
+    width: 12px;
+    height: 12px;
+    background-size: 12px; 
+    
+}
+
+.x-small-icon:hover{
+    filter: sepia(100%) hue-rotate(158deg) saturate(9);
+
+}
+
+.search-icon{
+   background-image: url(icons/searchw10.png);
+
+}
+
+.print-icon{
+    background-image: url(icons/printw10.png);
+ 
+ }
+
+ 
+.document-icon{
+    background-image: url(icons/documentw10.png);
+ 
+ }
+
+ .up-icon{
+     background-image: url(icons/back.png);
+transform: rotate(90deg);
+}
+ .down-icon{background-image: url(icons/back.png);
+    transform: rotate(-90deg); }
+ .start-icon{background-image: url(icons/start.png); }
+ .back-icon{background-image: url(icons/back.png); }
+ .forward-icon{background-image: url(icons/forward.png); }
+ .end-icon{background-image: url(icons/end.png); }
