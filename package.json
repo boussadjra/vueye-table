@@ -5,7 +5,8 @@
   "scripts": {
     "serve": "vue-cli-service serve",
     "build": "vue-cli-service build",
-    "lint": "vue-cli-service lint"
+    "lint": "vue-cli-service lint",
+    "deploy":"push-dir --dir=dist --branch=gh-pages --cleanup"
   },
   "dependencies": {
     "axios": "^0.18.0",
@@ -17,6 +18,7 @@
     "@vue/cli-plugin-eslint": "^3.0.1",
     "@vue/cli-service": "^3.0.1",
     "node-sass": "^4.9.0",
+    "push-dir": "^0.4.1",
     "sass-loader": "^7.0.1",
     "vue-template-compiler": "^2.5.17"
   },
@@ -44,14 +46,14 @@
     "last 2 versions",
     "not ie <= 8"
   ],
-  "keywords":[
-   "vuejs",
-   "datatable",
-   "vueyetable",
-   "table",
-   "datagrid",
-   "grid",
-   "vue component",
-   "web component"
+  "keywords": [
+    "vuejs",
+    "datatable",
+    "vueyetable",
+    "table",
+    "datagrid",
+    "grid",
+    "vue component",
+    "web component"
   ]
 }

@@ -1,7 +1,6 @@
 <template>
 <div class="main-page">
-    <!-- <h1 style="font-family:futura">Vueye Table</h1> -->
-  <img src="assets/vueye.png" alt="" srcset="" height="122" width="160">
+    <h1>Vueye Table</h1>
     <div class="main-container">
         <vueye-table title="Users" show-theme :rows_data="user_data"  v-on:checked-rows="getChecked"></vueye-table>
     </div>
