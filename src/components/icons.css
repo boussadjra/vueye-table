@@ -30,10 +30,8 @@
 
 }
 
-.print-icon{
-    background-image: url(icons/printw10.png);
- 
- }
+.print-icon{    background-image: url(icons/printw10.png); }
+.check-icon{    background-image: url(icons/check.png); }
 
  
 .document-icon{
@@ -51,3 +49,5 @@ transform: rotate(90deg);
  .back-icon{background-image: url(icons/back.png); }
  .forward-icon{background-image: url(icons/forward.png); }
  .end-icon{background-image: url(icons/end.png); }
+
+ 

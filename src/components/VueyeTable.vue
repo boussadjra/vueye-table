@@ -10,7 +10,7 @@
             
             <i class="icon search-icon" style="margin-left:-18px"></i>
         </div>
-        <div class="themes">
+        <div class="themes" v-if="showTheme">
           <span>Theme: </span>
           <div class="light" @click="changeTheme('light')"></div>
           <div class="dark-1" @click="changeTheme('dark-1')"></div>
@@ -18,6 +18,7 @@
 
         </div>
         <div class="vet-header-btns">
+            <i class="icon check-icon" @click="exportCheckedRows"></i>
             <i class="icon document-icon" @click="exportTableToExcel"></i>
             <i class="icon print-icon" @click="printTable()"></i>
         </div>
@@ -38,9 +39,10 @@
         </thead>
         <tbody>
             <tr class="data-row" :style="{color:currentTheme.main.color,backgroundColor:currentTheme.main.backgroundColor}" v-for="(row,indx) in currentPageData" :id="indx"  @click="clickOnRow(row,indx)">
-               <td  :style="getTableStyle">       <label class="container">
-  <input type="checkbox" checked="checked">
-  <span class="checkmark" :id="indx"></span>
+               <td  :style="getTableStyle">       
+                 <label class="container">
+  <input type="checkbox" :id="'cb'+indx" :value="row" v-model="checkedRows">
+  <span class="checkmark" :id="'ck'+indx" ></span>
 </label></td>
                 <td  :style="getTableStyle" class="tab-rows_data-cell" v-for="(cell,key,index)  in row" :key="key+index"> {{cell}}</td>
             </tr>
@@ -103,6 +105,10 @@ export default {
     tableStyle: {
       type: String,
       default: "striped"
+    },
+    showTheme:{
+      type:Boolean,
+      default:false
     }
   },
   /**************************************** */
@@ -118,6 +124,7 @@ export default {
       nbRowPerPage: 10,
       nbPages: 0,
       paginated_data: {},
+      checkedRows:[],
       currentTheme: {
         main: {},
         borderBottom: {},
@@ -306,7 +313,12 @@ export default {
       this.currentTheme.main.rowClick != undefined
         ? (e.style.backgroundColor = this.currentTheme.main.rowClick.backgroundColor)
         : (e.style.backgroundColor = "#fafafa");
-      this.$emit("click-row", row);
+      this.$emit("row-click", row);
+    },
+    exportCheckedRows(){
+
+      this.$emit("checked-rows",this.checkedRows);
+      this.checkedRows=[];
     },
     exportTableToExcel() {
       let downloadLink;

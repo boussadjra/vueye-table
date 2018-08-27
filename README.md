@@ -1,21 +1,10 @@
 # Vueye Table
 
-## Project setup
-```
-npm install
-```
+Vueye table is a data table component based on [Vue.js 2](http://vuejs.org),
+this component allows you to sort, search, print, export checked rows and export to excel 
+your data.
 
-### Compiles and hot-reloads for development
+### Installation
 ```
-npm run serve
-```
-
-### Compiles and minifies for production
-```
-npm run build
-```
-
-### Lints and fixes files
-```
-npm run lint
+npm install vueye-table
 ```

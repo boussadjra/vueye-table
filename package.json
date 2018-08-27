@@ -1,7 +1,7 @@
 {
-  "name": "vueye-table",
+  "name": "vueye-table-1",
   "version": "0.1.0",
-  "private": true,
+  "private": false,
   "scripts": {
     "serve": "vue-cli-service serve",
     "build": "vue-cli-service build",
@@ -9,7 +9,6 @@
   },
   "dependencies": {
     "axios": "^0.18.0",
-    "number-to-letters-fr": "^0.1.0",
     "vue": "^2.5.17",
     "vue-axios": "^2.1.3"
   },
@@ -44,5 +43,15 @@
     "> 1%",
     "last 2 versions",
     "not ie <= 8"
+  ],
+  "keywords":[
+   "vuejs",
+   "datatable",
+   "vueyetable",
+   "table",
+   "datagrid",
+   "grid",
+   "vue component",
+   "web component"
   ]
 }
