@@ -9,3 +9,41 @@ your data.
 ```
 npm install vueye-table
 ```
+### Use
+
+```js
+<template>
+...
+<vueye-table title="Users" show-theme :rows_data="user_data" v-on:row-clikc="onrowclick" v-on:checked-rows="getChecked"></vueye-table>
+...
+</template>
+
+<script>
+import VueyeTable from "vueye-table";
+
+export default {
+  name: "app",
+  data() {
+    return {
+      user_attr: ["id", "name", "phone"],
+      user_data: []
+    };
+  },
+  components: {
+    VueyeTable
+  },
+  methods: {
+   
+    getChecked(rows){
+      //
+    },
+    onrowclick(row){
+        //
+    }
+  }
+ 
+};
+</script>
+
+
+```

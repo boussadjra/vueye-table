@@ -3,7 +3,7 @@
     <!-- <h1 style="font-family:futura">Vueye Table</h1> -->
   <img src="assets/vueye.png" alt="" srcset="" height="122" width="160">
     <div class="main-container">
-        <vueye-table title="Users" :rows_data="user_data"  v-on:checked-rows="getChecked"></vueye-table>
+        <vueye-table title="Users" show-theme :rows_data="user_data"  v-on:checked-rows="getChecked"></vueye-table>
     </div>
 </div>
 </template>
