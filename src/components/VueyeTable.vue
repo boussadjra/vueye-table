@@ -104,7 +104,7 @@ export default {
     },
     tableStyle: {
       type: String,
-      default: "striped"
+      default: "bordered"
     },
     showTheme:{
       type:Boolean,

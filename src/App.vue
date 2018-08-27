@@ -64,6 +64,6 @@ body {
 .main-container {
   width: 95%;
   height: 85vh;
-  background: #fafafa;
+  
 }
 </style>
