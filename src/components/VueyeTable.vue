@@ -426,7 +426,7 @@ export default {
         yourDOCTYPE +
           "<html>" +
           head +
-          "<body><h2>" +
+          "<body dir="+this.locale.dir+"><h2>" +
           this.title +
           " :</h2>" +
           table +
@@ -482,7 +482,7 @@ export default {
   },
   mounted() {
     this.componentId=this.generateComponentId();
-    console.log(this.vLang)
+  
   }
 };
 </script>
