@@ -1,7 +1,7 @@
 # Vueye DataTable
 ![Vueye](https://github.com/boussadjra/vueye-table/blob/master/src/assets/vueye.png )
 
-Vueye table is a responsive data table component based on [Vue.js 2](http://vuejs.org), it organizes 
+Vueye data table is a responsive data table component based on [Vue.js 2](http://vuejs.org), it organizes 
 your data per pages in order to navigate easily, 
 
 This component allows you to :
@@ -11,8 +11,8 @@ This component allows you to :
 * Print 
 * Emit checked rows and the clicked row to the parent component 
 * Export to excel 
-* Change theme
-
+* Change theme (colors)
+* Many languages: English(en), Arabic(ar), French(fr), Spanish(es), German(ger) and Chinese(ch) 
 
 ## Demo
  [Demo](https://boussadjra.github.io/vueye-table/)
@@ -73,6 +73,7 @@ export default {
  table-style      : the type of table bordered or striped
  show-theme       : if this prop is not mentionned the theme bar will be hidden
  checkable        : show/hide the checkboxes column and the export checked rows button
+ vLang            : specify the data table language
 ```
 
 ### Screenshots

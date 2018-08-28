@@ -5,13 +5,18 @@
     
     <div class="main-container">
          <h2>Bordered table with light theme</h2>
-  <div class="code"> </div>
-        <vueye-table checkable :per-page-values="[5,10,15,20]" title="Users" show-theme :rows_data="user_data"  v-on:checked-rows="getChecked"></vueye-table>
+  
+        <vueye-table checkable :per-page-values="[5,10,15,20]" title="Utilisateurs" vLang="fr" show-theme :rows_data="user_data"  v-on:checked-rows="getChecked"></vueye-table>
     </div>
        <div class="main-container">
          <h2>Striped table with dark theme</h2>
-        <vueye-table title="Todos" theme-name="dark-1" table-style="striped" show-theme :rows_data="todo_data"  v-on:checked-rows="getChecked"></vueye-table>
+        <vueye-table title="Todos"  theme-name="dark-1" table-style="striped" show-theme :rows_data="todo_data"  v-on:checked-rows="getChecked"></vueye-table>
     </div>
+          <div class="main-container" dir="rtl">
+         <h2>جدول الموظفين</h2>
+        <vueye-table title="الموظفون" vLang="ar" theme-name="dark-2" table-style="striped" show-theme :rows_data="emps_data"  v-on:checked-rows="getChecked"></vueye-table>
+    </div>
+    
 </div>
 </template>
 
@@ -19,6 +24,7 @@
 import VueyeTable from "./components/VueyeTable.vue";
 import todos from "./assets/todos.json";
 import users from "./assets/users.json";
+import emps from "./assets/emps.json";
 export default {
   name: "app",
   data() {
@@ -26,7 +32,8 @@ export default {
       todo_attr: ["todoId", "id", "title", "completed"],
       todo_data: [],
       user_attr: ["id", "name", "phone"],
-      user_data: []
+      user_data: [],
+      emps_data: []
     };
   },
   components: {
@@ -41,7 +48,7 @@ export default {
     // console.log("app is mounted")
     this.todo_data = todos;
     this.user_data = users;
-
+    this.emps_data = emps;
     /*this.axios.get('https://jsonplaceholder.typicode.com/todos').then((response) => {
         //console.log(response.data)
     this.todo_data=response.data;
@@ -58,8 +65,8 @@ body {
   margin: 0;
   font-size: 12pt;
 }
-h2{
-      color: #444;
+h2 {
+  color: #444;
 }
 
 .main-page {

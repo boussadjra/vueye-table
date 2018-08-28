@@ -33,6 +33,10 @@
 .yellow-icon{
     filter:sepia(100%) hue-rotate(15deg) saturate(100);
 }
+
+.rotated-icon{
+    transform:rotate(180deg);
+}
 .search-icon{
    background-image: url(icons/searchw10.png);
 

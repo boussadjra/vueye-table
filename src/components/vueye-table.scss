@@ -1,6 +1,11 @@
+@import url('https://fonts.googleapis.com/css?family=Cairo');
 
 @mixin forSmallScreens($media) {
     @media (max-width: $media+px) { @content; }
+}
+body{
+  font-family: 'Cairo', sans-serif;
+
 }
 
 .vet-container{

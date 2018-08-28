@@ -1,17 +1,17 @@
 <template>
-	<div class="vet-container" :style="theme.main" :id="componentId">
+	<div class="vet-container" :style="theme.main" :id="componentId" :dir="locale.dir">
 		<div class="vet-header">
 			<div class="vet-header-title">
 				<h4> {{title}}</h4>
 			</div>
 			<div class="vet-header-search-container">
-				<input type="text" name="search" placeholder="Search ... " class="vet-header-search"
+				<input type="text" name="search" :placeholder="locale.search_data" class="vet-header-search"
 				v-model="searchValue" :style="theme.borderBottom">
 				
 				<i  :class="customIcon"  class="icon search-icon" style="margin-left:-18px"></i>
 			</div>
 			<div class="themes" v-if="showTheme">
-				<span>Theme: </span>
+				<span>{{locale.theme}}: </span>
 				<div class="light" @click="changeTheme('light')"></div>
 				<div class="dark-1" @click="changeTheme('dark-1')"></div>
 				<div class="dark-2" @click="changeTheme('dark-2')"></div>
@@ -51,20 +51,20 @@
 
 			<div class="vet-footer">
 				<div class="vet-footer-perpage">
-					<span>Number of rows per page </span>
+					<span>{{locale.nb_rows_ppage}} </span>
 					<select v-model="nbRowPerPage" @change="recreatePages">
 						<option v-for="ppval in perPageValues " :value="ppval" :key="ppval">{{ppval}}</option>
 						
 					</select>
 				</div>
 				<div class="vet-footer-page-desc">
-					<span> {{lowerBound}} <strong>-</strong> {{upperBound}} of {{rows_data.length}} </span>
+					<span> {{lowerBound}} <strong>-</strong> {{upperBound}} {{locale.of}} {{rows_data.length}} </span>
 				</div>
-				<div class="vet-footer-pagination">
-					<i  :class="customIcon" class="icon small-icon start-icon" @click="gotoFirstPage"></i>
-					<i  :class="customIcon" class="icon small-icon back-icon" @click="gotoPrevPage"></i>
-					<i  :class="customIcon" class="icon small-icon forward-icon" @click="gotoNextPage"></i>
-					<i  :class="customIcon" class="icon small-icon end-icon" @click="gotoLastPage"></i>
+				<div class="vet-footer-pagination" >
+					<i  :class="[customIcon,rotated]" class="icon small-icon start-icon" @click="gotoFirstPage"></i>
+					<i  :class="[customIcon,rotated]" class="icon small-icon back-icon" @click="gotoPrevPage"></i>
+					<i  :class="[customIcon,rotated]" class="icon small-icon forward-icon" @click="gotoNextPage"></i>
+					<i  :class="[customIcon,rotated]" class="icon small-icon end-icon" @click="gotoLastPage"></i>
 
 				</div>
 
@@ -74,6 +74,8 @@
 	</template>
 
 	<script>
+
+  import locales from './locales'
 export default {
   name: "vueye-table",
   /**************************************** */
@@ -87,6 +89,11 @@ export default {
       type: String,
       default: "my table"
     },
+    vLang:{
+      type:String,
+      default:"en"
+    }
+    ,
     cols: {
       type: Array,
       default: () => []
@@ -136,7 +143,8 @@ export default {
         borderBottom: {},
         rowClick: {}
       },
-	  customIcon: "gray-icon"
+    customIcon: "gray-icon",
+    rotated:""
 	  
     };
   },
@@ -165,6 +173,10 @@ export default {
       } else {
         return this.cols;
       }
+    },
+    locale(){
+          locales[this.vLang].dir=="rtl"?this.rotated="rotated-icon":this.rotated="";
+          return locales[this.vLang];
     },
     /**@function currentPageData locates to the first page by default
      * or to the page we are going to by paginating
@@ -469,7 +481,8 @@ export default {
     }
   },
   mounted() {
-	  this.componentId=this.generateComponentId();
+    this.componentId=this.generateComponentId();
+    console.log(this.vLang)
   }
 };
 </script>
