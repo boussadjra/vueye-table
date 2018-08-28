@@ -1,10 +1,23 @@
 # Vueye Table
 ![Vueye](https://github.com/boussadjra/vueye-table/blob/master/src/assets/vueye.png )
 
-Vueye table is a data table component based on [Vue.js 2](http://vuejs.org),
-this component allows you to sort, search, print, export checked rows and export to excel 
-your data and also to change theme.
+Vueye table is a responsive data table component based on [Vue.js 2](http://vuejs.org), it organizes 
+your data per pages in order to navigate easily, 
 
+This component allows you to :
+
+* Sort
+* Search
+* Print 
+* Emit checked rows and the clicked row to the parent component 
+* Export to excel 
+* Change theme
+
+
+## Demo
+ [Demo](https://boussadjra.github.io/vueye-table/)
+## Requirement
+ Vue.js 2
 ## Installation
 ```
 npm install vueye-table
@@ -14,11 +27,13 @@ npm install vueye-table
 ```js
 <template>
 ...
-<vueye-table title="Users" show-theme :rows_data="user_data" v-on:row-clikc="onrowclick" v-on:checked-rows="getChecked"></vueye-table>
+<vueye-table title="Users" show-theme :rows_data="user_data" v-on:row-clikc="onrowclick" 
+   v-on:checked-rows="getChecked"></vueye-table>
 ...
 </template>
 
 <script>
+
 import VueyeTable from "vueye-table";
 
 export default {
@@ -47,3 +62,21 @@ export default {
 
 
 ```
+### Props 
+
+```
+ title            : the data table title
+ cols             : the attributes or columns, by default it takes the json object keys
+ rows_data        : JS array of object or json content
+ per-pages-values : An array containing the possible number of rows per page 
+ theme-name       : specify a theme name, available ones are light, dark-1 and dark-2 
+ table-style      : the type of table bordered or striped
+ show-theme       : if this prop is not mentionned the theme bar will be hidden
+ checkable        : show/hide the checkboxes column and the export checked rows button
+```
+
+### Screenshots
+
+![Screenshot 1](https://github.com/boussadjra/vueye-table/blob/master/src/assets/scrshot1.png )
+![Screenshot 2](https://github.com/boussadjra/vueye-table/blob/master/src/assets/scrshot2.png )
+![Screenshot 3](https://github.com/boussadjra/vueye-table/blob/master/src/assets/scrshot3.png )

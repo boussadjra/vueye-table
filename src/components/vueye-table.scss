@@ -48,7 +48,9 @@
         padding: 10px;
         width: 340px;
         background: transparent;
-        
+        @include forSmallScreens(640){
+            width:200px;
+        }
         &:focus{
             outline: none;
             border-bottom:2px solid;
@@ -69,7 +71,7 @@
     &>div{
         margin-left: 5px;
         height: 16px;
-        width: 20px;
+        width: 16px;
         border-radius:2px;
         cursor: pointer;
     }
@@ -173,7 +175,7 @@ td, th {
     display: block;
     position: relative;
     padding-left: 35px;
-    margin-bottom: 12px;
+    margin-bottom: 18px;
     cursor: pointer;
     font-size: 22px;
     -webkit-user-select: none;
@@ -225,3 +227,36 @@ td, th {
     -ms-transform: rotate(45deg);
     transform: rotate(45deg);
 }
+
+
+
+  @media screen and (max-width: 600px) {
+  
+  table { border: 0; }
+  
+  table thead { display: none; }
+  
+  table tr {
+    margin-bottom: 10px;
+    display: block;
+    box-shadow: 0 0 10px #000;
+
+  }
+  
+  table td {
+    display: block;
+    text-align: right;
+    font-size: 13px;
+    // border-bottom: 1px dotted #ccc;
+  }
+  
+  table td:last-child { border-bottom: 0; }
+  
+  table td:before {
+    content: attr(data-label);
+    float: left;
+    text-transform: uppercase;
+    font-weight: bold;
+  }
+  
+  }

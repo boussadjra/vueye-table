@@ -1,8 +1,16 @@
 <template>
 <div class="main-page">
-    <h1>Vueye Table</h1>
+  
+    <div class="logo"></div>
+    
     <div class="main-container">
-        <vueye-table title="Users" show-theme :rows_data="user_data"  v-on:checked-rows="getChecked"></vueye-table>
+         <h2>Bordered table with light theme</h2>
+  <div class="code"> </div>
+        <vueye-table checkable :per-page-values="[5,10,15,20]" title="Users" show-theme :rows_data="user_data"  v-on:checked-rows="getChecked"></vueye-table>
+    </div>
+       <div class="main-container">
+         <h2>Striped table with dark theme</h2>
+        <vueye-table title="Todos" theme-name="dark-1" table-style="striped" show-theme :rows_data="todo_data"  v-on:checked-rows="getChecked"></vueye-table>
     </div>
 </div>
 </template>
@@ -25,10 +33,8 @@ export default {
     VueyeTable
   },
   methods: {
-   
-    getChecked(rows){
+    getChecked(rows) {
       console.log(rows);
-
     }
   },
   mounted() {
@@ -47,10 +53,13 @@ export default {
 <style lang="scss">
 body {
   font-family: Arial, Helvetica, sans-serif;
-  background: #dbeae5;
-  height: 100vh;
+  background: #efeff0;
+  height: 100%;
   margin: 0;
   font-size: 12pt;
+}
+h2{
+      color: #444;
 }
 
 .main-page {
@@ -62,7 +71,16 @@ body {
 
 .main-container {
   width: 95%;
-  height: 85vh;
-  
+  height: auto;
+  margin: 30px;
+}
+
+.logo {
+  background-image: url(assets/vueye.png);
+  width: 150px;
+  height: 125px;
+  background-repeat: no-repeat;
+  background-size: cover;
+  margin: 10px;
 }
 </style>

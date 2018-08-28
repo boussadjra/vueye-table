@@ -1,79 +1,79 @@
 <template>
-<div class="vet-container" :style="theme.main">
-    <div class="vet-header">
-        <div class="vet-header-title">
-            <h4> {{title}}</h4>
-        </div>
-        <div class="vet-header-search-container">
-            <input type="text" name="search" placeholder="Search ... " class="vet-header-search"
-             v-model="searchValue" :style="theme.borderBottom">
-            
-            <i class="icon search-icon" style="margin-left:-18px"></i>
-        </div>
-        <div class="themes" v-if="showTheme">
-          <span>Theme: </span>
-          <div class="light" @click="changeTheme('light')"></div>
-          <div class="dark-1" @click="changeTheme('dark-1')"></div>
-          <div class="dark-2" @click="changeTheme('dark-2')"></div>
+	<div class="vet-container" :style="theme.main" :id="componentId">
+		<div class="vet-header">
+			<div class="vet-header-title">
+				<h4> {{title}}</h4>
+			</div>
+			<div class="vet-header-search-container">
+				<input type="text" name="search" placeholder="Search ... " class="vet-header-search"
+				v-model="searchValue" :style="theme.borderBottom">
+				
+				<i  :class="customIcon"  class="icon search-icon" style="margin-left:-18px"></i>
+			</div>
+			<div class="themes" v-if="showTheme">
+				<span>Theme: </span>
+				<div class="light" @click="changeTheme('light')"></div>
+				<div class="dark-1" @click="changeTheme('dark-1')"></div>
+				<div class="dark-2" @click="changeTheme('dark-2')"></div>
 
-        </div>
-        <div class="vet-header-btns">
-            <i class="icon check-icon" @click="exportCheckedRows"></i>
-            <i class="icon document-icon" @click="exportTableToExcel"></i>
-            <i class="icon print-icon" @click="printTable()"></i>
-        </div>
+			</div>
+			<div class="vet-header-btns">
+				<i  :class="customIcon" class="icon check-icon" @click="exportCheckedRows" v-if="checkable"></i>
+				<i  :class="customIcon" class="icon document-icon" @click="exportTableToExcel"></i>
+				<i  :class="customIcon" class="icon print-icon" @click="printTable()"></i>
+			</div>
 
-    </div>
-    <table :id="title|lowercase" >
-        <thead>
-          <th  :style="getTableStyle"></th>
-            <th  :style="getTableStyle" v-for="(col,index) in columns" :key="col">
-                <div class="tab-head-cell">
-                    <span>{{col}}</span>
-                    <span class="tab-head-cell-icons">
-                 <i class="icon x-small-icon up-icon" @click="sort('asc',index)"></i>                    
-                 <i class="icon x-small-icon down-icon"  @click="sort('desc',index)"></i>
-               </span>
-                </div>
-            </th>
-        </thead>
-        <tbody>
-            <tr class="data-row" :style="{color:currentTheme.main.color,backgroundColor:currentTheme.main.backgroundColor}" v-for="(row,indx) in currentPageData" :id="indx"  @click="clickOnRow(row,indx)">
-               <td  :style="getTableStyle">       
-                 <label class="container">
-  <input type="checkbox" :id="'cb'+indx" :value="row" v-model="checkedRows">
-  <span class="checkmark" :id="'ck'+indx" ></span>
-</label></td>
-                <td  :style="getTableStyle" class="tab-rows_data-cell" v-for="(cell,key,index)  in row" :key="key+index"> {{cell}}</td>
-            </tr>
-        </tbody>
-    </table>
+		</div>
+		<table :id="title|lowercase" >
+			<thead>
+				<th  :style="getTableStyle" v-if="checkable"></th>
+				<th  :style="getTableStyle" v-for="(col,index) in columns" :key="col">
+					<div class="tab-head-cell">
+						<span>{{col}}</span>
+						<span class="tab-head-cell-icons">
+							<i  :class="customIcon" class="icon x-small-icon up-icon" @click="sort('asc',index)"></i>                    
+							<i  :class="customIcon" class="icon x-small-icon down-icon"  @click="sort('desc',index)"></i>
+						</span>
+					</div>
+				</th>
+			</thead>
+			<tbody>
+				<tr class="data-row" :style="{color:currentTheme.main.color,backgroundColor:currentTheme.main.backgroundColor}" v-for="(row,indx) in currentPageData" :id="componentId+indx"  @click="clickOnRow(row,String(componentId+indx))">
+					<td  :style="getTableStyle" v-if="checkable">       
+						<label class="container">
+							<input type="checkbox" :id="'cb'+indx" :value="row" v-model="checkedRows">
+							<span class="checkmark" :id="'ck'+indx" ></span>
+						</label></td>
+						<td :data-label="key" :style="getTableStyle" class="tab-rows_data-cell" v-for="(cell,key,index)  in row" :key="key+index"> {{cell}}</td>
+					</tr>
+				</tbody>
+			</table>
 
-    <div class="vet-footer">
-        <div class="vet-footer-perpage">
-            <span>Number of rows per page </span>
-            <select v-model="nbRowPerPage" @change="recreatePages">
-                     <option v-for="ppval in perPageValues " :value="ppval" :key="ppval">{{ppval}}</option>
-                     
-            </select>
-        </div>
-        <div class="vet-footer-page-desc">
-            <span> {{lowerBound}} <strong>-</strong> {{upperBound}} of {{rows_data.length}} </span>
-        </div>
-        <div class="vet-footer-pagination">
-            <i class="icon small-icon start-icon" @click="gotoFirstPage"></i>
-            <i class="icon small-icon back-icon" @click="gotoPrevPage"></i>
-            <i class="icon small-icon forward-icon" @click="gotoNextPage"></i>
-            <i class="icon small-icon end-icon" @click="gotoLastPage"></i>
+			<div class="vet-footer">
+				<div class="vet-footer-perpage">
+					<span>Number of rows per page </span>
+					<select v-model="nbRowPerPage" @change="recreatePages">
+						<option v-for="ppval in perPageValues " :value="ppval" :key="ppval">{{ppval}}</option>
+						
+					</select>
+				</div>
+				<div class="vet-footer-page-desc">
+					<span> {{lowerBound}} <strong>-</strong> {{upperBound}} of {{rows_data.length}} </span>
+				</div>
+				<div class="vet-footer-pagination">
+					<i  :class="customIcon" class="icon small-icon start-icon" @click="gotoFirstPage"></i>
+					<i  :class="customIcon" class="icon small-icon back-icon" @click="gotoPrevPage"></i>
+					<i  :class="customIcon" class="icon small-icon forward-icon" @click="gotoNextPage"></i>
+					<i  :class="customIcon" class="icon small-icon end-icon" @click="gotoLastPage"></i>
 
-        </div>
+				</div>
 
-    </div>
+			</div>
 
-</div>
-</template>
+		</div>
+	</template>
 
-<script>
+	<script>
 export default {
   name: "vueye-table",
   /**************************************** */
@@ -85,7 +85,7 @@ export default {
   props: {
     title: {
       type: String,
-      default: "my-table"
+      default: "my table"
     },
     cols: {
       type: Array,
@@ -106,10 +106,15 @@ export default {
       type: String,
       default: "bordered"
     },
-    showTheme:{
-      type:Boolean,
-      default:false
-    }
+    showTheme: {
+      type: Boolean,
+      default: false
+	},
+	checkable:{
+		type:Boolean,
+		default:false
+	}
+	
   },
   /**************************************** */
   /**************************************** */
@@ -119,17 +124,20 @@ export default {
   /**************************************** */
   data() {
     return {
+		componentId:'',
       searchValue: "",
       currentPageIndex: 0,
       nbRowPerPage: 10,
       nbPages: 0,
       paginated_data: {},
-      checkedRows:[],
+      checkedRows: [],
       currentTheme: {
         main: {},
         borderBottom: {},
         rowClick: {}
-      }
+      },
+	  customIcon: "gray-icon"
+	  
     };
   },
   filters: {
@@ -147,6 +155,8 @@ export default {
   /**************************************** */
   /**************************************** */
   computed: {
+ 
+
     columns() {
       if (this.cols.length == 0) {
         if (typeof this.rows_data[0] == "object") {
@@ -202,6 +212,15 @@ export default {
   /**************************************** */
 
   methods: {
+	     generateComponentId() {
+      let text = "";
+      let possible = "abcdefghijklmnopqrstuvwxyz";
+
+      for (let i = 0; i < 5; i++) {
+        text += possible.charAt(Math.floor(Math.random() * possible.length));
+      }
+      return text;
+    },
     /*** @method createPages  creates pages with default per page value */
     createPages() {
       /** @description lengthAll for getting the length of the array containing all data */
@@ -312,13 +331,12 @@ export default {
       let e = document.getElementById("" + index);
       this.currentTheme.main.rowClick != undefined
         ? (e.style.backgroundColor = this.currentTheme.main.rowClick.backgroundColor)
-        : (e.style.backgroundColor = "#fafafa");
+        : (e.style.backgroundColor = "#ddd");
       this.$emit("row-click", row);
     },
-    exportCheckedRows(){
-
-      this.$emit("checked-rows",this.checkedRows);
-      this.checkedRows=[];
+    exportCheckedRows() {
+      this.$emit("checked-rows", this.checkedRows);
+      this.checkedRows = [];
     },
     exportTableToExcel() {
       let downloadLink;
@@ -409,8 +427,6 @@ export default {
       /******************** */
     },
     changeTheme(theme) {
-      let icons = document.getElementsByClassName("icon");
-
       if (theme == "dark-1") {
         this.currentTheme.main = {
           backgroundColor: "#201d31",
@@ -422,9 +438,7 @@ export default {
         this.currentTheme.borderBottom = {
           borderBottom: "1px solid #00ffff"
         };
-        for (let i = 0; i < icons.length; i++) {
-          icons[i].style.filter = "sepia(100%) hue-rotate(160deg) saturate(35)";
-        }
+        this.customIcon = "cyan-icon";
       } else if (theme == "dark-2") {
         this.currentTheme.main = {
           backgroundColor: "#201d31",
@@ -436,29 +450,27 @@ export default {
         this.currentTheme.borderBottom = {
           borderBottom: "1px solid #ffff00"
         };
-        for (let i = 0; i < icons.length; i++) {
-          icons[i].style.filter = "sepia(100%) hue-rotate(15deg) saturate(100)";
-        }
+        this.customIcon = "yellow-icon";
       } else {
         this.currentTheme.main = {
           backgroundColor: "#fff",
           color: "#6a6a6a",
           rowClick: {
-            backgroundColor: "#fafafa"
+            backgroundColor: "#ddd"
           }
         };
         this.currentTheme.borderBottom = {
           borderBottom: "1px solid #6a6a6a"
         };
-        for (let i = 0; i < icons.length; i++) {
-          icons[i].style.filter = "none";
-        }
+        this.customIcon = "gray-icon";
       }
 
       return this.currentTheme;
     }
   },
-  mounted() {}
+  mounted() {
+	  this.componentId=this.generateComponentId();
+  }
 };
 </script>
 <style src="./icons.css" lang="scss" scoped>

@@ -17,14 +17,22 @@
     width: 12px;
     height: 12px;
     background-size: 12px; 
-    
+
 }
 
 .x-small-icon:hover{
     filter: sepia(100%) hue-rotate(158deg) saturate(9);
 
 }
-
+.gray-icon{
+    filter:none
+}
+.cyan-icon{
+    filter:sepia(100%) hue-rotate(160deg) saturate(35);
+}
+.yellow-icon{
+    filter:sepia(100%) hue-rotate(15deg) saturate(100);
+}
 .search-icon{
    background-image: url(icons/searchw10.png);
 
