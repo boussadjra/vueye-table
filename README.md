@@ -1,5 +1,5 @@
 # Vueye DataTable
-![Vueye](https://github.com/boussadjra/vueye-table/blob/master/src/assets/vueye.png )
+![Vueye](https://raw.githubusercontent.com/boussadjra/vueye-table/master/src/assets/vueye.png )
 
 Vueye data table is a responsive data table component based on [Vue.js 2](http://vuejs.org), it organizes 
 your data per pages in order to navigate easily, 
@@ -78,6 +78,6 @@ export default {
 
 ### Screenshots
 
-![Screenshot 1](https://github.com/boussadjra/vueye-table/blob/master/src/assets/scrshot1.png )
-![Screenshot 2](https://github.com/boussadjra/vueye-table/blob/master/src/assets/scrshot2.png )
-![Screenshot 3](https://github.com/boussadjra/vueye-table/blob/master/src/assets/scrshot3.png )
+![Screenshot 1](https://raw.githubusercontent.com/boussadjra/vueye-table/blob/master/src/assets/scrshot1.png )
+![Screenshot 2](https://raw.githubusercontent.com/boussadjra/vueye-table/blob/master/src/assets/scrshot2.png )
+![Screenshot 3](https://raw.githubusercontent.com/boussadjra/vueye-table/blob/master/src/assets/scrshot3.png )
