@@ -6,7 +6,7 @@
     <div class="main-container">
          <h2>Bordered table with light theme</h2>
   
-        <vueye-table checkable :per-page-values="[5,10,15,20]" title="Utilisateurs" vLang="fr" show-theme :rows_data="user_data"  v-on:checked-rows="getChecked"></vueye-table>
+        <vueye-table checkable :per-page-values="[5,10,25,50]" title="Utilisateurs" vLang="fr" show-theme :rows_data="user_data"  v-on:checked-rows="getChecked"></vueye-table>
     </div>
        <div class="main-container">
          <h2>Striped table with dark theme</h2>
