@@ -73,6 +73,6 @@ export default {
 
 ### Screenshots
 
-![Screenshot 1](https://raw.githubusercontent.com/boussadjra/vueye-table/blob/master/src/assets/scrshot1.png )
-![Screenshot 2](https://raw.githubusercontent.com/boussadjra/vueye-table/blob/master/src/assets/scrshot2.png )
-![Screenshot 3](https://raw.githubusercontent.com/boussadjra/vueye-table/blob/master/src/assets/scrshot3.png )
+![Screenshot 1](https://raw.githubusercontent.com/boussadjra/vueye-table/master/src/assets/scrshot1.png )
+![Screenshot 2](https://raw.githubusercontent.com/boussadjra/vueye-table/master/src/assets/scrshot2.png )
+![Screenshot 3](https://raw.githubusercontent.com/boussadjra/vueye-table/master/src/assets/scrshot3.png )
