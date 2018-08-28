@@ -17,7 +17,8 @@ This component allows you to :
 ## Demo
  [Vueye data table demo](https://boussadjra.github.io/vueye-table/)
 ## Requirement
- Vue.js 2
+ * Vue.js 2
+ * It doesn't require any css framework
 ## Installation
 ```
 npm install vueye-datatable --save-dev
@@ -31,11 +32,8 @@ npm install vueye-datatable --save-dev
    v-on:checked-rows="getChecked"></vueye-table>
 ...
 </template>
-
 <script>
-
 import VueyeTable from "vueye-datatable";
-
 export default {
   name: "app",
   data() {
@@ -48,7 +46,6 @@ export default {
     VueyeTable
   },
   methods: {
-   
     getChecked(rows){
       //
     },
@@ -56,10 +53,8 @@ export default {
         //
     }
   }
- 
 };
 </script>
-
 
 ```
 ### Props 
