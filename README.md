@@ -15,12 +15,12 @@ This component allows you to :
 * Many languages: English(en), Arabic(ar), French(fr), Spanish(es), German(ger) and Chinese(ch) 
 
 ## Demo
- [Demo](https://boussadjra.github.io/vueye-table/)
+ [Vueye data table demo](https://boussadjra.github.io/vueye-table/)
 ## Requirement
  Vue.js 2
 ## Installation
 ```
-npm install vueye-datatable
+npm install vueye-datatable --save-dev
 ```
 ## Use
 

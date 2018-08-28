@@ -17,7 +17,12 @@
   "homepage": "https://boussadjra.github.io/vueye-table/",
   "files": [
     "dist/*",
-    "src/*",
+    "src/*.js",
+    "src/*.vue",
+    "src/components/*",
+    "src/icons/*",
+    "src/locales/*",
+    "src/assets/*.json",
     "*.json",
     "*.js",
     "*.md"
