@@ -1,4 +1,4 @@
-# Vueye Table
+# Vueye DataTable
 ![Vueye](https://github.com/boussadjra/vueye-table/blob/master/src/assets/vueye.png )
 
 Vueye table is a responsive data table component based on [Vue.js 2](http://vuejs.org), it organizes 
@@ -20,7 +20,7 @@ This component allows you to :
  Vue.js 2
 ## Installation
 ```
-npm install vueye-table
+npm install vueye-datatable
 ```
 ## Use
 
@@ -34,7 +34,7 @@ npm install vueye-table
 
 <script>
 
-import VueyeTable from "vueye-table";
+import VueyeTable from "vueye-datatable";
 
 export default {
   name: "app",
