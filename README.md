@@ -6,9 +6,9 @@ your data per pages in order to navigate easily.
 
 This component allows you to :
 
-* Sort
-* Search
-* Print 
+* Sort columns
+* Search data
+* Print
 * Emit checked rows and the clicked row to the parent component 
 * Export to excel 
 * Change theme (colors)
