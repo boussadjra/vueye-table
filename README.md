@@ -8,7 +8,7 @@ This component allows you to :
 
 * Sort columns
 * Search data
-* Print
+* Print your table
 * Emit checked rows and the clicked row to the parent component 
 * Export to excel 
 * Change theme (colors)
