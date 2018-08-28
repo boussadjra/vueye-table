@@ -2,7 +2,7 @@
 ![Vueye](https://raw.githubusercontent.com/boussadjra/vueye-table/master/src/assets/vueye.png )
 
 Vueye data table is a responsive data table component based on [Vue.js 2](http://vuejs.org), it organizes 
-your data per pages in order to navigate easily, 
+your data per pages in order to navigate easily.
 
 This component allows you to :
 
