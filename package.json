@@ -1,22 +1,20 @@
 {
   "author": "BRAHIM BOUSSADJRA",
   "name": "vueye-datatable",
-  "main":"./dist/vueye-table.common.js",
-  "version": "0.1.0",
+  "main": "./dist/vueye-table.common.js",
+  "version": "0.1.1",
   "private": false,
   "scripts": {
     "serve": "vue-cli-service serve",
     "build": "vue-cli-service build",
     "lint": "vue-cli-service lint",
-    "bundle":"vue-cli-service build --target lib --name vueye-table ./src/components/VueyeTable.vue"
+    "bundle": "vue-cli-service build --target lib --name vueye-table ./src/components/VueyeTable.vue"
   },
-  
   "repository": {
     "type": "git",
     "url": "git+https://github.com/boussadjra/vueye-table.git"
   },
-  "homepage":"https://boussadjra.github.io/vueye-table/"
-  ,
+  "homepage": "https://boussadjra.github.io/vueye-table/",
   "files": [
     "dist/*",
     "src/*",
