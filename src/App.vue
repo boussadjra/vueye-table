@@ -4,9 +4,9 @@
     <div class="logo"></div>
     
     <div class="main-container">
-         <h2>Bordered table with light theme</h2>
+         <h2>Bordered table with blue theme</h2>
   
-        <vueye-table theme-name="red" checkable :per-page-values="[5,10,25,50]" title="Utilisateurs" vLang="fr" show-theme :rows_data="user_data"  v-on:checked-rows="getChecked"></vueye-table>
+        <vueye-table theme-name="blue-1" checkable :per-page-values="[5,10,25,50]" title="Utilisateurs" vLang="fr" show-theme :rows_data="user_data"  v-on:checked-rows="getChecked"></vueye-table>
     </div>
        <div class="main-container">
          <h2>Striped table with dark theme</h2>
@@ -60,6 +60,7 @@ export default {
 <style lang="scss">
 body {
   font-family: Arial, Helvetica, sans-serif;
+  font-family: Comforta;
   background: #efeff0;
   height: 100%;
   margin: 0;
@@ -83,7 +84,7 @@ h2 {
 }
 
 .logo {
-  background-image: url(assets/vueye.png);
+  background-image: url(https://raw.githubusercontent.com/boussadjra/vueye-table/master/src/assets/vueye.png);
   width: 150px;
   height: 125px;
   background-repeat: no-repeat;

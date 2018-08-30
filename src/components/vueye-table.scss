@@ -1,11 +1,11 @@
-@import url('https://fonts.googleapis.com/css?family=Cairo');
+
 
 @mixin forSmallScreens($media) {
     @media (max-width: $media+px) { @content; }
 }
 
 @font-face{
-    src: url(fonts/Comfortaa-Light.ttf);
+    src: url(https://raw.githubusercontent.com/boussadjra/vueye-table/master/src/components/fonts/Comfortaa-Light.ttf);
     font-family: "Comforta";
 }
 
@@ -160,7 +160,7 @@ tr{
 
 
 
-td{font-size: 12pt;font-weight: lighter; }
+td{font-size: 12pt; }
 
 td, th {
     border-bottom: 1px solid #dddddd;
