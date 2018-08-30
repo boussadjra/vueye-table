@@ -3,12 +3,16 @@
 @mixin forSmallScreens($media) {
     @media (max-width: $media+px) { @content; }
 }
-body{
-  font-family: 'Cairo', sans-serif;
 
+@font-face{
+    src: url(fonts/Comfortaa-Light.ttf);
+    font-family: "Comforta";
 }
 
+
+
 .vet-container{
+    font-family: Comforta;
     border-radius: 4px;
     width: 100%;
     height:auto;
@@ -67,12 +71,15 @@ body{
     
     
 }
-
+::placeholder{
+    color: inherit;
+    font-family:inherit;
+}
 .themes{
     display: flex;
     flex-direction: row;
     justify-content: space-between;
-    width: 100px;
+    // width: 100px;
     &>div{
         margin-left: 5px;
         height: 16px;
@@ -82,7 +89,7 @@ body{
     }
     .light{
         background: #fff;
-        border: 1px solid #000;
+        border: 2px solid #000;
       
     }
     
@@ -94,6 +101,14 @@ body{
     .dark-2{
         background: #201d31;
         border: 2px solid #ffff00;    
+    }
+    .blue-1{
+        background: #18399a;
+        border: 2px solid #05fa7d;    
+    }
+    .red{
+        background: #dc004b;
+        border: 2px solid white;    
     }
 }
 .vet-header-btns,.vet-footer-pagination{
@@ -235,7 +250,7 @@ td, th {
 
 
 
-  @media screen and (max-width: 600px) {
+  @media screen and (max-width: 640px) {
   
   table { border: 0; }
   

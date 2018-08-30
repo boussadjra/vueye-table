@@ -15,12 +15,14 @@
 				<div class="light" @click="changeTheme('light')"></div>
 				<div class="dark-1" @click="changeTheme('dark-1')"></div>
 				<div class="dark-2" @click="changeTheme('dark-2')"></div>
+				<div class="blue-1" @click="changeTheme('blue-1')"></div>
+				<div class="red" @click="changeTheme('red')"></div>
 
 			</div>
 			<div class="vet-header-btns">
 				<i  :class="customIcon" class="icon check-icon" @click="exportCheckedRows" v-if="checkable"></i>
 				<i  :class="customIcon" class="icon document-icon" @click="exportTableToExcel"></i>
-				<i  :class="customIcon" class="icon print-icon" @click="printTable()"></i>
+				<i  :class="customIcon" class="icon print-icon" @click="printTable"></i>
 			</div>
 
 		</div>
@@ -439,8 +441,10 @@ export default {
       /******************** */
     },
     changeTheme(theme) {
-      if (theme == "dark-1") {
-        this.currentTheme.main = {
+
+switch (theme) {
+  case 'dark-1':
+       this.currentTheme.main = {
           backgroundColor: "#201d31",
           color: "#00ffff",
           rowClick: {
@@ -451,8 +455,9 @@ export default {
           borderBottom: "1px solid #00ffff"
         };
         this.customIcon = "cyan-icon";
-      } else if (theme == "dark-2") {
-        this.currentTheme.main = {
+    break;
+ case 'dark-2':
+     this.currentTheme.main = {
           backgroundColor: "#201d31",
           color: "#ffff00",
           rowClick: {
@@ -463,8 +468,39 @@ export default {
           borderBottom: "1px solid #ffff00"
         };
         this.customIcon = "yellow-icon";
-      } else {
-        this.currentTheme.main = {
+    break;
+
+     case 'blue-1':
+     this.currentTheme.main = {
+          backgroundColor: "#18399a",
+          color: "#05fa7d",
+          rowClick: {
+            backgroundColor: "#11286d"
+          }
+        };
+
+        this.currentTheme.borderBottom = {
+          borderBottom: "1px solid #05fa7d"
+        };
+        this.customIcon = "green-icon";
+    break;
+ 
+     case 'red':
+     this.currentTheme.main = {
+          backgroundColor: "#dc004b",
+          color: "#fff",
+          rowClick: {
+            backgroundColor: "#c00444"
+          }
+        };
+
+        this.currentTheme.borderBottom = {
+          borderBottom: "1px solid #fff"
+        };
+        this.customIcon = "white-icon";
+    break;
+  default:
+       this.currentTheme.main = {
           backgroundColor: "#fff",
           color: "#6a6a6a",
           rowClick: {
@@ -475,7 +511,10 @@ export default {
           borderBottom: "1px solid #6a6a6a"
         };
         this.customIcon = "gray-icon";
-      }
+    break;
+}
+
+    
 
       return this.currentTheme;
     }

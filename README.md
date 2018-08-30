@@ -64,7 +64,7 @@ export default {
  cols             : the attributes or columns, by default it takes the json object keys
  rows_data        : JS array of object or json content
  per-pages-values : An array containing the possible number of rows per page 
- theme-name       : specify a theme name, available ones are light, dark-1 and dark-2 
+ theme-name       : specify a theme name, available ones are light, dark-1, dark-2, blue-1 and red
  table-style      : the type of table bordered or striped
  show-theme       : if this prop is not mentionned the theme bar will be hidden
  checkable        : show/hide the checkboxes column and the export checked rows button
