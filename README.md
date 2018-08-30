@@ -16,6 +16,7 @@ This component allows you to :
 
 ## Demo
  [Vueye data table demo](https://boussadjra.github.io/vueye-table/)
+ or the [video](https://www.youtube.com/watch?v=3isA2Sl7MyQ)
 ## Requirement
  * Vue.js 2
  * It doesn't require any css framework
