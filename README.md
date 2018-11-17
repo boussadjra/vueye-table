@@ -40,7 +40,6 @@ npm install vueye-datatable --save-dev
     v-on:checked-rows="getChecked"
     v-on:row-click="onrowclick"
     ></vueye-table>
-
 ...
 </template>
 <script>
