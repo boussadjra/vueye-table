@@ -50,15 +50,15 @@ export default {
     return {
      todos: [],
      theme3: {
-			backgroundColor: "#141443",
-			color: "#eee",
-			rows:{
-				borderBottom: "1px solid #eee"
+	backgroundColor: "#141443",
+	color: "#eee",
+	rows:{
+	   borderBottom: "1px solid #eee"
         },
       rowClick: {
-				backgroundColor: "#0D0B2F"
-			}
-			}
+	backgroundColor: "#0D0B2F"
+	}
+	}
     };
   },
   components: {
