@@ -30,7 +30,16 @@ npm install vueye-datatable --save-dev
 ```js
 <template>
 ...
-	<vueye-table class="table-container"  checkable tableStyle="bordered" :theme="theme3"  :per-page-values="[5,10,25,50]" title="TODOS"   :rows_data="todos" v-on:checked-rows="getChecked"></vueye-table>
+<vueye-table 
+     checkable 
+     tableStyle="bordered" 
+     :theme="theme3" 
+     :per-page-values="[5,10,25,50]"
+     title="TODOS"  
+    :rows_data="todos" 
+    v-on:checked-rows="getChecked"
+    v-on:row-click="onrowclick"
+    ></vueye-table>
 
 ...
 </template>
