@@ -1,35 +1,35 @@
 
-
+// #0161e3
 @mixin forSmallScreens($media) {
     @media (max-width: $media+px) { @content; }
 }
-
+/*
 @font-face{
     src: url(https://raw.githubusercontent.com/boussadjra/vueye-table/master/src/components/fonts/Comfortaa-Light.ttf);
     font-family: "Comforta";
-}
+    }*/
 
 
 
-.vet-container{
-    font-family: Comforta;
-    border-radius: 4px;
-    width: 100%;
-    height:auto;
-    box-shadow: 0 0 6px #000;
-    background:#fff;
-    color: #666;
-}
+    .vet-container{
+        
+        border-radius: 4px;
+        width: 100%;
+        height:auto;
+       
+        background:#fff;
+        color: #666;
+    }
 
-.vet-header{
-    display: flex;
-    flex-direction: row;
-    justify-content: space-between;
-    align-items: center;
-    
-    padding:0px 20px 0 20px;
-    
-    box-shadow: 0px 1px 5px #444;
+    .vet-header{
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+        
+        padding:0px 20px 0 20px;
+        
+    // box-shadow: 0px 1px 5px #444;
     @include forSmallScreens(640){
         flex-direction: column;
         &>div{
@@ -51,72 +51,37 @@
     }
     .vet-header-search{
         
-        border:none;
-        border-bottom:1px solid #6a6a6a;
-        
-        padding: 10px;
-        width: 340px;
-        background: transparent;
-        @include forSmallScreens(640){
-            width:200px;
-        }
-        &:focus{
-            outline: none;
-            border-bottom:2px solid;
-        }
-        &[placeholder]{
-            color:inherit;
-        }
+       border-radius:22px;
+       border:1px solid #d2c7c7;
+       
+       padding: 8px;
+       width: 340px;
+       background: transparent;
+       @include forSmallScreens(640){
+        width:200px;
     }
-    
-    
+    &:focus{
+        outline: none;
+        border:1px solid;
+    }
+    &[placeholder]{
+        color:inherit;
+    }
+}
+
+
 }
 ::placeholder{
     color: inherit;
     font-family:inherit;
 }
-.themes{
-    display: flex;
-    flex-direction: row;
-    justify-content: space-between;
-    // width: 100px;
-    &>div{
-        margin-left: 5px;
-        height: 16px;
-        width: 16px;
-        border-radius:2px;
-        cursor: pointer;
-    }
-    .light{
-        background: #fff;
-        border: 2px solid #000;
-      
-    }
-    
-    
-    .dark-1{
-        background: #201d31;
-        border: 2px solid #00ffff;    
-    }
-    .dark-2{
-        background: #201d31;
-        border: 2px solid #ffff00;    
-    }
-    .blue-1{
-        background: #18399a;
-        border: 2px solid #05fa7d;    
-    }
-    .red{
-        background: #dc004b;
-        border: 2px solid white;    
-    }
-}
+
 .vet-header-btns,.vet-footer-pagination{
     display: flex;
     flex-direction: row;
     justify-content: space-around;
     align-items:center;
-    .icon{
+    .v-icon{
         margin-right: 10px;
     }
     
@@ -155,18 +120,19 @@ thead{  padding: 8px;}
 }
 tr{
     cursor: pointer;
-   
+    
 }
 
 
 
-td{font-size: 12pt; }
 
+td{font-size: 11pt;padding: 10px; }
+th{padding: 15px;
+    text-transform: uppercase;
+
+}
 td, th {
-    border-bottom: 1px solid #dddddd;
     text-align: center;
-    padding: 15px;
-    
 }
 
 
@@ -176,11 +142,11 @@ td, th {
     justify-content: flex-end;
     align-items: center;
     
-    padding:40px;
+    padding:20px;
     
     font-size: 11pt; 
     
-    box-shadow: 0px -1px 5px #444;
+    // box-shadow: 0px -1px 5px #444;
     &>div{
         margin-right: 35px;
     }
@@ -216,8 +182,8 @@ td, th {
     position: absolute;
     top: 0;
     left: 0;
-    height: 18px;
-    width: 18px;
+    height: 12px;
+    width: 12px;
     border-radius: 4px;
     border: 2px solid;
 }
@@ -237,10 +203,10 @@ td, th {
 
 /* Style the checkmark/indicator */
 .container .checkmark:after {
-    left: 5px;
+    left: 3px;
     top: 0px;
-    width: 5px;
-    height: 13px;
+    width: 3px;
+    height: 8px;
     border: solid currentColor;
     border-width: 0 3px 3px 0;
     -webkit-transform: rotate(45deg);
@@ -250,33 +216,50 @@ td, th {
 
 
 
-  @media screen and (max-width: 640px) {
-  
-  table { border: 0; }
-  
-  table thead { display: none; }
-  
-  table tr {
-    margin-bottom: 10px;
-    display: block;
-    box-shadow: 0 0 10px #000;
+@media screen and (max-width: 640px) {
+    
+    table { border: 0; }
+    
+    table thead { display: none; }
+    
+    table tr {
+        margin-bottom: 10px;
+        display: block;
+        box-shadow: 0 0 10px #000;
+        
+    }
+    
+    table td {
+        display: block;
+        text-align: right;
+        font-size: 13px;
+        // border-bottom: 1px dotted #ccc;
+    }
+    
+    table td:last-child { border-bottom: 0; }
+    
+    table td:before {
+        content: attr(data-label);
+        float: left;
+        text-transform: uppercase;
+        font-weight: bold;
+    }
+    
+}
 
+.icon{
+    width: 24px;
+    height: 24px;
+    background-size: 24px;
+    background-repeat: no-repeat;
+    
   }
-  
-  table td {
-    display: block;
-    text-align: right;
-    font-size: 13px;
-    // border-bottom: 1px dotted #ccc;
-  }
-  
-  table td:last-child { border-bottom: 0; }
-  
-  table td:before {
-    content: attr(data-label);
-    float: left;
-    text-transform: uppercase;
-    font-weight: bold;
-  }
-  
+  .fa-icon {
+    cursor: pointer;
+    width: auto;
+    height: 1em; /* or any other relative font sizes */
+    
+    /* You would have to include the following two lines to make this work in Safari */
+    max-width: 100%;
+    max-height: 100%;
   }
