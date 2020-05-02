@@ -1,0 +1,89 @@
+* {
+    box-sizing: border-box;
+    margin: 0;
+    font-family: Roboto, Helvetica, Arial, sans-serif;
+}
+
+.ve-table-wrapper {
+    width: 100%;
+    // background: #f4f4f5;
+    box-shadow: 0 0 4px rgb(182, 181, 181);
+    font-size: 10pt;
+}
+
+.ve-table {
+    width: 100%;
+    border-spacing: 0;
+    padding: 12px;
+    thead {
+        color: rgba($color: #000000, $alpha: 0.5);
+        font-size: 10pt;
+        font-weight: lighter;
+        tr {
+            height: 48px;
+            text-align: start;
+        }
+        th {
+            padding: 4px;
+            text-align: start;
+            border-bottom: thin solid rgba($color: #000000, $alpha: 0.12);
+            .ve-table-head-cell {
+                display: flex;
+                align-items: center;
+                min-width: 40px;
+                &-sorted {
+                    color: #444;
+                }
+                svg {
+                    margin-left: 4px;
+                    cursor: pointer;
+                    width: auto;
+                    fill: #444;
+                }
+                &-sortable:hover {
+                    color: #444;
+                    cursor: pointer;
+                    svg {
+                        fill: #444;
+                        margin-left: 4px;
+                        display: block;
+                    }
+                }
+            }
+        }
+    }
+    &-sort-none {
+        svg {
+            display: none;
+            transition: all .5s;
+            &:hover {
+                display: block;
+            }
+        }
+    }
+    &-sort-desc {
+        svg {
+            transition: all .5s;
+            transform: rotate(180deg);
+        }
+    }
+    &-sort-asc {
+        svg {
+            transition: all .5s;
+            transform: rotate(0deg);
+        }
+    }
+}
+
+tbody {
+    tr {
+        height: 48px;
+        text-align: start;
+    }
+    .ve-table-row-item {
+        backface-visibility: hidden;
+    }
+    td {
+        border-bottom: thin solid rgba($color: #000000, $alpha: 0.12);
+    }
+}

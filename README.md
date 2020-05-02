@@ -1,29 +1,97 @@
-# vueye-table
+# Vueye DataTable
 
-## Project setup
-```
-npm install
-```
+Vueye data table is a responsive data table component based on [Vue.js 2](http://vuejs.org), it organizes 
+your data per pages in order to navigate easily.
 
-### Compiles and hot-reloads for development
-```
-npm run serve
-```
+![Vueye](https://raw.githubusercontent.com/boussadjra/vueye-table/master/src/assets/vueye.png )
 
-### Compiles and minifies for production
-```
-npm run build
-```
+This component allows you to :
 
-### Run your tests
-```
-npm run test
-```
+* Sort columns
+* Search data
+* Print your data into a spreadsheet
+* Emit checked rows and the clicked row to the parent component 
+* Export to excel 
+* Create your own theme (colors)
+* Many languages: English(en), Arabic(ar), French(fr), Spanish(es), German(ger) and Chinese(ch) 
 
-### Lints and fixes files
-```
-npm run lint
-```
+## Demo
+ [Vueye data table demo](https://boussadjra.github.io/vueye-table/)
 
-### Customize configuration
-See [Configuration Reference](https://cli.vuejs.org/config/).
+## Requirement
+ * Vue.js 2 + composition-api
+ * It doesn't require any css framework
+## Installation
+```
+npm install vueye-table --save
+```
+## Use
+
+```js
+<template>
+...
+<vueye-table 
+     checkable 
+     tableStyle="bordered" 
+     :theme="theme3" 
+     :per-page-values="[5,10,25,50]"
+     title="TODOS"  
+    :rows_data="todos" 
+    v-on:checked-rows="getChecked"
+    v-on:row-click="onrowclick"
+    ></vueye-table>
+...
+</template>
+<script>
+import VueyeTable from "vueye-table";
+export default {
+  name: "app",
+  data() {
+    return {
+     todos: [],
+     theme3: {
+	backgroundColor: "#141443",
+	color: "#eee",
+	rows:{
+	   borderBottom: "1px solid #eee"
+        },
+      rowClick: {
+	backgroundColor: "#0D0B2F"
+	}
+	}
+    };
+  },
+  components: {
+    VueyeTable
+  },
+  methods: {
+    getChecked(rows){
+      //
+    },
+    onrowclick(row){
+        //
+    }
+  },
+  mounted() {
+  this.axios.get("https://jsonplaceholder.typicode.com/todos").then(res=>{
+      this.todos=res.data;
+  })
+}
+};
+</script>
+
+```
+### Props 
+
+
+|Name | Description |
+|--------------------|------------------------|
+| title | the data table title|
+| cols | the attributes or columns, by default it takes the json object keys|
+| rows_data | JS array of object or json content|
+| per-pages-values | An array containing the possible number of rows per page |
+| table-style | the type of table **bordered** or **striped** |
+| checkable | show/hide the checkboxes column and the export checked rows button |
+| v-lang| specify the data table language |
+| header-shown | show/hide the data table header|
+| theme | define your own theme by specifying the background color, the text and the border bottom color |
