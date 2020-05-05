@@ -21,10 +21,10 @@
         class="ve-table-row-item"
       >
         <template v-for="(column, key) in columns">
-          <td v-if="$scopedSlots[column.key]">
+          <td v-if="$scopedSlots[column.key]" :data-label="column.label">
             <slot :name="column.key" :item="item"></slot>
           </td>
-          <td v-else>{{item[column.key]}}</td>
+          <td v-else :data-label="column.label">{{item[column.key]}}</td>
         </template>
       </tr>
     </tbody>

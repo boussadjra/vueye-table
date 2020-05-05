@@ -172,3 +172,34 @@ tbody {
     -ms-transform: rotate(45deg);
     transform: rotate(45deg);
 }
+
+@media screen and (max-width: 640px) {
+    table {
+        border: 0;
+    }
+    table thead {
+        display: none;
+    }
+    table tr {
+        margin-bottom: 10px;
+        display: block;
+        box-shadow: 0 0 4px rgb(190, 190, 190);
+        height: 100%;
+    }
+    table td {
+        display: block;
+        text-align: right;
+        padding: 10px;
+        // font-size: 13px;
+        // border-bottom: 1px dotted #ccc;
+    }
+    table td:last-child {
+        border-bottom: 0;
+    }
+    table td:before {
+        content: attr(data-label);
+        float: left;
+        text-transform: uppercase;
+        font-weight: bold;
+    }
+}

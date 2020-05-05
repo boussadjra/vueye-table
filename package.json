@@ -1,7 +1,7 @@
 {
     "author": "BRAHIM BOUSSADJRA",
     "name": "vueye-table",
-    "version": "1.0.0",
+    "version": "1.0.0-beta.2",
     "private": false,
     "main": "./build/vueye-table.common.js",
     "scripts": {

@@ -15,10 +15,9 @@
           <slot :name="slot" v-bind="scope" />
         </template>
     </ve-grid>
-  </div>
-</template>
-    </ve-grid>
+ 
     <ve-footer>
+    
       <ve-pagination
         @update-page="updatePage"
         :per-page-values="perPageValues"
