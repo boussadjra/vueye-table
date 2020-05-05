@@ -10,6 +10,6 @@ name:'ve-footer'
 }
 </script>
 
-<style>
+<style lang="scss">
 
 </style>

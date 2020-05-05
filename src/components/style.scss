@@ -13,13 +13,19 @@ ul {
     }
 }
 
+@mixin forSmallScreens($media) {
+    @media (max-width: $media+px) {
+        @content;
+    }
+}
+
 .ve-table-wrapper {
     width: 100%;
     // background: #f4f4f5;
     box-shadow: 0 0 4px rgb(182, 181, 181);
     font-size: 10pt;
     display: grid;
-    grid-template-rows: 64px auto 64px;
+    grid-template-rows: 64px auto auto;
 }
 
 .ve-table {

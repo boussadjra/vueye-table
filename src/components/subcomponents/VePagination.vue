@@ -72,6 +72,11 @@ export default {
 </script>
 
 <style lang="scss">
+@mixin forSmallScreens($media) {
+    @media (max-width: $media+px) { @content; }
+}
+
+
 .ve-pagination {
   display: flex;
   flex-direction: row;
@@ -101,5 +106,14 @@ export default {
       cursor: pointer;
     }
   }
+
+     @include forSmallScreens(640){
+        flex-direction: column;
+        height: 100%;
+        &>div{
+            margin-bottom: 10px;
+        }
+        
+    }
 }
 </style>
