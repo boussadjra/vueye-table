@@ -4,11 +4,22 @@
     font-family: Roboto, Helvetica, Arial, sans-serif;
 }
 
+ul {
+    list-style: none;
+    padding-inline-start: 0;
+    margin-block-start: 0;
+    li {
+        text-align: start;
+    }
+}
+
 .ve-table-wrapper {
     width: 100%;
     // background: #f4f4f5;
     box-shadow: 0 0 4px rgb(182, 181, 181);
     font-size: 10pt;
+    display: grid;
+    grid-template-rows: 64px auto 64px;
 }
 
 .ve-table {
@@ -28,9 +39,10 @@
             text-align: start;
             border-bottom: thin solid rgba($color: #000000, $alpha: 0.12);
             .ve-table-head-cell {
-                display: flex;
+                display: grid;
+                grid-template-columns: auto 24px;
                 align-items: center;
-                min-width: 40px;
+                width: fit-content;
                 &-sorted {
                     color: #444;
                 }
@@ -86,4 +98,77 @@ tbody {
     td {
         border-bottom: thin solid rgba($color: #000000, $alpha: 0.12);
     }
+}
+
+.ve-icon {
+    cursor: pointer;
+}
+
+
+/************/
+
+.ve-checkbox {
+    display: block;
+    position: relative;
+    padding-left: 35px;
+    margin-bottom: 18px;
+    cursor: pointer;
+    font-size: 22px;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
+
+/* Hide the browser's default checkbox */
+
+.ve-checkbox input {
+    position: absolute;
+    opacity: 0;
+    cursor: pointer;
+}
+
+
+/* Create a custom checkbox */
+
+.ve-checkmark {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 16px;
+    width: 16px;
+    border-radius: 4px;
+    border: 2px solid #444;
+}
+
+
+/* Create the ve-checkmark/indicator (hidden when not checked) */
+
+.ve-checkmark:after {
+    content: "";
+    position: absolute;
+    display: none;
+}
+
+
+/* Show the ve-checkmark when checked */
+
+.ve-checkbox input:checked~.ve-checkmark:after {
+    display: block;
+}
+
+
+/* Style the ve-checkmark/indicator */
+
+.ve-checkbox .ve-checkmark:after {
+    left: 4px;
+    top: -5px;
+    width: 6px;
+    height: 12px;
+    border: solid #444;
+    border-width: 0 3px 3px 0;
+    -webkit-transform: rotate(45deg);
+    -ms-transform: rotate(45deg);
+    transform: rotate(45deg);
 }

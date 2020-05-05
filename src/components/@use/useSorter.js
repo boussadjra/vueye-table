@@ -4,16 +4,27 @@ import { getDeepNestedFieldValue as nestedVal } from '../helpers';
 const useSorter = (data, sortBy) => {
 	const sortedBy = reactive({
 		label: null,
-		key: sortBy,
+		key: null,
 		direction: 'none',
 		sortClass: 've-table-sort-none',
 	});
 
 	let sortedData = ref([...data]);
-	watch(sortBy, () => {
-	
-		sort({ label: null, key: sortBy });
+
+	watch('sortBy', (newVal, oldVal) => {
+		sortedBy.key = newVal;
+
+		newVal ? sort({ label: null, key: newVal }) : {};
 	});
+
+	/*watch('data', (newVal, oldVal) => {
+		sortedData.value = newVal;
+		//	sort({ label: null, key: sortBy });
+	});*/
+
+	function setSortedData(newData) {
+		sortedData.value = newData;
+	}
 	function sort(column) {
 		if (column.key !== sortedBy.key) {
 			sortedBy.direction = 'none';
@@ -26,9 +37,7 @@ const useSorter = (data, sortBy) => {
 		} else if (sortedBy.direction === 'asc') {
 			sortedBy.direction = 'desc';
 		} else {
-			sortedBy.direction = 'none';
-			sortedBy.key = null;
-			sortedBy.label = null;
+			resetSortedBy();
 		}
 
 		sortedBy.sortClass = 've-table-sort-' + sortedBy.direction;
@@ -36,29 +45,40 @@ const useSorter = (data, sortBy) => {
 			sortedData.value.sort(compareValues(column.key, sortedBy.direction));
 		}
 	}
-
+	function resetSortedBy() {
+		sortedBy.direction = 'none';
+		sortedBy.key = null;
+		sortedBy.label = null;
+		sortedBy.sortClass = 've-table-sort-' + sortedBy.direction;
+	}
 	function arrowSortShown(column) {
 		return column.sortable && (sortedBy.direction === 'none' || column.key === sortedBy.key);
 	}
 	function labelClass(column) {
-		return [
+
+		let classes= [
 			{
 				've-table-head-cell-sorted': column.key === sortedBy.key && column.sortable,
 				've-table-head-cell-sortable': column.sortable,
 			},
 			sortedBy.sortClass,
 		];
+
+		return classes;
 	}
 	function compareValues(key, order) {
 		return function(a, b) {
-			/*	if (!a.hasOwnProperty(key) || !b.hasOwnProperty(key)) {
-				// property doesn't exist on either object
-				return 0;
-			}*/
-
-			let varA = typeof nestedVal(key, a) === 'string' ? nestedVal(key, a).toUpperCase() : nestedVal(key, a);
-			let varB = typeof nestedVal(key, b) === 'string' ? nestedVal(key, b).toUpperCase() : nestedVal(key, b);
-
+			let valA = nestedVal(key, a);
+			let valB = nestedVal(key, b);
+			let varA = null;
+			let varB = null;
+			if (isNaN(Number(valA))) {
+				varA = typeof valA === 'string' ? valA.toUpperCase() : valA;
+				varB = typeof valB === 'string' ? valB.toUpperCase() : valB;
+			} else {
+				varA = Number(valA);
+				varB = Number(valB);
+			}
 			let comparison = 0;
 			if (varA > varB) {
 				comparison = 1;
@@ -69,7 +89,15 @@ const useSorter = (data, sortBy) => {
 		};
 	}
 
-	return { handler: sort, data: sortedData, labelClass, column: sortedBy, arrowSortShown };
+	return {
+		handler: sort,
+		data: sortedData,
+		labelClass,
+		column: sortedBy,
+		arrowSortShown,
+		setSortedData,
+		resetSortedBy,
+	};
 };
 
 export default useSorter;

@@ -1,18 +1,40 @@
 import { ref } from "@vue/composition-api";
 
 import {getDeepNestedFieldValue} from '../helpers'
-const useMapper = (data, columns) => {
+const useMapper = (data, cols) => {
     const rows = ref([]);
-    rows.value = data.map(item => {
-      let row = {};
-      columns.forEach(column => {
-        row[column.key] =getDeepNestedFieldValue(column.key,item);
-      });
+    const notMappedData = ref([]);
+    const columns = ref([]);
+
+    function map() {
+      if(columns.value.length>0){
+        rows.value = notMappedData.value.map(item => {
+          let row = {};
+      
+          columns.value.forEach(column => {
+          
+            row[column.key] =getDeepNestedFieldValue(column.key,item);
+          });
+      
+          return row;
+        });
+      }else{
+        rows.value=[]
+        console.log('-----no col---------------')
+        console.log()
+        console.log('--------------------')
+      }
+     
   
-      return row;
-    });
-  
-    return rows;
+    }
+
+    function setColumns(_columns) {
+      columns.value=_columns;
+    }
+    function setNotMappedData(_rows) {
+      notMappedData.value=_rows
+    }
+    return {rows,handler:map,setColumns,setNotMappedData};
   };
 
   export default useMapper;
