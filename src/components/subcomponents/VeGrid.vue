@@ -81,6 +81,8 @@ export default {
     watch("data", (newV, oldV) => {
       sorter.resetSortedBy();
       mapper.setNotMappedData(newV);
+      sorter.setSortedData(mapper.rows.value);
+
     });
 
     watch("columns", (newV, oldV) => {

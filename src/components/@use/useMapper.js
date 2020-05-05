@@ -20,9 +20,7 @@ const useMapper = (data, cols) => {
         });
       }else{
         rows.value=[]
-        console.log('-----no col---------------')
-        console.log()
-        console.log('--------------------')
+     
       }
      
   
@@ -33,6 +31,7 @@ const useMapper = (data, cols) => {
     }
     function setNotMappedData(_rows) {
       notMappedData.value=_rows
+      map()
     }
     return {rows,handler:map,setColumns,setNotMappedData};
   };
