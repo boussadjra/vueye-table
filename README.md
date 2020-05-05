@@ -1,6 +1,6 @@
 # Vueye DataTable
 
-Vueye data table is a responsive data table component based on [Vue.js 2](http://vuejs.org), it organizes 
+Vueye data table is a responsive data table component based on [Vue.js](http://vuejs.org), it organizes 
 your data per pages in order to navigate easily.
 
 ![Vueye](https://raw.githubusercontent.com/boussadjra/vueye-table/master/src/assets/vueye.png )
@@ -8,13 +8,9 @@ your data per pages in order to navigate easily.
 This component allows you to :
 
 * Sort columns
-* Search data
-* Print your data into a spreadsheet
-* Emit checked rows and the clicked row to the parent component 
-* Export to excel 
-* Create your own theme (colors)
-* Many languages: English(en), Arabic(ar), French(fr), Spanish(es), German(ger) and Chinese(ch) 
-
+* Show only desired columns
+* Custom cells rendering
+* Other features are coming soon
 ## Demo
  [Vueye data table demo](https://boussadjra.github.io/vueye-table/)
 
@@ -30,54 +26,66 @@ npm install vueye-table --save
 ```js
 <template>
 ...
-<vueye-table 
-     checkable 
-     tableStyle="bordered" 
-     :theme="theme3" 
-     :per-page-values="[5,10,25,50]"
-     title="TODOS"  
-    :rows_data="todos" 
-    v-on:checked-rows="getChecked"
-    v-on:row-click="onrowclick"
-    ></vueye-table>
-...
+<template>
+<div id="app">
+    <VueyeTable :data='employees' :columns='columns' title="My Table" >
+
+    <template v-slot:id="{item}">
+        <i>{{item.id}}</i>
+      </template>
+        <template v-slot:employee_name="{item}">
+        <b>{{item.employee_name}}</b>
+      </template>
+  
+    </VueyeTable>
+</div>
 </template>
+
 <script>
-import VueyeTable from "vueye-table";
+import VueyeTable from './components/VueyeTable.vue'
+import employees from './assets/employees.json'
 export default {
-  name: "app",
-  data() {
-    return {
-     todos: [],
-     theme3: {
-	backgroundColor: "#141443",
-	color: "#eee",
-	rows:{
-	   borderBottom: "1px solid #eee"
-        },
-      rowClick: {
-	backgroundColor: "#0D0B2F"
-	}
-	}
-    };
-  },
-  components: {
-    VueyeTable
-  },
-  methods: {
-    getChecked(rows){
-      //
+    name: 'App',
+    data: () => ({
+        employees,
+        columns: [{
+                key: "id",
+                label: "ID",
+                sortable: true,
+                type: 'number',
+                display:true
+            },
+            {
+                key: "employee_name",
+                label: "Employee Name",
+                sortable: true,
+                display:true
+
+            },
+            {
+                key: "employee_salary",
+                label: "Employee Salary",
+                display:true,
+                sortable: true,
+            },   {
+                key: "employee_age",
+                label: "Employee Age",
+                sortable: true
+            }, {
+                key: "address.city",
+                label: "Address",
+                sortable: true,
+                sortable: true,
+
+            },
+           
+        ]
+    }),
+    components: {
+        VueyeTable
     },
-    onrowclick(row){
-        //
-    }
-  },
-  mounted() {
-  this.axios.get("https://jsonplaceholder.typicode.com/todos").then(res=>{
-      this.todos=res.data;
-  })
+
 }
-};
 </script>
 
 ```
@@ -87,11 +95,5 @@ export default {
 |Name | Description |
 |--------------------|------------------------|
 | title | the data table title|
-| cols | the attributes or columns, by default it takes the json object keys|
-| rows_data | JS array of object or json content|
-| per-pages-values | An array containing the possible number of rows per page |
-| table-style | the type of table **bordered** or **striped** |
-| checkable | show/hide the checkboxes column and the export checked rows button |
-| v-lang| specify the data table language |
-| header-shown | show/hide the data table header|
-| theme | define your own theme by specifying the background color, the text and the border bottom color |
+| columns | the attributes or columns, by default it takes the json object keys|
+| data | JS array of object or json content|
