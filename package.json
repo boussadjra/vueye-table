@@ -3,7 +3,7 @@
     "name": "vueye-table",
     "version": "1.0.0-beta.0",
     "private": false,
-    "main": "./dist/vueye-table.common.js",
+    "main": "./build/vueye-table.common.js",
 
     "scripts": {
         "serve": "vue-cli-service serve",
@@ -33,6 +33,11 @@
     "browserslist": [
         "> 1%",
         "last 2 versions"
+    ],
+    "files": [
+        "build/vueye-table.common.js",
+        "build/*.css",
+        "*.md"
     ],
     "keywords": [
         "vue.js",

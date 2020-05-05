@@ -14,6 +14,8 @@ This component allows you to :
 ## Demo
  [Vueye data table demo](https://boussadjra.github.io/vueye-table/)
 
+ [Boilerplate in codesandbox](https://codesandbox.io/s/bold-star-s7hgw)
+
 ## Requirement
  * Vue.js 2 + composition-api
  * It doesn't require any css framework
@@ -24,8 +26,7 @@ npm install vueye-table --save
 ## Use
 
 ```js
-<template>
-...
+
 <template>
 <div id="app">
     <VueyeTable :data='employees' :columns='columns' title="My Table" >
@@ -42,7 +43,7 @@ npm install vueye-table --save
 </template>
 
 <script>
-import VueyeTable from './components/VueyeTable.vue'
+import VueyeTable from "vueye-table";
 import employees from './assets/employees.json'
 export default {
     name: 'App',
@@ -87,6 +88,23 @@ export default {
 
 }
 </script>
+
+```
+
+In main.js `@vue/composition-api` plugin to make work with Vue.js 2 :
+
+
+```js
+import Vue from 'vue'
+import App from './App.vue'
+import VueComp from '@vue/composition-api'
+Vue.config.productionTip = false
+
+Vue.use(VueComp)
+
+new Vue({
+  render: h => h(App),
+}).$mount('#app')
 
 ```
 ### Props 
