@@ -1,7 +1,7 @@
 {
     "author": "BRAHIM BOUSSADJRA",
     "name": "vueye-table",
-    "version": "1.0.0-beta.4",
+    "version": "1.0.0",
     "private": false,
     "description": "A data table created using Vue.js",
     "main": "./build/vueye-table.common.js",
