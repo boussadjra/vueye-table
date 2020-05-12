@@ -8,7 +8,11 @@
     </div>
     <div class="ve-pagination-page-desc">
       <span>
-        <span> {{lowerBound}} <strong>-</strong> {{upperBound}} of {{data.length}} </span>
+        <span>
+          {{lowerBound}}
+          <strong>-</strong>
+          {{upperBound}} of {{notPagedData.length}}
+        </span>
       </span>
     </div>
     <div class="ve-pagination-arrows">
@@ -24,12 +28,13 @@
 import Icon from "../icons";
 import { ref, watch, computed } from "@vue/composition-api";
 import usePaginator from "../@use/usePaginator.js";
+import { store, mutations } from "../store";
 
 export default {
   name: "ve-pagination",
-  props: ["perPageValues", "data", "perPage"],
+  props: ["perPageValues", "perPage"],
   setup(props, context) {
-    const { data, perPage } = props;
+    const { perPage } = props;
     const {
       pages,
       pagesCount,
@@ -39,31 +44,62 @@ export default {
       last,
       first,
       currentPageItems,
-      setPerPage
-    } = usePaginator(data, perPage);
+      setPerPage,
+      notPagedData,
+      setNotPagedData
+    } = usePaginator([], perPage);
 
     const nbRowPerPage = ref(perPage);
 
+    watch(
+      () => store.allData,
+      (newVal, oldVal) => {
+        setNotPagedData(newVal);
+      }
+    );
+
+    watch(
+      () => store.handledData,
+      (newVal, oldVal) => {
+        setNotPagedData(newVal);
+      }
+    );
     watch(currentPage, () => {
-      context.emit("update-page", currentPageItems);
+      context.emit("update-page", currentPageItems, setNotPagedData);
     });
 
     watch(nbRowPerPage, newVal => {
       setPerPage(newVal);
-      context.emit("update-page", currentPageItems);
+      context.emit("update-page", currentPageItems, setNotPagedData);
     });
 
+    watch(currentPageItems, newVal => {
+      mutations.setCurrentPageItems(newVal);
+    });
+    const allData = computed(() => {
+      return store.allData;
+    });
     const lowerBound = computed(() => {
-      
-      return (currentPage.value-1) * nbRowPerPage.value + 1;
+      return (currentPage.value - 1) * nbRowPerPage.value + 1;
     });
     const upperBound = computed(() => {
-      return (currentPage.value ) * nbRowPerPage.value > data.length
-        ? data.length
-        : (currentPage.value) * nbRowPerPage.value;
+      return currentPage.value * nbRowPerPage.value > notPagedData.value.length
+        ? notPagedData.value.length
+        : currentPage.value * nbRowPerPage.value;
     });
 
-    return { nbRowPerPage, next, prev, last, first,upperBound,lowerBound,pagesCount };
+    return {
+      allData,
+      nbRowPerPage,
+      next,
+      prev,
+      last,
+      first,
+      upperBound,
+      lowerBound,
+      notPagedData,
+      pagesCount
+    };
   },
   components: {
     Icon
@@ -73,9 +109,10 @@ export default {
 
 <style lang="scss">
 @mixin forSmallScreens($media) {
-    @media (max-width: $media+px) { @content; }
+  @media (max-width: $media+px) {
+    @content;
+  }
 }
-
 
 .ve-pagination {
   display: flex;
@@ -107,13 +144,12 @@ export default {
     }
   }
 
-     @include forSmallScreens(640){
-        flex-direction: column;
-        height: 100%;
-        &>div{
-            margin-bottom: 10px;
-        }
-        
+  @include forSmallScreens(640) {
+    flex-direction: column;
+    height: 100%;
+    & > div {
+      margin-bottom: 10px;
     }
+  }
 }
 </style>

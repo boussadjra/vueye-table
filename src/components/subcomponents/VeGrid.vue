@@ -42,7 +42,9 @@ import {
 } from "@vue/composition-api";
 import useMapper from "../@use/useMapper.js";
 import useSorter from "../@use/useSorter.js";
-import { maroon } from "color-name";
+import useFilter from "../@use/useFilter.js";
+import { store, mutations } from "../store";
+
 export default {
   name: "ve-grid",
   props: {
@@ -50,10 +52,7 @@ export default {
       type: Array,
       default: () => []
     },
-    data: {
-      type: Array,
-      default: () => []
-    },
+
     keyTransition: {
       type: String,
       default: "id"
@@ -61,35 +60,65 @@ export default {
     sortBy: {
       type: String,
       default: null
+    },
+    filterBy: {
+      type: String,
+      default: null
+    },
+    searchValue: {
+      type: String,
+      default: ""
     }
   },
   setup(props) {
-    const { data, columns, sortBy } = props;
+    const { columns, sortBy, searchValue, filterBy } = props;
 
-    const mapper = useMapper(data, columns);
+    const mapper = useMapper([], columns);
 
-    const sorter = useSorter(data, sortBy);
+    const sorter = useSorter([], sortBy);
+    const filter = useFilter([], searchValue, null);
 
     const items = computed(() => {
-      if (sorter.column.direction !== "none" || sortBy !== null) {
-        return sorter.data.value;
-      } else {
-        return mapper.rows.value;
+      return store.currentPageItems;
+    });
+
+    watch(
+      () => store.allData,
+      (newV, oldV) => {
+        sorter.resetSortedBy();
+        mapper.setNotMappedData(newV);
+        filter.setItems(mapper.rows.value);
+
+        sorter.setSortedData(mapper.rows.value);
       }
-    });
-
-    watch("data", (newV, oldV) => {
-      sorter.resetSortedBy();
-      mapper.setNotMappedData(newV);
-      sorter.setSortedData(mapper.rows.value);
-
-    });
+    );
 
     watch("columns", (newV, oldV) => {
       mapper.setColumns(newV);
 
       mapper.handler();
+
       sorter.setSortedData(mapper.rows.value);
+      filter.setItems(mapper.rows.value);
+    });
+
+    watch("searchValue", (newV, oldV) => {
+      filter.setSearchValue(newV);
+
+      filter.handler();
+      sorter.setSortedData(filter.filteredItems.value);
+      mutations.setHandledData(filter.filteredItems.value);
+    });
+
+    watch("filterBy", (newV, oldV) => {
+      filter.setKey(newV);
+
+      filter.handler();
+      sorter.setSortedData(filter.filteredItems.value);
+      mutations.setHandledData(filter.filteredItems.value);
+    });
+    watch(sorter.data, newVal => {
+      mutations.setHandledData(newVal);
     });
 
     return {
@@ -98,11 +127,7 @@ export default {
       items
     };
   },
-  errorCaptured(err, vm, info) {
-    console.log("--------error hook----------");
-    console.log(err, vm, info);
-    console.log("--------------------");
-  },
+
   components: {
     Icon
   }

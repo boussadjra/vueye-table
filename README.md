@@ -7,6 +7,8 @@ your data per pages in order to navigate easily.
 
 This component allows you to :
 
+* Paginate data
+* Filter by field
 * Sort columns
 * Show only desired columns
 * Custom cells rendering
@@ -18,18 +20,19 @@ This component allows you to :
 
 ## Requirement
  * Vue.js 2 + composition-api
- * It doesn't require any css framework
+ * It doesn't require any CSS framework
+
 ## Installation
 ```
 npm install vueye-table --save
 ```
-## Use
+## Usage
 
 ```js
 
 <template>
 <div id="app">
-    <VueyeTable :data='employees' :columns='columns' title="My Table" >
+    <VueyeTable :data='employees' :columns='columns' title="Employees" >
 
     <template v-slot:id="{item}">
         <i>{{item.id}}</i>
@@ -91,7 +94,7 @@ export default {
 
 ```
 
-In main.js `@vue/composition-api` plugin to make work with Vue.js 2 :
+In main.js add `@vue/composition-api` plugin to make work with Vue.js 2 :
 
 
 ```js
@@ -113,5 +116,5 @@ new Vue({
 |Name | Description |
 |--------------------|------------------------|
 | title | the data table title|
-| columns | the attributes or columns, by default it takes the json object keys|
+| columns | the attributes or columns|
 | data | JS array of object or json content|

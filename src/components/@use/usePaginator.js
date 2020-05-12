@@ -1,27 +1,33 @@
 import { ref, computed, watch } from '@vue/composition-api';
 
-const usePaginator = (data, pPage) => {
+const usePaginator = (data, pPage = 10) => {
+	const notPagedData = ref([...data]);
 	const pages = ref([]);
 	const perPage = ref(pPage);
 
 	const currentPage = ref(1);
-	watch(
-		() => [data, perPage],
-		() => {
-			paginate();
-		}
-	);
 
+	function setNotPagedData(_data, test) {
+		notPagedData.value = _data;
+	}
+	watch(notPagedData, () => {
+		paginate();
+	});
+	watch(perPage, () => {
+		paginate();
+	});
 	function paginate() {
 		pages.value = [];
 		let start = 0;
 		let end = perPage.value;
-		while (start <= data.length) {
-			pages.value.push(data.slice(start, end));
+		while (start <= notPagedData.value.length) {
+			pages.value.push(notPagedData.value.slice(start, end));
 
 			start = start + perPage.value;
 			end = end + perPage.value;
 		}
+		currentPage.value=1
+
 	}
 	const pagesCount = computed(() => pages.value.length);
 
@@ -45,7 +51,19 @@ const usePaginator = (data, pPage) => {
 		currentPage.value = pagesCount.value;
 	}
 
-	return { pages, pagesCount, currentPage, next, prev, last, first, setPerPage, currentPageItems };
+	return {
+		pages,
+		pagesCount,
+		currentPage,
+		next,
+		prev,
+		last,
+		first,
+		setPerPage,
+		currentPageItems,
+		notPagedData,
+		setNotPagedData,
+	};
 };
 
 export default usePaginator;
