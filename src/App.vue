@@ -1,7 +1,10 @@
 <template>
 <div id="app">
     <VueyeTable :data="employees" :columns="columns" title="Employees" 
-    filter-by="employee_salary">
+    filter-by="employee_salary" 
+    select-rows
+    v-model="selectedRows"
+    >
         <template v-slot:id="{item}">
             <i>{{item.id}}</i>
         </template>
@@ -49,7 +52,8 @@ export default {
                 sortable: true,
                 sortable: true
             }
-        ]
+        ],
+        selectedRows:[]
     }),
     components: {
         VueyeTable

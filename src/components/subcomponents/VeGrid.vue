@@ -2,6 +2,12 @@
   <table class="ve-table">
     <thead>
       <tr>
+        <th v-if="selectRows">
+          <label class="ve-checkbox">
+            <input type="checkbox" v-model="allSelected">
+            <span class="ve-checkmark" :class="{'ve-checkmark-minus':someSelected}"></span>
+          </label>
+        </th>
         <th v-for="(column, index) in columns" :key="index">
           <div
             class="ve-table-head-cell"
@@ -20,6 +26,12 @@
         :key="item[keyTransition]?item[keyTransition]:i"
         class="ve-table-row-item"
       >
+        <td v-if="selectRows">
+          <label class="ve-checkbox">
+            <input type="checkbox" :value="item" v-model="selectedRows" @change="checkRows">
+            <span class="ve-checkmark"></span>
+          </label>
+        </td>
         <template v-for="(column, key) in columns">
           <td v-if="$scopedSlots[column.key]" :data-label="column.label">
             <slot :name="column.key" :item="item"></slot>
@@ -68,20 +80,27 @@ export default {
     searchValue: {
       type: String,
       default: ""
+    },
+    selectRows: {
+      type: Boolean,
+      default: false
     }
   },
   setup(props) {
-    const { columns, sortBy, searchValue, filterBy } = props;
+    const { columns, sortBy, searchValue, filterBy, selectRows } = props;
 
     const mapper = useMapper([], columns);
 
     const sorter = useSorter([], sortBy);
     const filter = useFilter([], searchValue, null);
 
+    const selectedRows = ref([]);
+     const allSelected = ref(false);
+    const someSelected = ref(false);
     const items = computed(() => {
       return store.currentPageItems;
     });
-
+   
     watch(
       () => store.allData,
       (newV, oldV) => {
@@ -92,7 +111,25 @@ export default {
         sorter.setSortedData(mapper.rows.value);
       }
     );
+    watch(
+      () => store.selectedRows,
+      (newV, oldV) => {
+        someSelected.value=items.value.length!==newV.length && newV.length>0 ;
+        selectedRows.value = newV;
 
+
+      }
+    );
+    watch(
+       allSelected,
+      newVal => {
+
+      
+        newVal
+          ? mutations.setSelectedRows(items.value)
+          : mutations.setSelectedRows([]);
+      }
+    );
     watch("columns", (newV, oldV) => {
       mapper.setColumns(newV);
 
@@ -121,10 +158,18 @@ export default {
       mutations.setHandledData(newVal);
     });
 
+    function checkRows() {
+      mutations.setSelectedRows(selectedRows.value);
+    }
+
     return {
       mapper,
       sorter,
-      items
+      items,
+      checkRows,
+      selectedRows,
+      allSelected,
+      someSelected
     };
   },
 

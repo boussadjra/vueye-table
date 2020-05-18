@@ -3,7 +3,7 @@
     <h4>{{title}}</h4>
 
      <div class="ve-input-search-wrap">
-     <select class="ve-input-select" v-model="filterBy"@change="selectFilterBy" >
+     <select class="ve-input-select" v-model="filterBy" @change="selectFilterBy" >
      <option value="null" disabled>Filter by</option>
        <option  v-for="(column, index) in selectedColumns" :key="index" :value="column">
        {{column.label}}

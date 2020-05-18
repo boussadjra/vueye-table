@@ -9,12 +9,11 @@
     />
     <ve-grid
       :columns="state.selectedColumns"
-      
-     
       :key-transition="keyTransition"
       :sort-by="sortBy"
       :search-value="state.searchValue"
       :filter-by="state.selectedFilterBy"
+      :selectRows="selectRows"
     >
       <!--  <template v-for="(_, slot) of $scopedSlots" v-slot:[slot]="scope">
         <slot :name="slot" v-bind="scope"/>
@@ -44,7 +43,7 @@ import VeFooter from "./subcomponents/VeFooter";
 import VePagination from "./subcomponents/VePagination";
 import { reactive, onMounted, watch } from "@vue/composition-api";
 import { getDeepNestedFieldValue } from "./helpers";
-import {mutations} from './store'
+import { store, mutations } from "./store";
 /*
  *
  ****
@@ -55,6 +54,7 @@ export default {
     data: Array,
     columns: Array,
     title: String,
+    value: Array,
     keyTransition: {
       type: String,
       default: "id"
@@ -75,6 +75,10 @@ export default {
       type: Number,
       default: 10
     },
+    selectRows: {
+      type: Boolean,
+      default: false
+    },
     customFilter: {
       type: Function,
       default: (items, search, filter, columns) => {
@@ -94,7 +98,7 @@ export default {
   setup(props, context) {
     const state = reactive({
       displayedData: [...props.data],
-      allData:[...props.data],
+      allData: [...props.data],
       selectedColumns: [],
       searchValue: "",
       selectedFilterBy: props.filterBy
@@ -113,8 +117,15 @@ export default {
     }
     onMounted(() => {
       state.selectedColumns = props.columns.filter(col => col.display);
-      mutations.setAllData(props.data)
+      mutations.setAllData(props.data);
     });
+
+    watch(
+      () => store.selectedRows,
+      newV => {
+        context.emit("input", newV);
+      }
+    );
     return {
       state,
       updatePage,
