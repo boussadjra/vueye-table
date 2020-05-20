@@ -26,6 +26,10 @@ ul {
     font-size: 10pt;
     display: grid;
     grid-template-rows: 64px auto auto;
+    @include forSmallScreens(640) {
+        grid-template-rows: 160px auto auto;
+        width: 100%;
+    }
 }
 
 .ve-table {
@@ -192,11 +196,22 @@ tbody {
     table thead {
         display: none;
     }
+    table tbody {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+    }
     table tr {
         margin-bottom: 10px;
-        display: block;
-        box-shadow: 0 0 4px rgb(190, 190, 190);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        -webkit-box-shadow: 0 0 4px #bebebe;
+        box-shadow: 0 0 4px #bebebe;
         height: 100%;
+        width: 100%;
+        align-items: stretch;
     }
     table td {
         display: block;
