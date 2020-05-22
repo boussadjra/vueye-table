@@ -7,18 +7,17 @@
     y="0px"
     viewBox="0 0 512 512"
     xml:space="preserve"
-    style="transform:rotate(180deg)"
+    style="transform:rotate(-90deg)"
   >
     <path
-      d="M384 448v-85h-256v85h256zM405 256c12 0 22 9 22 21s-10 22 -22 22s-21 -10 -21 -22s9 -21 21 -21zM341 107v106h-170v-106h170zM405 341c35 0 64 -29 64 -64v-128h-85v-85h-256v85h-85v128c0 35 29 64 64 64h298z" />
-
+    d="M442 362l-39 -39l-80 80l39 39c8 8 22 8 30 0l50 -50c8 -8 8 -22 0 -30zM64 144l236 236l80 -80l-236 -236h-80v80z" />
 
   </svg>
 </template>
 
 <script>
 export default {
-  name: "print",
+  name: "edit",
   props: {
     fill: {
       default: "#000"

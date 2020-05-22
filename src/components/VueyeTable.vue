@@ -69,7 +69,7 @@ export default {
     },
     perPageValues: {
       type: Array,
-      default: () => [5, 10, 25, 50, 100, 500]
+      default: () => [5, 10, 25, 50, 100]
     },
     perPage: {
       type: Number,
@@ -117,8 +117,13 @@ export default {
     }
     onMounted(() => {
       state.selectedColumns = props.columns.filter(col => col.display);
-      mutations.setAllData(props.data);
     });
+
+    watch(()=>props.data,  (newVal, oldVal) =>{
+      mutations.setAllData(newVal);
+
+    })
+    
 
     watch(
       () => store.selectedRows,

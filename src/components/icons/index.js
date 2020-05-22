@@ -18,25 +18,7 @@ const Icon = {
 	render(h) {
 		return h(this.name, { props: this.$props });
 	},
-	/*	components: {
-		ArrowRight,
-		ArrowDown,
-		Search,
-		Place,
-		Addon,
-		Gift,
-		LineChart,
-		Dashboard,
-		SuperMarket,
-		Document,
-		Calendar,
-		Bell,
-		Message,
-		Settings,
-		Logout,
-	},*/
-
-	mounted() {},
+	
 };
 
 export default Icon;
