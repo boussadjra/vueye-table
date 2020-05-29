@@ -1,6 +1,6 @@
 <template>
   <div id="app">
-    <VueyeTable :data="employees" :columns="columns" title="Employees" filter-by="employee_salary">
+    <VueyeTable :data="employees" :columns="columns" dense title="Employees" filter-by="employee_salary">
       <template v-slot:employee_salary="{item}">
         <b
           v-if="item.employee_salary>100000"

@@ -30,6 +30,13 @@ ul {
         grid-template-rows: 160px auto auto;
         width: 100%;
     }
+    &-dense {
+        .ve-table {
+            tr {
+                height: 32px;
+            }
+        }
+    }
 }
 
 .ve-table {

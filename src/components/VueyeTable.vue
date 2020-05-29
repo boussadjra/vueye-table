@@ -1,5 +1,5 @@
 <template>
-  <div class="ve-table-wrapper">
+  <div class="ve-table-wrapper" :class="{'ve-table-wrapper-dense':dense}">
     <ve-header
       :title="title"
       :columns="columns"
@@ -79,21 +79,11 @@ export default {
       type: Boolean,
       default: false
     },
-    customFilter: {
-      type: Function,
-      default: (items, search, filter, columns) => {
-        search = search.toString().toLowerCase();
-        if (search.trim() === "") return items;
-
-        const props = columns.map(h => h.key);
-
-        return items.filter(item =>
-          props.some(prop =>
-            filter(getDeepNestedFieldValue(prop, item), search)
-          )
-        );
-      }
+       dense:{
+      type:Boolean,
+      default:false
     }
+   
   },
   setup(props, context) {
     const state = reactive({

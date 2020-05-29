@@ -84,7 +84,8 @@ export default {
     selectRows: {
       type: Boolean,
       default: false
-    }
+    },
+ 
   },
   setup(props) {
     const { columns, sortBy, searchValue, filterBy, selectRows } = props;
