@@ -9,6 +9,12 @@ features:
   - title: Feature 2
     details: Custom rendering 
   - title: Feature 3
-    details: Sorting data 
+    details: Sort columns
 footer: VueyeTable Component
 ---
+
+<style>
+    .home .hero .action-button{
+      background-color:#3eaf7c
+    }
+</style>
