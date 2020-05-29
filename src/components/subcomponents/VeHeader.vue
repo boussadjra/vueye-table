@@ -285,7 +285,7 @@ th {
   width: 280px;
   color: #2c3e50;
   right: 0;
-
+z-index: 20;
   .ve-card {
     background: white;
     width: 280px;

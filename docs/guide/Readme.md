@@ -1,3 +1,12 @@
-# Overview
+# Getting Started
 
-Lorem, ipsum dolor sit amet consectetur adipisicing elit. Voluptatem dolor vitae cumque mollitia placeat nam dolorem non deleniti recusandae adipisci. Distinctio fugit sint labore nihil, dolore aliquid, eveniet ratione ea saepe sapiente illum eum id blanditiis corrupti voluptas fugiat suscipit?
+ It's a data table created using Vue.js, which has some feature like :
+
+ - Show data per page
+ - Sort columns
+ - Cells Custom rendering
+ - CRUD Actions
+ - Customize the columns display 
+ -  
+
+## Installation

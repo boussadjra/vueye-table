@@ -5,10 +5,10 @@ actionText: Get Started →
 actionLink: /guide/
 features:
   - title: Feature 1
-    details: Show paginated data 
+    details: Organize data per pages
   - title: Feature 2
-    details: Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
+    details: Custom rendering 
   - title: Feature 3
-    details: Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
-footer: Vue Component Library 2019
+    details: Sorting data 
+footer: VueyeTable Component
 ---

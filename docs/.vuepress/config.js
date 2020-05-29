@@ -1,6 +1,7 @@
 module.exports = {
 	title: 'Vueye table',
     description: 'A data table created using Vue.js',
+    logo: '/assets/vueye.png',
     themeConfig:{
         nav: [
             { text: 'Home', link: '/' },
@@ -8,14 +9,14 @@ module.exports = {
             { text: 'Github', link: 'https://github.com/boussadjra/vueye-table' },
           
         ],
-        sidebar:  [
+        sidebar:  'auto'/*[
             {
                 title: 'Guide',
                 collapsable: true,
                 children: [
-            {title: 'Installation',link: '/'}
+            {text: 'Installation',link: '/guide/Installation'}
                 ]
             }
-            ]
+            ]*/
     }
 };
