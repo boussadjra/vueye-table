@@ -1,6 +1,7 @@
 <template>
-  <div class="ve-table-wrapper" :class="{'ve-table-wrapper-dense':dense}">
+  <div class="ve-table-wrapper" :class="{'ve-table-wrapper-dense':dense,'ve-table-wrapper-no-header':!headerDisplay}">
     <ve-header
+    v-if="headerDisplay"
       :title="title"
       :columns="columns"
       @select-columns="onSelectColumns"
@@ -82,6 +83,9 @@ export default {
        dense:{
       type:Boolean,
       default:false
+    },headerDisplay:{
+      type:Boolean,
+      default:true
     }
    
   },

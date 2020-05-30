@@ -315,6 +315,7 @@ z-index: 20;
 }
 .ve-input-search {
   display: flex;
+  align-items: center;
 }
 .ve-input-search-box {
   width: 280px;
@@ -328,13 +329,12 @@ z-index: 20;
     color: #aaa;
   }
 
-  max-width: 300px;
+  max-width: 256px;
 
   color: #635e5e;
   display: block;
-  height: calc(2.25rem + 2px);
-  padding: 0.375rem 0.75rem;
-  font-size: 1rem;
+  height:32px;
+  padding: 4px 10px;
   font-weight: 400;
   line-height: 1.5;
   background-clip: padding-box;

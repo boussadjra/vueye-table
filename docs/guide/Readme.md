@@ -1,12 +1,163 @@
-# Getting Started
+# Guide
 
- It's a data table created using Vue.js, which has some feature like :
+## Getting Started
 
- - Show data per page
- - Sort columns
- - Cells Custom rendering
- - CRUD Actions
- - Customize the columns display 
- -  
+### Introduction
 
-## Installation
+It's a data table created using Vue.js, which has some features like :
+
+-   Show data per page
+-   Sort columns
+-   Cells Custom rendering
+-   CRUD Actions
+-   Customize the columns display
+-   Filter data by fields
+
+### Installation
+
+    npm install vueye-table --save
+
+### Requirements
+
+To make this component work with Vue 2, you should use the Vue composition-api plugin by importing it and using it in `main.js` as follows :
+
+```js{3,5}
+import Vue from 'vue';
+import App from './App.vue';
+import VueComp from '@vue/composition-api';
+
+Vue.use(VueComp);
+
+new Vue({
+	render: h => h(App),
+}).$mount('#app');
+```
+
+## Columns configuration
+
+The `columns` prop value could have the following structure :
+
+```js
+ columns: [
+      {
+        key: "id",
+        label: "ID",
+        sortable: true,
+        type: "number",
+        display: true
+      },
+      ...
+ ]
+```
+
+| key      | description                                                                     |
+| -------- | ------------------------------------------------------------------------------- |
+| key      | the corresponding field in the data array, it could be a path to a nested field |
+| label    | the text to show in the table head                                              |
+| sortable | Allow or not the column sorting                                                 |
+| type     | the field type                                                                  |
+| display  | show the column                                                                 |
+
+## Examples
+
+### Basic Example
+
+::: details Input
+<<< @/docs/.vuepress/components/BasicExample.vue
+
+:::
+
+::: details Output
+
+ <BasicExample />
+
+:::
+
+### Display table header
+
+---
+
+The table header contains the title, search input and the export and print buttons
+
+::: details Input
+<<< @/docs/.vuepress/components/WithHeader.vue
+:::
+
+::: details Output
+<WithHeader />
+:::
+
+### Custom rendering
+
+::: details Input
+<<< @/docs/.vuepress/components/CustomRendering.vue
+:::
+
+::: details Output
+<CustomRendering />
+:::
+
+### Props
+
+| Name            | Description                                  |
+| --------------- | -------------------------------------------- |
+| title           | the data table title                         |
+| columns         | the attributes or columns                    |
+| data            | JS array of object or json content           |
+| filter-by       | specify the default column for filter        |
+| per-page-values | the array of per pages values                |
+| per-page        | the default per page                         |
+| select-rows     | add checkbox columns in order to select rows |
+| v-model         | returns the selected rows                    |
+| dense           | Show table rows in small size                |
+| headerDisplay   | show/hide the table header                   |
+<style>
+  table{
+    border-left: thin solid rgba(0,0,0,0.12);
+    border-right: thin solid rgba(0,0,0,0.12);
+    border-radius:6px;
+  }
+ tr:nth-child(2n){
+   background-color:inherit;
+ }
+tbody tr {
+        height: 48px;
+        text-align: start;
+
+}
+
+
+th,
+td {
+  border:none;
+    border-bottom: thin solid rgba(0,0,0,0.12);
+}
+.custom-block.details{
+  background-color:white;
+  background-color: white;
+    border: thin solid #70f;
+    border-radius: 46px;
+}
+.custom-block.details summary{
+color: #70f;
+
+}
+.custom-block.details[open] summary{
+   margin-bottom:20px;
+
+}
+::-webkit-scrollbar {
+    width: 10px;
+    border-radius: 5px
+}
+
+::-webkit-scrollbar-track {
+    background: inherit;
+    border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #7700ff;
+    border-radius: 5px;
+}
+</style>

@@ -1,31 +1,38 @@
 # Vueye Table
 
-Vueye data table is a responsive data table component based on [Vue.js](http://vuejs.org), it organizes 
+Vueye data table is a responsive data table component based on [Vue.js](http://vuejs.org), it organizes
 your data per pages in order to navigate easily.
 
-![Vueye](https://raw.githubusercontent.com/boussadjra/vueye-table/master/src/assets/vueye.png )
+![Vueye](https://raw.githubusercontent.com/boussadjra/vueye-table/master/src/assets/vueye.png)
 
 This component allows you to :
 
-* Paginate data
-* Filter by field
-* Sort columns
-* Show only desired columns
-* Custom cells rendering
-* Other features are coming soon
-## Demo
- [Vueye data table demo](https://boussadjra.github.io/vueye-table/)
+-   Paginate data
+-   Filter by field
+-   Sort columns
+-   Show only desired columns
+-   Custom cells rendering
+-   Other features are coming soon
 
- [Boilerplate in codesandbox](https://codesandbox.io/s/bold-star-s7hgw)
+## Demo
+
+[Vueye data table demo](https://boussadjra.github.io/vueye-table/)
+
+[Boilerplate in codesandbox](https://codesandbox.io/s/bold-star-s7hgw)
+
+**[Documentation](http://vueye-table.surge.sh/)**
 
 ## Requirement
- * Vue.js ^2.6 + composition-api
- * It doesn't require any CSS framework
+
+-   Vue.js ^2.6 + composition-api
+-   It doesn't require any CSS framework
 
 ## Installation
+
 ```
 npm install vueye-table --save
 ```
+
 ## Usage
 
 ```js
@@ -164,30 +171,30 @@ export default {
 
 In main.js add `@vue/composition-api` plugin to make work with Vue.js 2 :
 
-
 ```js
-import Vue from 'vue'
-import App from './App.vue'
-import VueComp from '@vue/composition-api'
-Vue.config.productionTip = false
+import Vue from 'vue';
+import App from './App.vue';
+import VueComp from '@vue/composition-api';
+Vue.config.productionTip = false;
 
-Vue.use(VueComp)
+Vue.use(VueComp);
 
 new Vue({
-  render: h => h(App),
-}).$mount('#app')
-
+	render: h => h(App),
+}).$mount('#app');
 ```
-### Props 
 
+### Props
 
-|Name | Description |
-|--------------------|------------------------|
-| title | the data table title|
-| columns | the attributes or columns|
-| data | JS array of object or json content|
-| filter-by | specify the default column for filter|
-| per-page-values | the array of  per pages values |
-| per-page | the default per page |
-| select-rows | add checkbox columns in order to select rows |
-| v-model | returns the selected rows |
+| Name            | Description                                  |
+| --------------- | -------------------------------------------- |
+| title           | the data table title                         |
+| columns         | the attributes or columns                    |
+| data            | JS array of object or json content           |
+| filter-by       | specify the default column for filter        |
+| per-page-values | the array of per pages values                |
+| per-page        | the default per page                         |
+| select-rows     | add checkbox columns in order to select rows |
+| v-model         | returns the selected rows                    |
+| dense           | Show table rows in small size                |
+| headerDisplay   | show/hide the table header                   |

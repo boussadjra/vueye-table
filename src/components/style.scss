@@ -1,16 +1,25 @@
 * {
     box-sizing: border-box;
     margin: 0;
-    font-family: Roboto, Helvetica, Arial, sans-serif;
 }
 
-ul {
-    list-style: none;
-    padding-inline-start: 0;
-    margin-block-start: 0;
-    li {
-        text-align: start;
-    }
+pre {
+    font-family: monospace;
+}
+
+html,
+body,
+a,
+ul,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+p,
+table {
+    font-family: 'Nunito', Helvetica, Arial, sans-serif;
 }
 
 @mixin forSmallScreens($media) {
@@ -26,9 +35,13 @@ ul {
     font-size: 10pt;
     display: grid;
     grid-template-rows: 64px auto auto;
+    padding: 4px;
     @include forSmallScreens(640) {
         grid-template-rows: 160px auto auto;
         width: 100%;
+    }
+    &-no-header {
+        grid-template-rows: auto auto;
     }
     &-dense {
         .ve-table {
@@ -43,6 +56,7 @@ ul {
     width: 100%;
     border-spacing: 0;
     padding: 12px;
+    display: table;
     thead {
         color: rgba($color: #000000, $alpha: 0.5);
         font-size: 10pt;
@@ -52,7 +66,7 @@ ul {
             text-align: start;
         }
         th {
-            padding: 4px 0;
+            // padding: 4px;
             text-align: start;
             border-bottom: thin solid rgba($color: #000000, $alpha: 0.12);
             .ve-table-head-cell {
@@ -112,9 +126,11 @@ tbody {
     .ve-table-row-item {
         backface-visibility: hidden;
     }
-    td {
-        border-bottom: thin solid rgba($color: #000000, $alpha: 0.12);
-    }
+}
+
+th,
+td {
+    border-bottom: thin solid rgba($color: #000000, $alpha: 0.12);
 }
 
 .ve-icon {

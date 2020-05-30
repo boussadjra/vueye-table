@@ -2,6 +2,12 @@ module.exports = {
 	title: 'Vueye table',
     description: 'A data table created using Vue.js',
     logo: '/assets/vueye.png',
+    base:'/',
+    markdown: {
+        config: md => {
+          md.set({ breaks: true })
+      },
+    },
     themeConfig:{
         nav: [
             { text: 'Home', link: '/' },
@@ -19,4 +25,4 @@ module.exports = {
             }
             ]*/
     }
-};
+}
