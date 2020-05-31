@@ -123,8 +123,20 @@ tbody {
         height: 48px;
         text-align: start;
     }
-    .ve-table-row-item {
-        backface-visibility: hidden;
+    .ve-table-row {
+        &-item {
+            backface-visibility: hidden;
+        }
+        &-expand {
+            &-icon {
+                cursor: pointer;
+                transition: all .5s ease;
+                &-open {
+                    transform: rotate(90deg);
+                    transition: all .5s ease;
+                }
+            }
+        }
     }
 }
 

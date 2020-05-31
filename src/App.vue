@@ -1,6 +1,6 @@
 <template>
   <div id="app">
-    <VueyeTable :data="employees" :columns="columns" dense title="Employees" filter-by="employee_salary">
+    <VueyeTable :data="employees" :columns="columns"  title="Employees" filter-by="employee_salary">
       <template v-slot:employee_salary="{item}">
         <b
           v-if="item.employee_salary>100000"
@@ -13,6 +13,21 @@
           <button class="ve-table-btn ve-table-btn-primary" @click="edit(item)">Edit</button>
           <button class="ve-table-btn ve-table-btn-danger" @click="deleteItem(item)">Delete</button>
         </div>
+      </template>
+      <template v-slot:expand="{item}">
+    <div style="padding:10px">
+    
+          <div >
+            Details
+          </div>
+          <div>
+            <ul>
+              <li v-for="(val, key,index) in getMoreDetails(item.id)" :key="index">
+              <strong>{{key}} : </strong> {{val}}
+              </li>
+            </ul>
+          </div>
+    </div>
       </template>
     </VueyeTable>
   </div>
@@ -75,6 +90,9 @@ export default {
       this.employees = this.employees.filter(
         employee => employee.id !== item.id
       );
+    },
+    getMoreDetails(id){
+      return this.employees.find(emp=>emp.id===id)
     }
   },
   components: {

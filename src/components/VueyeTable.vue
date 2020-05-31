@@ -15,6 +15,7 @@
       :search-value="state.searchValue"
       :filter-by="state.selectedFilterBy"
       :selectRows="selectRows"
+      :expand="expand"
     >
       <!--  <template v-for="(_, slot) of $scopedSlots" v-slot:[slot]="scope">
         <slot :name="slot" v-bind="scope"/>
@@ -22,6 +23,9 @@
 
       <template v-for="slot in Object.keys($scopedSlots)" v-slot:[slot]="scope">
         <slot :name="slot" v-bind="scope"/>
+      </template>
+       <template v-for="slot in $slots" >
+        <slot :name="slot"></slot>
       </template>
     </ve-grid>
 
@@ -42,7 +46,7 @@ import VeHeader from "./subcomponents/VeHeader";
 import VeGrid from "./subcomponents/VeGrid";
 import VeFooter from "./subcomponents/VeFooter";
 import VePagination from "./subcomponents/VePagination";
-import { reactive, onMounted, watch } from "@vue/composition-api";
+import { reactive, onMounted, watch,computed } from "@vue/composition-api";
 import { getDeepNestedFieldValue } from "./helpers";
 import { store, mutations } from "./store";
 /*
@@ -111,6 +115,7 @@ export default {
     }
     onMounted(() => {
       state.selectedColumns = props.columns.filter(col => col.display);
+   
     });
 
     watch(()=>props.data,  (newVal, oldVal) =>{
@@ -125,11 +130,16 @@ export default {
         context.emit("input", newV);
       }
     );
+
+    const expand=computed(() => {
+   return context.slots.expand!==undefined;
+    })
     return {
       state,
       updatePage,
       onSelectColumns,
-      selectFilterBy
+      selectFilterBy,
+      expand
     };
   },
   components: {
@@ -137,8 +147,7 @@ export default {
     VeGrid,
     VeFooter,
     VePagination
-  }
-};
+  }};
 </script>
 
 <style>

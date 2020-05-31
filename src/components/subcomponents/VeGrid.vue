@@ -18,27 +18,43 @@
             <icon v-if="sorter.arrowSortShown(column)" name="arrow-up"/>
           </div>
         </th>
+        <th></th>
       </tr>
     </thead>
     <tbody name="flip-list" is="transition-group">
-      <tr
-        v-for="(item, i) in items"
-        :key="item[keyTransition]?item[keyTransition]:i"
-        class="ve-table-row-item"
-      >
-        <td v-if="selectRows">
-          <label class="ve-checkbox">
-            <input type="checkbox" :value="item" v-model="selectedRows" @change="checkRows">
-            <span class="ve-checkmark"></span>
-          </label>
-        </td>
-        <template v-for="(column, key) in columns">
-          <td v-if="$scopedSlots[column.key]" :data-label="column.label">
-            <slot :name="column.key" :item="item"></slot>
+      <template v-for="(item, i) in items">
+        <tr :key="item[keyTransition]?item[keyTransition]:i" class="ve-table-row-item">
+          <td v-if="selectRows">
+            <label class="ve-checkbox">
+              <input type="checkbox" :value="item" v-model="selectedRows" @change="checkRows">
+              <span class="ve-checkmark"></span>
+            </label>
           </td>
-          <td v-else :data-label="column.label">{{item[column.key]}}</td>
-        </template>
-      </tr>
+          <template v-for="(column, key) in columns">
+            <td v-if="$scopedSlots[column.key]" :data-label="column.label">
+              <slot :name="column.key" :item="item"></slot>
+            </td>
+            <td v-else :data-label="column.label">{{item[column.key]}}</td>
+          </template>
+          <td>
+            <icon
+            v-if="expand"
+              name="chevron-right"
+              fill="#888"
+              height="14px"
+              width="14px"
+              class="ve-table-row-expand-icon"
+              :class="{'ve-table-row-expand-icon-open':expandRow===i}"
+              @click.native="expandRow===i?expandRow=-1:expandRow=i"
+            />
+          </td>
+        </tr>
+        <tr :key="'ex'+i" class="ve-table-row-item ve-table-row-expand" v-if="expandRow===i">
+          <td :colspan="Object.keys(item).length+1">
+            <slot name="expand" :item="item"></slot>
+          </td>
+        </tr>
+      </template>
     </tbody>
   </table>
 </template>
@@ -85,7 +101,10 @@ export default {
       type: Boolean,
       default: false
     },
- 
+    expand: {
+      type: Boolean,
+      default: false
+    }
   },
   setup(props) {
     const { columns, sortBy, searchValue, filterBy, selectRows } = props;
@@ -96,12 +115,13 @@ export default {
     const filter = useFilter([], searchValue, null);
 
     const selectedRows = ref([]);
-     const allSelected = ref(false);
+    const allSelected = ref(false);
     const someSelected = ref(false);
+    const expandRow = ref(-1);
     const items = computed(() => {
       return store.currentPageItems;
     });
-   
+
     watch(
       () => store.allData,
       (newV, oldV) => {
@@ -115,22 +135,16 @@ export default {
     watch(
       () => store.selectedRows,
       (newV, oldV) => {
-        someSelected.value=items.value.length!==newV.length && newV.length>0 ;
+        someSelected.value =
+          items.value.length !== newV.length && newV.length > 0;
         selectedRows.value = newV;
-
-
       }
     );
-    watch(
-       allSelected,
-      newVal => {
-
-      
-        newVal
-          ? mutations.setSelectedRows(items.value)
-          : mutations.setSelectedRows([]);
-      }
-    );
+    watch(allSelected, newVal => {
+      newVal
+        ? mutations.setSelectedRows(items.value)
+        : mutations.setSelectedRows([]);
+    });
     watch("columns", (newV, oldV) => {
       mapper.setColumns(newV);
 
@@ -170,7 +184,8 @@ export default {
       checkRows,
       selectedRows,
       allSelected,
-      someSelected
+      someSelected,
+      expandRow
     };
   },
 

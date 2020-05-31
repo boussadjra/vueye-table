@@ -1,6 +1,5 @@
 ---
 home: true
-heroImage: /assets/vueye.png
 actionText: GET STARTED
 actionLink: /guide/
 features:

@@ -107,6 +107,17 @@ The table header contains the title, search input and the export and print butto
 <SelectRows />
 :::
 
+### Expand rows
+
+::: details Input
+<<< @/docs/.vuepress/components/ExpandRows.vue
+:::
+
+::: details Output
+<ExpandRows />
+:::
+
+
 ## Props
 
 | Name            | Description                                  |
