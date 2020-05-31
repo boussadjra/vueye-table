@@ -197,4 +197,4 @@ new Vue({
 | select-rows     | add checkbox columns in order to select rows |
 | v-model         | returns the selected rows                    |
 | dense           | Show table rows in small size                |
-| headerDisplay   | show/hide the table header                   |
+| header-display   | show/hide the table header                   |

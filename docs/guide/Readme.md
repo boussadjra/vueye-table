@@ -97,7 +97,17 @@ The table header contains the title, search input and the export and print butto
 <CustomRendering />
 :::
 
-### Props
+### Select rows
+
+::: details Input
+<<< @/docs/.vuepress/components/SelectRows.vue
+:::
+
+::: details Output
+<SelectRows />
+:::
+
+## Props
 
 | Name            | Description                                  |
 | --------------- | -------------------------------------------- |
@@ -111,6 +121,10 @@ The table header contains the title, search input and the export and print butto
 | v-model         | returns the selected rows                    |
 | dense           | Show table rows in small size                |
 | headerDisplay   | show/hide the table header                   |
+
+
+
+
 <style>
   table{
     border-left: thin solid rgba(0,0,0,0.12);
@@ -131,6 +145,7 @@ th,
 td {
   border:none;
     border-bottom: thin solid rgba(0,0,0,0.12);
+    text-align:left;
 }
 .custom-block.details{
   background-color:white;

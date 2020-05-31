@@ -1,7 +1,6 @@
 module.exports = {
 	title: 'Vueye table',
     description: 'A data table created using Vue.js',
-    logo: '/assets/vueye.png',
     base:'/',
     markdown: {
         config: md => {
