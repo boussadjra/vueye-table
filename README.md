@@ -197,4 +197,6 @@ new Vue({
 | select-rows     | add checkbox columns in order to select rows |
 | v-model         | returns the selected rows                    |
 | dense           | Show table rows in small size                |
-| header-display   | show/hide the table header                   |
+| striped         | Apply striped style                          |
+| bordered        | make the table bordered                      |
+| header-display  | show/hide the table header                   |

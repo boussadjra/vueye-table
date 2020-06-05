@@ -1,12 +1,12 @@
 <template>
   <div id="app">
-    <VueyeTable :data="employees" :columns="columns"  title="Employees" filter-by="employee_salary">
+    <VueyeTable bordered :data="employees" :columns="columns"  title="Employees" filter-by="employee_salary">
       <template v-slot:employee_salary="{item}">
         <b
           v-if="item.employee_salary>100000"
-          style="background:#3bb640;color:white"
+          style="background:#3bb640;color:white;padding:3px;border-radius:2px"
         >{{item.employee_salary}}</b>
-        <b v-else style="background:#ee4422;color:white">{{item.employee_salary}}</b>
+        <b v-else style="background:#ee4422;color:white;padding:3px;border-radius:2px">{{item.employee_salary}}</b>
       </template>
       <template v-slot:actions="{item}">
         <div class="ve-table-actions">

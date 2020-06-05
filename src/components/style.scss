@@ -50,6 +50,26 @@ table {
             }
         }
     }
+    &-striped {
+        tbody tr:nth-of-type(odd) {
+            background-color: rgba(0, 0, 0, .05);
+        }
+        td,
+        th {
+            padding-left: 10px;
+            border: none;
+        }
+    }
+    &-bordered {
+        table {
+            border-collapse: collapse;
+        }
+        td,
+        th {
+            padding-left: 10px;
+            border: thin solid rgba(0, 0, 0, .12);
+        }
+    }
 }
 
 .ve-table {

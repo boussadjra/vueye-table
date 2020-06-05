@@ -1,5 +1,5 @@
 <template>
-  <table class="ve-table">
+  <table class="ve-table" >
     <thead>
       <tr>
         <th v-if="selectRows">
@@ -34,7 +34,7 @@
             <td v-if="$scopedSlots[column.key]" :data-label="column.label">
               <slot :name="column.key" :item="item"></slot>
             </td>
-            <td v-else :data-label="column.label">{{item[column.key]}}</td>
+            <td v-else :data-label="column.label" @select="select">{{item[column.key]}}</td>
           </template>
           <td>
             <icon
@@ -176,7 +176,11 @@ export default {
     function checkRows() {
       mutations.setSelectedRows(selectedRows.value);
     }
-
+function select(e){
+console.log('---select-----------------')
+console.log(e)
+console.log('--------------------')
+}
     return {
       mapper,
       sorter,
@@ -185,7 +189,8 @@ export default {
       selectedRows,
       allSelected,
       someSelected,
-      expandRow
+      expandRow,
+      select
     };
   },
 
