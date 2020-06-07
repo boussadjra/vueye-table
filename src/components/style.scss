@@ -19,7 +19,7 @@ h5,
 h6,
 p,
 table {
-    font-family: 'Nunito', Helvetica, Arial, sans-serif;
+    font-family: Helvetica, Arial, sans-serif;
 }
 
 @mixin forSmallScreens($media) {
@@ -163,6 +163,7 @@ tbody {
 th,
 td {
     border-bottom: thin solid rgba($color: #000000, $alpha: 0.12);
+    padding: 10px;
 }
 
 .ve-icon {

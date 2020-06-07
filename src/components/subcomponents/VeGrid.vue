@@ -1,5 +1,5 @@
 <template>
-  <table class="ve-table" >
+  <table class="ve-table">
     <thead>
       <tr>
         <th v-if="selectRows">
@@ -8,17 +8,28 @@
             <span class="ve-checkmark" :class="{'ve-checkmark-minus':someSelected}"></span>
           </label>
         </th>
-        <th v-for="(column, index) in columns" :key="index">
-          <div
-            class="ve-table-head-cell"
-            :class="sorter.labelClass(column)"
-            @click="column.sortable?sorter.handler(column):{}"
-          >
-            <span>{{column.label}}</span>
-            <icon v-if="sorter.arrowSortShown(column)" name="arrow-up"/>
-          </div>
-        </th>
-        <th></th>
+        <template v-for="(column, index) in columns">
+          <template v-if="$scopedSlots['header.cell.'+column.key]">
+            <slot :name="'header.cell.'+column.key" :column="column"></slot>
+          </template>
+          <th v-else-if="$scopedSlots['header.'+column.key]">
+            <div>
+              <slot :name="'header.'+column.key" :column="column"></slot>
+              <icon v-if="sorter.arrowSortShown(column)" name="arrow-up"/>
+            </div>
+          </th>
+          <th v-else>
+            <div
+              class="ve-table-head-cell"
+              :class="sorter.labelClass(column)"
+              @click="column.sortable?sorter.handler(column):{}"
+            >
+              <span>{{column.label}}</span>
+              <icon v-if="sorter.arrowSortShown(column)" name="arrow-up"/>
+            </div>
+          </th>
+        </template>
+        <th v-if="expand"></th>
       </tr>
     </thead>
     <tbody name="flip-list" is="transition-group">
@@ -31,14 +42,17 @@
             </label>
           </td>
           <template v-for="(column, key) in columns">
-            <td v-if="$scopedSlots[column.key]" :data-label="column.label">
+            <template v-if="$scopedSlots['cell.'+column.key]" :data-label="column.label">
+              <slot :name="'cell.'+column.key" :item="item"></slot>
+            </template>
+            <td v-else-if="$scopedSlots[column.key]" :data-label="column.label">
               <slot :name="column.key" :item="item"></slot>
             </td>
-            <td v-else :data-label="column.label" @select="select">{{item[column.key]}}</td>
+            <td v-else :data-label="column.label">{{item[column.key]}}</td>
           </template>
           <td>
             <icon
-            v-if="expand"
+              v-if="expand"
               name="chevron-right"
               fill="#888"
               height="14px"
@@ -176,11 +190,7 @@ export default {
     function checkRows() {
       mutations.setSelectedRows(selectedRows.value);
     }
-function select(e){
-console.log('---select-----------------')
-console.log(e)
-console.log('--------------------')
-}
+
     return {
       mapper,
       sorter,
@@ -189,8 +199,7 @@ console.log('--------------------')
       selectedRows,
       allSelected,
       someSelected,
-      expandRow,
-      select
+      expandRow
     };
   },
 

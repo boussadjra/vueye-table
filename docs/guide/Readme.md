@@ -87,14 +87,40 @@ The table header contains the title, search input and the export and print butto
 <WithHeader />
 :::
 
-### Custom rendering
+### Table body custom rendering
 
 ::: details Input
 <<< @/docs/.vuepress/components/CustomRendering.vue
 :::
 
-::: details Output
 <CustomRendering />
+
+### Table body cells custom rendering
+If you want to take the control over the whole cell you can prefix
+the `column` key with `cell.` keyword and here you're able to style and render the `td` element as you want 
+::: details Input
+<<< @/docs/.vuepress/components/FullCellCustomRendering.vue
+:::
+
+<FullCellCustomRendering />
+
+
+### Table head custom rendering
+
+::: details Input
+<<< @/docs/.vuepress/components/HeadCustomRendering.vue
+:::
+::: details Output
+<HeadCustomRendering />
+:::
+
+### Table head full cell custom rendering
+
+::: details Input
+<<< @/docs/.vuepress/components/HeadCellCustomRendering.vue
+:::
+::: details Output
+<HeadCellCustomRendering />
 :::
 
 ### Select rows

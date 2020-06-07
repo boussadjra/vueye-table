@@ -1,5 +1,5 @@
 <template>
-<div class="ve-table-wrapper" :class="{'ve-table-wrapper-dense':dense,'ve-table-wrapper-no-header':!headerDisplay,'ve-table-wrapper-striped':striped,'ve-table-wrapper-bordered':bordered}">
+<div class="ve-table-wrapper" :class="classes">
     <ve-header v-if="headerDisplay" :title="title" :columns="columns" @select-columns="onSelectColumns" @select-filter-by="selectFilterBy" v-model="state.searchValue" />
     <ve-grid :columns="state.selectedColumns" :key-transition="keyTransition" :sort-by="sortBy" :search-value="state.searchValue" :filter-by="state.selectedFilterBy" :selectRows="selectRows" :expand="expand">
         <!--  <template v-for="(_, slot) of $scopedSlots" v-slot:[slot]="scope">
@@ -93,6 +93,7 @@ export default {
 
     },
     setup(props, context) {
+        const {dense,headerDisplay,striped,bordered}=props
         const state = reactive({
             displayedData: [...props.data],
             allData: [...props.data],
@@ -132,12 +133,17 @@ export default {
         const expand = computed(() => {
             return context.slots.expand !== undefined;
         })
+
+        const classes=computed(() => {
+        return   {'ve-table-wrapper-dense':dense,'ve-table-wrapper-no-header':!headerDisplay,'ve-table-wrapper-striped':striped,'ve-table-wrapper-bordered':bordered}
+        })
         return {
             state,
             updatePage,
             onSelectColumns,
             selectFilterBy,
-            expand
+            expand,
+        classes
         };
     },
     components: {

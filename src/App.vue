@@ -1,12 +1,32 @@
 <template>
   <div id="app">
-    <VueyeTable bordered :data="employees" :columns="columns"  title="Employees" filter-by="employee_salary">
-      <template v-slot:employee_salary="{item}">
-        <b
-          v-if="item.employee_salary>100000"
-          style="background:#3bb640;color:white;padding:3px;border-radius:2px"
-        >{{item.employee_salary}}</b>
-        <b v-else style="background:#ee4422;color:white;padding:3px;border-radius:2px">{{item.employee_salary}}</b>
+    <VueyeTable
+
+      :data="employees"
+      :columns="columns"
+      title="Employees"
+    >
+      <template v-slot:header.cell.employee_salary="{column}">
+        <th style="background:#e3e3e3;color:#000;">{{column.label}}</th>
+      </template>
+      <template v-slot:cell.employee_salary="{item}">
+        <td style="background:#e3e3e3;color:#000;">
+          
+          <b
+            v-if="item.employee_salary>100000"
+            style="background:#3bb640;color:white;padding:3px;border-radius:2px"
+          >{{item.employee_salary}}</b>
+          <b
+            v-else
+            style="background:#ee4422;color:white;padding:3px;border-radius:2px"
+          >{{item.employee_salary}}</b>
+        </td>
+      </template>
+      <template v-slot:header.cell.employee_name="{column}">
+        <th class="ve-table-custom-cell">{{column.label}}</th>
+      </template>
+      <template v-slot:cell.employee_name="{item}">
+        <td class="ve-table-custom-cell">{{item.employee_name}}</td>
       </template>
       <template v-slot:actions="{item}">
         <div class="ve-table-actions">
@@ -15,19 +35,17 @@
         </div>
       </template>
       <template v-slot:expand="{item}">
-    <div style="padding:10px">
-    
-          <div >
-            Details
-          </div>
+        <div style="padding:10px">
+          <div>Details</div>
           <div>
             <ul>
               <li v-for="(val, key,index) in getMoreDetails(item.id)" :key="index">
-              <strong>{{key}} : </strong> {{val}}
+                <strong>{{key}} :</strong>
+                {{val}}
               </li>
             </ul>
           </div>
-    </div>
+        </div>
       </template>
     </VueyeTable>
   </div>
@@ -91,8 +109,8 @@ export default {
         employee => employee.id !== item.id
       );
     },
-    getMoreDetails(id){
-      return this.employees.find(emp=>emp.id===id)
+    getMoreDetails(id) {
+      return this.employees.find(emp => emp.id === id);
     }
   },
   components: {
@@ -102,8 +120,6 @@ export default {
 </script>
 
 <style lang="scss">
-
-
 .ve-table {
   &-actions {
     width: 104px;
@@ -133,5 +149,10 @@ export default {
       color: white;
     }
   }
+}
+
+.ve-table-custom-cell {
+  background: rgb(30, 118, 233);
+  color: white;
 }
 </style>
