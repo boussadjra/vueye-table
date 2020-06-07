@@ -1,7 +1,7 @@
 module.exports = {
 	title: 'Vueye table',
     description: 'A data table created using Vue.js',
-    base:'/',
+    base:'/vueye-table/',
     markdown: {
         config: md => {
           md.set({ breaks: true })

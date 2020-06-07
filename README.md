@@ -14,13 +14,13 @@ This component allows you to :
 -   Custom cells rendering
 -   Other features are coming soon
 
-## Demo
+## Docs
 
-[Vueye data table demo](https://boussadjra.github.io/vueye-table/)
+**[Documentation](https://boussadjra.github.io/vueye-table/)**
 
 [Boilerplate in codesandbox](https://codesandbox.io/s/bold-star-s7hgw)
 
-**[Documentation](http://vueye-table.surge.sh/)**
+
 
 ## Requirement
 
