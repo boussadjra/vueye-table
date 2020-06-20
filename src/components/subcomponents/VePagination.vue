@@ -1,7 +1,7 @@
 <template>
   <div class="ve-pagination">
     <div class="ve-pagination-perpage">
-      <span>Number of rows per page</span>
+      <span>{{config.nbRowsPerPage}}</span>
       <select v-model="nbRowPerPage">
         <option v-for="ppval in perPageValues " :value="ppval" :key="ppval">{{ppval}}</option>
       </select>
@@ -11,7 +11,7 @@
         <span>
           {{lowerBound}}
           <strong>-</strong>
-          {{upperBound}} of {{notPagedData.length}}
+          {{upperBound}} {{config.of}} {{notPagedData.length}}
         </span>
       </span>
     </div>
@@ -32,7 +32,7 @@ import { store, mutations } from "../store";
 
 export default {
   name: "ve-pagination",
-  props: ["perPageValues", "perPage"],
+  props: ["perPageValues", "perPage","config"],
   setup(props, context) {
     const { perPage } = props;
     const {

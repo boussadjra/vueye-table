@@ -143,7 +143,15 @@ the `column` key with `cell.` keyword and here you're able to style and render t
 <ExpandRows />
 :::
 
+### Config default labels
 
+::: details Input
+<<< @/docs/.vuepress/components/ConfigDefaultLabels.vue
+:::
+
+::: details Output
+<ConfigDefaultLabels />
+:::
 ## Props
 
 | Name            | Description                                  |
@@ -158,6 +166,7 @@ the `column` key with `cell.` keyword and here you're able to style and render t
 | v-model         | returns the selected rows                    |
 | dense           | Show table rows in small size                |
 | headerDisplay   | show/hide the table header                   |
+| config   | change the default labels                   |
 
 
 

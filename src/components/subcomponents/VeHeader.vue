@@ -4,7 +4,7 @@
 
     <div class="ve-input-search-wrap">
       <select class="ve-input-select" v-model="filterBy" @change="selectFilterBy">
-        <option value="null" disabled>Filter by</option>
+        <option value="null" disabled>{{config.filterBy}}</option>
         <option
           v-for="(column, index) in selectedColumns"
           :key="index"
@@ -18,7 +18,7 @@
           v-on:input="$emit('input', $event.target.value)"
           type="text"
           class="ve-input-search-box"
-          placeholder="Search ..."
+          :placeholder="config.search+' ...'"
         >
         <div class="ve-input-search-box-append">
           <icon name="search"/>
@@ -75,7 +75,7 @@ import { store } from "../store";
 import { getDeepNestedFieldValue } from "../helpers";
 export default {
   name: "ve-header",
-  props: ["columns", "title", "value"],
+  props: ["columns", "title", "value","config"],
   data() {
     return {
       toggleCustomColumns: false,

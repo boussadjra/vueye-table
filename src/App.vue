@@ -1,17 +1,11 @@
 <template>
   <div id="app">
-    <VueyeTable
-
-      :data="employees"
-      :columns="columns"
-      title="Employees"
-    >
+    <VueyeTable :data="employees" :columns="columns" title="Employees" :config='config'>
       <template v-slot:header.cell.employee_salary="{column}">
         <th style="background:#e3e3e3;color:#000;">{{column.label}}</th>
       </template>
       <template v-slot:cell.employee_salary="{item}">
         <td style="background:#e3e3e3;color:#000;">
-          
           <b
             v-if="item.employee_salary>100000"
             style="background:#3bb640;color:white;padding:3px;border-radius:2px"
@@ -96,7 +90,13 @@ export default {
         display: true
       }
     ],
-    selectedRows: []
+    selectedRows: [],
+    config: {
+      filterBy: "Chercher par",
+      search: "Chercher",
+      nbRowsPerPage: "Nombre des lignes par page",
+      of: "de"
+    }
   }),
   methods: {
     edit(item) {
