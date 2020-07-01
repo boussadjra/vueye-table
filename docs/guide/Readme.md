@@ -107,6 +107,7 @@ the `column` key with `cell.` keyword and here you're able to style and render t
 
 ### Table head custom rendering
 
+You could also customize the `column` label in the table head. 
 ::: details Input
 <<< @/docs/.vuepress/components/HeadCustomRendering.vue
 :::
@@ -115,6 +116,12 @@ the `column` key with `cell.` keyword and here you're able to style and render t
 :::
 
 ### Table head full cell custom rendering
+
+ You could be able to customize the full head cell of given column (not just the label), to make this you have access to a property called `columnDef` which contains `column` and the `sorter` that has the following fields:
+
+   1 - `handler` this function is used to sort the given column which should be passed as parameter
+   2 - `column.direction` the sort direction, by default its value is `none` if you click in the sort icon this passes to `asc`, then to `desc`, if you click again it comes back to `none` and so on.
+
 
 ::: details Input
 <<< @/docs/.vuepress/components/HeadCellCustomRendering.vue
@@ -135,6 +142,8 @@ the `column` key with `cell.` keyword and here you're able to style and render t
 
 ### Expand rows
 
+If there's more details and you don't want to overload your table, so you could put that details inside an expanded row with your custom style 
+
 ::: details Input
 <<< @/docs/.vuepress/components/ExpandRows.vue
 :::
@@ -144,6 +153,8 @@ the `column` key with `cell.` keyword and here you're able to style and render t
 :::
 
 ### Config default labels
+ 
+ I don't like to use `i18n` configuration in order to make the component internationalized, but i prefered to give the developer the freedom to make its own config. 
 
 ::: details Input
 <<< @/docs/.vuepress/components/ConfigDefaultLabels.vue

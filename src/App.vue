@@ -1,8 +1,15 @@
 <template>
   <div id="app">
-    <VueyeTable :data="employees" :columns="columns" title="Employees" :config='config'>
-      <template v-slot:header.cell.employee_salary="{column}">
-        <th style="background:#e3e3e3;color:#000;">{{column.label}}</th>
+    <VueyeTable :data="employees" :columns="columns" title="Employees" :config="config" dense>
+      <template v-slot:header.cell.employee_salary="{columnDef}">
+        <th style="background:#e3e3e3;color:#000;display:flex;">
+          <span>{{columnDef.column.label}}</span>
+          <span @click="columnDef.sorter.handler(columnDef.column)">
+            <h4 v-if="columnDef.sorter.column.direction==='asc'">&#8593;</h4>
+            <h4 v-else-if="columnDef.sorter.column.direction==='desc'">&#8595;</h4>
+            <h4 v-else>&#8593;</h4>
+          </span>
+        </th>
       </template>
       <template v-slot:cell.employee_salary="{item}">
         <td style="background:#e3e3e3;color:#000;">
@@ -16,8 +23,8 @@
           >{{item.employee_salary}}</b>
         </td>
       </template>
-      <template v-slot:header.cell.employee_name="{column}">
-        <th class="ve-table-custom-cell">{{column.label}}</th>
+      <template v-slot:header.cell.employee_name="{columnDef}">
+        <th class="ve-table-custom-cell">{{columnDef.column.label}}</th>
       </template>
       <template v-slot:cell.employee_name="{item}">
         <td class="ve-table-custom-cell">{{item.employee_name}}</td>
@@ -127,6 +134,7 @@ export default {
     justify-content: space-around;
     align-items: center;
   }
+
   &-btn {
     height: 24px;
     min-width: 32px;
@@ -140,10 +148,12 @@ export default {
     border: none;
     position: relative;
     white-space: nowrap;
+
     &-primary {
       background: #3844cc;
       color: white;
     }
+
     &-danger {
       background: #e24e40;
       color: white;

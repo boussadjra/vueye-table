@@ -10,7 +10,7 @@
         </th>
         <template v-for="(column, index) in columns">
           <template v-if="$scopedSlots['header.cell.'+column.key]">
-            <slot :name="'header.cell.'+column.key" :column="column"></slot>
+            <slot :name="'header.cell.'+column.key" :columnDef="{column,sorter}" ></slot>
           </template>
           <th v-else-if="$scopedSlots['header.'+column.key]">
             <div>
