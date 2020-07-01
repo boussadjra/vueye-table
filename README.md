@@ -18,7 +18,7 @@ This component allows you to :
 
 **[Documentation](https://boussadjra.github.io/vueye-table/)**
 
-[Boilerplate in codesandbox](https://codesandbox.io/s/bold-star-s7hgw)
+[Boilerplate in codesandbox](https://codesandbox.io/s/bold-star-s7hgw) (update the component dependency to the latest version)
 
 
 

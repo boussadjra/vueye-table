@@ -154,7 +154,19 @@ If there's more details and you don't want to overload your table, so you could 
 
 ### Config default labels
  
- I don't like to use `i18n` configuration in order to make the component internationalized, but i prefered to give the developer the freedom to make its own config. 
+ I don't like to use `i18n` configuration in order to make the component internationalized, but i prefered to give the developer the possibility to make its own config.
+ 
+ The default config :
+
+ ```js
+     {
+        filterBy: "Filter by",
+        search: "Search",
+        nbRowsPerPage: "Number of rows per page",
+        of: "of"
+      }
+ 
+ ```
 
 ::: details Input
 <<< @/docs/.vuepress/components/ConfigDefaultLabels.vue
