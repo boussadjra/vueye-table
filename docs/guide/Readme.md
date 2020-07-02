@@ -87,6 +87,25 @@ The table header contains the title, search input and the export and print butto
 <WithHeader />
 :::
 
+### CRUD
+ The `actions` slot gives you an access to the row item that you could edit, delete or do any other action with it, the following example shows a simple use :
+
+ ```html
+    <template v-slot:actions="{item}">
+        <div class="ve-table-actions">
+          <button class="ve-table-btn ve-table-btn-primary" @click="edit(item)">Edit</button>
+          <button class="ve-table-btn ve-table-btn-danger" @click="deleteItem(item)">Delete</button>
+        </div>
+      </template>
+ ```
+
+ Note that you're free to define your actions and the components which accomplish the full action like confirmation message and edit dialog
+::: details Input
+<<< @/docs/.vuepress/components/CRUDExample.vue
+:::
+
+<CRUDExample />
+
 ### Table body custom rendering
 
 ::: details Input
@@ -98,6 +117,9 @@ The table header contains the title, search input and the export and print butto
 ### Table body cells custom rendering
 If you want to take the control over the whole cell you can prefix
 the `column` key with `cell.` keyword and here you're able to style and render the `td` element as you want 
+
+Note that you should add `data-label` attribute with column name, this's useful for small screens
+
 ::: details Input
 <<< @/docs/.vuepress/components/FullCellCustomRendering.vue
 :::

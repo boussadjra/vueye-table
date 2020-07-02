@@ -2,7 +2,7 @@
   <div id="app">
     <VueyeTable :data="todos" :columns="columns" title="Todos">
       <template v-slot:cell.completed="{item}">
-        <td :style="{'background':colors[item.userId-1],'color':'white'}">{{item.userId}}</td>
+        <td :style="{'background':colors[item.userId-1],'color':'white'}" data-label="Completed">{{item.userId}}</td>
       </template>
       <template v-slot:completed="{item}">{{item.completed?'Yes':'No'}}</template>
     </VueyeTable>

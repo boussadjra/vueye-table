@@ -1,7 +1,16 @@
 <template>
   <div id="app">
-    <VueyeTable :data="employees" :columns="columns" title="Employees" :config="config" >
-  
+    <VueyeTable :data="employees" :columns="columns" title="Employees" :config="config">
+      <template v-slot:header.cell.employee_salary="{columnDef}">
+        <th style="background:#e3e3e3;color:#000;display:flex;height:48px">
+          <span>{{columnDef.column.label}}</span>
+          <span @click="columnDef.sorter.handler(columnDef.column)">
+            <h4 v-if="columnDef.sorter.column.direction==='asc'">&#8593;</h4>
+            <h4 v-else-if="columnDef.sorter.column.direction==='desc'">&#8595;</h4>
+            <h4 v-else>&#8593;</h4>
+          </span>
+        </th>
+      </template>
       <template v-slot:cell.employee_salary="{item}">
         <td style="background:#e3e3e3;color:#000;" data-label="employee_salary">
           <b
@@ -18,25 +27,12 @@
         <th class="ve-table-custom-cell">{{columnDef.column.label}}</th>
       </template>
       <template v-slot:cell.employee_name="{item}">
-        <td class="ve-table-custom-cell"  data-label="Employee Salary" >{{item.employee_name}}</td>
+        <td class="ve-table-custom-cell" data-label="Employee Salary">{{item.employee_name}}</td>
       </template>
-  <template v-slot:actions="{item}">
+      <template v-slot:actions="{item}">
         <div class="ve-table-actions">
           <button class="ve-table-btn ve-table-btn-primary" @click="edit(item)">Edit</button>
           <button class="ve-table-btn ve-table-btn-danger" @click="deleteItem(item)">Delete</button>
-        </div>
-      </template>
-     <template v-slot:expand="{item}">
-        <div style="padding:10px">
-          <div>Details</div>
-          <div>
-            <ul>
-              <li v-for="(val, key,index) in getMoreDetails(item.id)" :key="index">
-                <strong>{{key}} :</strong>
-                {{val}}
-              </li>
-            </ul>
-          </div>
         </div>
       </template>
     </VueyeTable>
@@ -44,8 +40,7 @@
 </template>
 
 <script>
-import VueyeTable from "./components/VueyeTable.vue";
-import employees from "./assets/employees.json";
+import employees from "../assets/employees.json";
 export default {
   name: "App",
   data: () => ({
@@ -112,7 +107,6 @@ export default {
     }
   },
   components: {
-    VueyeTable
   }
 };
 </script>

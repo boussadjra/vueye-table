@@ -43,7 +43,7 @@ table {
     grid-template-rows: 64px auto auto;
     padding: 4px;
     @include forSmallScreens(640) {
-        grid-template-rows: 160px auto auto;
+        grid-template-rows: 240px auto auto;
         width: 100%;
     }
     &-no-header {
@@ -53,6 +53,9 @@ table {
         .ve-table {
             tr {
                 height: 32px;
+                @include forSmallScreens(640) {
+                    height: fit-content;
+                }
             }
         }
     }
@@ -161,6 +164,9 @@ tbody {
                     transform: rotate(90deg);
                     transition: all .5s ease;
                 }
+            }
+            td {
+                text-align: start!important;
             }
         }
     }
@@ -317,7 +323,7 @@ td {
     position: relative;
     @include forSmallScreens(640) {
         flex-direction: column;
-        height: 100%;
+        height: fit-content;
         &>div,
         &>h4 {
             margin-bottom: 4px;
