@@ -10,7 +10,7 @@
 </template>
 
 <script>
-import todos from "../assets/todos.json";
+import todos from "../assets/todos.js";
 
 export default {
   name: "FullCellCustomRendering",

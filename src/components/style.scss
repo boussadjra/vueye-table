@@ -152,7 +152,7 @@ tbody {
         height: 48px;
         text-align: start;
     }
-    .ve-table-row {
+    &.ve-table-row {
         &-item {
             backface-visibility: hidden;
         }

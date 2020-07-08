@@ -26,7 +26,6 @@
 </template>
 
 <script>
-import VueyeTable from "./components/VueyeTable.vue";
 import axios from "axios";
 export default {
   name: "App",
@@ -105,9 +104,6 @@ export default {
 
   created() {
     // this.getData();
-  },
-  components: {
-    VueyeTable
   }
 };
 </script>

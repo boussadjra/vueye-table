@@ -7,7 +7,7 @@
       @select-columns="onSelectColumns"
       @select-filter-by="selectFilterBy"
       v-model="state.searchValue"
-      :config='config'
+      :config="config"
     />
     <ve-grid
       :columns="state.selectedColumns"
@@ -18,10 +18,6 @@
       :selectRows="selectRows"
       :expand="expand"
     >
-      <!--  <template v-for="(_, slot) of $scopedSlots" v-slot:[slot]="scope">
-        <slot :name="slot" v-bind="scope"/>
-      </template>-->
-
       <template v-for="slot in Object.keys($scopedSlots)" v-slot:[slot]="scope">
         <slot :name="slot" v-bind="scope"/>
       </template>
@@ -33,10 +29,10 @@
     <ve-footer>
       <ve-pagination
         @update-page="updatePage"
-        :per-page-values="perPageValues"
-        :data="data"
-        :per-page="perPage"
-        :config='config'
+        :per-page-values="perPageOptions"
+        :per-page="server?server.perPage:perPage"
+        :config="config"
+        :server="server"
       />
     </ve-footer>
   </div>
@@ -62,6 +58,10 @@ export default {
     columns: Array,
     title: String,
     value: Array,
+    server: {
+      type: Object,
+      default: null
+    },
     keyTransition: {
       type: String,
       default: "id"
@@ -104,7 +104,7 @@ export default {
     },
     config: {
       type: Object,
-      default:()=> ({
+      default: () => ({
         filterBy: "Filter by",
         search: "Search",
         nbRowsPerPage: "Number of rows per page",
@@ -113,7 +113,15 @@ export default {
     }
   },
   setup(props, context) {
-    const { dense, headerDisplay, striped, bordered } = props;
+    const {
+      dense,
+      headerDisplay,
+      striped,
+      bordered,
+      perPage,
+      perPageValues,
+      server
+    } = props;
     const state = reactive({
       displayedData: [...props.data],
       allData: [...props.data],
@@ -122,8 +130,13 @@ export default {
       selectedFilterBy: props.filterBy
     });
 
-    function updatePage(items) {
+    function updatePage(items, currentPage,nbRowPerPage) {
       state.displayedData = items.value;
+    
+      if (server && currentPage) {
+      
+        context.emit("update-request", currentPage.value,nbRowPerPage.value);
+      }
     }
 
     function onSelectColumns(selectedColumns) {
@@ -134,7 +147,7 @@ export default {
       state.selectedFilterBy = selectedFilterBy.key;
     }
     onMounted(() => {
-      state.selectedColumns = props.columns.filter(col => col.display);
+      state.selectedColumns = props.columns.filter(col => col);
     });
 
     watch(
@@ -154,7 +167,15 @@ export default {
     const expand = computed(() => {
       return context.slots.expand !== undefined;
     });
+    const perPageOptions = computed(() => {
+      if (server && !perPageValues.includes(server.perPage)) {
+        let _perPageValues = [...perPageValues];
+        _perPageValues.push(server.perPage);
+        return _perPageValues.sort((a, b) => (a > b ? 1 : -1));
+      }
 
+      return perPageValues;
+    });
     const classes = computed(() => {
       return {
         "ve-table-wrapper-dense": dense,
@@ -169,7 +190,8 @@ export default {
       onSelectColumns,
       selectFilterBy,
       expand,
-      classes
+      classes,
+      perPageOptions
     };
   },
   components: {

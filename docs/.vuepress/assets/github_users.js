@@ -1,4 +1,4 @@
-[{
+const github_users=[{
         "login": "boussadjra",
         "id": 11801238,
         "node_id": "MDQ6VXNlcjExODAxMjM4",
@@ -599,3 +599,5 @@
         "site_admin": false
     }
 ]
+
+export default github_users;

@@ -1,4 +1,4 @@
-[{
+const employees=[{
         "id": "1",
         "employee_name": "Tiger Nixon",
         "employee_salary": "320800",
@@ -207,3 +207,5 @@
         "profile_image": ""
     }
 ]
+
+export default employees; 

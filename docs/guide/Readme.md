@@ -88,35 +88,39 @@ The table header contains the title, search input and the export and print butto
 :::
 
 ### CRUD
- The `actions` slot gives you an access to the row item that you could edit, delete or do any other action with it, the following example shows a simple use :
 
- ```html
-    <template v-slot:actions="{item}">
-        <div class="ve-table-actions">
-          <button class="ve-table-btn ve-table-btn-primary" @click="edit(item)">Edit</button>
-          <button class="ve-table-btn ve-table-btn-danger" @click="deleteItem(item)">Delete</button>
-        </div>
-      </template>
- ```
+The `actions` slot gives you an access to the row item that you could edit, delete or do any other action with it, the following example shows a simple use :
 
- Note that you're free to define your actions and the components which accomplish the full action like confirmation message and edit dialog
+```html
+<template v-slot:actions="{item}">
+	<div class="ve-table-actions">
+		<button class="ve-table-btn ve-table-btn-primary" @click="edit(item)">Edit</button>
+		<button class="ve-table-btn ve-table-btn-danger" @click="deleteItem(item)">Delete</button>
+	</div>
+</template>
+```
+
+Note that you're free to define your actions and the components which accomplish the full action like confirmation message and edit dialog
 ::: details Input
 <<< @/docs/.vuepress/components/CRUDExample.vue
 :::
-
+::: details Output
 <CRUDExample />
+:::
 
 ### Table body custom rendering
 
 ::: details Input
 <<< @/docs/.vuepress/components/CustomRendering.vue
 :::
-
+::: details Output
 <CustomRendering />
+:::
 
 ### Table body cells custom rendering
+
 If you want to take the control over the whole cell you can prefix
-the `column` key with `cell.` keyword and here you're able to style and render the `td` element as you want 
+the `column` key with `cell.` keyword and here you're able to style and render the `td` element as you want
 
 Note that you should add `data-label` attribute with column name, this's useful for small screens
 
@@ -124,12 +128,13 @@ Note that you should add `data-label` attribute with column name, this's useful 
 <<< @/docs/.vuepress/components/FullCellCustomRendering.vue
 :::
 
+::: details Output
 <FullCellCustomRendering />
-
+:::
 
 ### Table head custom rendering
 
-You could also customize the `column` label in the table head. 
+You could also customize the `column` label in the table head.
 ::: details Input
 <<< @/docs/.vuepress/components/HeadCustomRendering.vue
 :::
@@ -139,11 +144,10 @@ You could also customize the `column` label in the table head.
 
 ### Table head full cell custom rendering
 
- You could be able to customize the full head cell of given column (not just the label), to make this you have access to a property called `columnDef` which contains `column` and the `sorter` that has the following fields:
+You could be able to customize the full head cell of given column (not just the label), to make this you have access to a property called `columnDef` which contains `column` and the `sorter` that has the following fields:
 
-   1 - `handler` this function is used to sort the given column which should be passed as parameter
-   2 - `column.direction` the sort direction, by default its value is `none` if you click in the sort icon this passes to `asc`, then to `desc`, if you click again it comes back to `none` and so on.
-
+1 - `handler` this function is used to sort the given column which should be passed as parameter
+2 - `column.direction` the sort direction, by default its value is `none` if you click in the sort icon this passes to `asc`, then to `desc`, if you click again it comes back to `none` and so on.
 
 ::: details Input
 <<< @/docs/.vuepress/components/HeadCellCustomRendering.vue
@@ -164,7 +168,7 @@ You could also customize the `column` label in the table head.
 
 ### Expand rows
 
-If there's more details and you don't want to overload your table, so you could put that details inside an expanded row with your custom style 
+If there's more details and you don't want to overload your table, so you could put that details inside an expanded row with your custom style
 
 ::: details Input
 <<< @/docs/.vuepress/components/ExpandRows.vue
@@ -175,20 +179,20 @@ If there's more details and you don't want to overload your table, so you could 
 :::
 
 ### Config default labels
- 
- I don't like to use `i18n` configuration in order to make the component internationalized, but i prefered to give the developer the possibility to make its own config.
- 
- The default config :
 
- ```js
-     {
-        filterBy: "Filter by",
-        search: "Search",
-        nbRowsPerPage: "Number of rows per page",
-        of: "of"
-      }
- 
- ```
+I don't like to use `i18n` configuration in order to make the component internationalized, but i prefered to give the developer the possibility to make its own config.
+
+The default config :
+
+```js
+    {
+       filterBy: "Filter by",
+       search: "Search",
+       nbRowsPerPage: "Number of rows per page",
+       of: "of"
+     }
+
+```
 
 ::: details Input
 <<< @/docs/.vuepress/components/ConfigDefaultLabels.vue
@@ -197,24 +201,60 @@ If there's more details and you don't want to overload your table, so you could 
 ::: details Output
 <ConfigDefaultLabels />
 :::
+
+### Server side pagination
+
+if your data needs a server request with per page or page number queries so you could do that by providing a server request prop as follows :
+
+```js
+:server="serverRequest"
+```
+
+and in your data object :
+
+```js
+ serverRequest: {
+    total: null,//this will be updated by server response
+    perPage: 10,
+    page: 1
+  }
+```
+
+in order to go to the next/previous page or change per page value, the table component should emit an event called `@update-request` and its handler has two parameters `page` and `perPage`, then the method will update the server request and fires an AJAX call to fetch the data based on the previous parameters
+
+::: tip
+ you don't need to call the method that fetch data in the `mounted` or `created` hooks because is called when the `page` changes which means that the method is called for the first rendering
+:::
+::: details Input
+<<< @/docs/.vuepress/components/ServerPagination.vue
+:::
+
+::: details Output
+<ServerPagination />
+:::
+
 ## Props
 
-| Name            | Description                                  |
-| --------------- | -------------------------------------------- |
-| title           | the data table title                         |
-| columns         | the attributes or columns                    |
-| data            | JS array of object or json content           |
-| filter-by       | specify the default column for filter        |
-| per-page-values | the array of per pages values                |
-| per-page        | the default per page                         |
-| select-rows     | add checkbox columns in order to select rows |
-| v-model         | returns the selected rows                    |
-| dense           | Show table rows in small size                |
-| headerDisplay   | show/hide the table header                   |
-| config   | change the default labels                   |
+| Name            | Description                                                     |
+| --------------- | --------------------------------------------------------------- |
+| title           | the data table title                                            |
+| columns         | the attributes or columns                                       |
+| data            | JS array of objects or json content                              |
+| filter-by       | specify the default column for filter                           |
+| per-page-values | the array of per pages values                                   |
+| per-page        | the default per page                                            |
+| select-rows     | add checkbox columns in order to select rows                    |
+| v-model         | returns the selected rows                                       |
+| dense           | Show table rows in small size                                   |
+| headerDisplay   | show/hide the table header                                      |
+| config          | change the default labels                                       |
+| server          | the server request with per page, page number and total queries |
 
+## Events
 
-
+| Name           | Description                                                                                                            |
+| -------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| update-request | if you provide `server` prop you'll need this event to get the some parameter from the table like `page` and `perPage` |
 
 <style>
   table{

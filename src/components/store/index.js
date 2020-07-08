@@ -3,8 +3,8 @@ const store = Vue.observable({
 	allData: [],
 	currentPageItems: [],
 	handledData: [],
-	selectedRows:[]
-
+	selectedRows:[],
+currentPage:1
 });
 
 const mutations = {
@@ -20,7 +20,12 @@ const mutations = {
 
   setSelectedRows(data){
 	store.selectedRows=data
+  },
+
+  setCurrentPage(page){
+	  store.currentPage=page
   }
+
   
 };
 

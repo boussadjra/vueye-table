@@ -19,7 +19,7 @@
 </template>
 
 <script>
-import employees from "../assets/employees.json";
+import employees from "../assets/employees.js";
 export default {
   name: "App",
   data: () => ({

@@ -8,11 +8,11 @@
 </template>
 
 <script>
-import employees from "../assets/employees.json";
+import employees from "../assets/employees.js";
 export default {
   name: "BasicExample",
   data: () => ({
-    employees: employees,
+    // employees: employees,
     columns: [
       {
         key: "id",
@@ -45,7 +45,12 @@ export default {
         sortable: true
       }
     ]
-  })
+  }),
+  computed:{
+    employees(){
+      return employees.slice();
+    }
+  }
 };
 </script>
 

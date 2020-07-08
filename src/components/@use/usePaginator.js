@@ -1,6 +1,6 @@
 import { ref, computed, watch } from '@vue/composition-api';
 
-const usePaginator = (data, pPage = 10) => {
+const usePaginator = (data, pPage = 10, server) => {
 	const notPagedData = ref([...data]);
 	const pages = ref([]);
 	const perPage = ref(pPage);
@@ -18,28 +18,38 @@ const usePaginator = (data, pPage = 10) => {
 	});
 	function paginate() {
 		pages.value = [];
-		let start = 0;
-		let end = perPage.value;
-		while (start <= notPagedData.value.length) {
-			pages.value.push(notPagedData.value.slice(start, end));
+		if (server) {
+			pages.value.push(notPagedData.value);
 
-			start = start + perPage.value;
-			end = end + perPage.value;
+		} else {
+			let start = 0;
+			let end = perPage.value;
+			while (start <= notPagedData.value.length) {
+				pages.value.push(notPagedData.value.slice(start, end));
+
+				start = start + perPage.value;
+				end = end + perPage.value;
+			}
+		currentPage.value = 1;
+
 		}
-		currentPage.value=1
 
 	}
 	const pagesCount = computed(() => pages.value.length);
 
 	const currentPageItems = computed(() => {
-		return pages.value[currentPage.value - 1];
+		return server?pages.value[0]:pages.value[currentPage.value - 1];
 	});
 	function setPerPage(_perPage) {
 		perPage.value = _perPage;
 		paginate();
 	}
 	function next() {
-		currentPage.value < pagesCount.value ? currentPage.value++ : {};
+		if (server) {
+			currentPage.value++;
+		} else {
+			currentPage.value < pagesCount.value ? currentPage.value++ : {};
+		}
 	}
 	function prev() {
 		currentPage.value > 0 ? currentPage.value-- : {};

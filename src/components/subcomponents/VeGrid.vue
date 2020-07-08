@@ -9,63 +9,83 @@
           </label>
         </th>
         <template v-for="(column, index) in columns">
-          <template v-if="$scopedSlots['header.cell.'+column.key]">
-            <slot :name="'header.cell.'+column.key" :columnDef="{column,sorter}" ></slot>
+          <template v-if="column.display">
+            <template v-if="$scopedSlots['header.cell.'+column.key]">
+              <slot :name="'header.cell.'+column.key" :columnDef="{column,sorter}"></slot>
+            </template>
+            <th v-else-if="$scopedSlots['header.'+column.key]">
+              <div>
+                <slot :name="'header.'+column.key" :column="column"></slot>
+                <icon v-if="sorter.arrowSortShown(column)" name="arrow-up"/>
+              </div>
+            </th>
+            <th v-else>
+              <div
+                class="ve-table-head-cell"
+                :class="sorter.labelClass(column)"
+                @click="column.sortable?sorter.handler(column):{}"
+              >
+                <span>{{column.label}}</span>
+                <icon v-if="sorter.arrowSortShown(column)" name="arrow-up"/>
+              </div>
+            </th>
           </template>
-          <th v-else-if="$scopedSlots['header.'+column.key]">
-            <div>
-              <slot :name="'header.'+column.key" :column="column"></slot>
-              <icon v-if="sorter.arrowSortShown(column)" name="arrow-up"/>
-            </div>
-          </th>
-          <th v-else>
-            <div
-              class="ve-table-head-cell"
-              :class="sorter.labelClass(column)"
-              @click="column.sortable?sorter.handler(column):{}"
-            >
-              <span>{{column.label}}</span>
-              <icon v-if="sorter.arrowSortShown(column)" name="arrow-up"/>
-            </div>
-          </th>
         </template>
+
         <th v-if="expand"></th>
       </tr>
     </thead>
     <tbody name="flip-list" is="transition-group">
-      <template v-for="(item, i) in items">
-        <tr :key="item[keyTransition]?item[keyTransition]:i" class="ve-table-row-item">
-          <td v-if="selectRows">
-            <label class="ve-checkbox">
-              <input type="checkbox" :value="item" v-model="selectedRows" @change="checkRows">
-              <span class="ve-checkmark"></span>
-            </label>
-          </td>
-          <template v-for="(column, key) in columns">
-            <template v-if="$scopedSlots['cell.'+column.key]" :data-label="column.label">
-              <slot :name="'cell.'+column.key" :item="item"></slot>
-            </template>
-            <td v-else-if="$scopedSlots[column.key]" :data-label="column.label">
-              <slot :name="column.key" :item="item"></slot>
+      <template v-if="items && items.length">
+        <template v-for="(item, i) in items">
+          <tr :key="item[keyTransition]?item[keyTransition]:i" class="ve-table-row-item">
+            <td v-if="selectRows">
+              <label class="ve-checkbox">
+                <input type="checkbox" :value="item" v-model="selectedRows" @change="checkRows">
+                <span class="ve-checkmark"></span>
+              </label>
             </td>
-            <td v-else :data-label="column.label">{{item[column.key]}}</td>
-          </template>
-          <td>
-            <icon
-              v-if="expand"
-              name="chevron-right"
-              fill="#888"
-              height="14px"
-              width="14px"
-              class="ve-table-row-expand-icon"
-              :class="{'ve-table-row-expand-icon-open':expandRow===i}"
-              @click.native="expandRow===i?expandRow=-1:expandRow=i"
-            />
-          </td>
-        </tr>
-        <tr :key="'ex'+i" class="ve-table-row-item ve-table-row-expand" v-if="expandRow===i">
-          <td :colspan="Object.keys(item).length+1">
-            <slot name="expand" :item="item"></slot>
+            <template v-for="(column, key) in columns">
+              <template v-if="column.display">
+                <template v-if="$scopedSlots['cell.'+column.key]" :data-label="column.label">
+                  <slot :name="'cell.'+column.key" :item="item"></slot>
+                </template>
+                <td v-else-if="$scopedSlots[column.key]" :data-label="column.label">
+                  <slot :name="column.key" :item="item"></slot>
+                </td>
+                <td v-else :data-label="column.label">{{item[column.key]}}</td>
+              </template>
+            </template>
+
+            <td>
+              <icon
+                v-if="expand"
+                name="chevron-right"
+                fill="#888"
+                height="14px"
+                width="14px"
+                class="ve-table-row-expand-icon"
+                :class="{'ve-table-row-expand-icon-open':expandRow===i}"
+                @click.native="expandRow===i?expandRow=-1:expandRow=i"
+              />
+            </td>
+          </tr>
+          <tr :key="'ex'+i" class="ve-table-row-item ve-table-row-expand" v-if="expandRow===i">
+            <td :colspan="Object.keys(item).length+1">
+              <slot name="expand" :item="item"></slot>
+            </td>
+          </tr>
+        </template>
+      </template>
+
+      <template v-else>
+        <tr key="loading">
+          <td :colspan="columns.length">
+            <div class="spinner">
+              <div class="bounce1"></div>
+              <div class="bounce2"></div>
+              <div class="bounce3"></div>
+            </div>
           </td>
         </tr>
       </template>
@@ -209,5 +229,60 @@ export default {
 };
 </script>
 
-<style>
+<style >
+.spinner {
+  display: flex;
+  /* margin: 100px auto 0; */
+  width: 100%;
+  justify-content: center;
+  text-align: center;
+}
+
+.spinner > div {
+  width: 18px;
+  height: 18px;
+  background-color: #333;
+
+  border-radius: 100%;
+  display: inline-block;
+  -webkit-animation: sk-bouncedelay 1.4s infinite ease-in-out both;
+  animation: sk-bouncedelay 1.4s infinite ease-in-out both;
+}
+.spinner--small > div  {
+  width: 8px;
+  height: 8px;
+}
+.spinner .bounce1 {
+  -webkit-animation-delay: -0.32s;
+  animation-delay: -0.32s;
+}
+
+.spinner .bounce2 {
+  -webkit-animation-delay: -0.16s;
+  animation-delay: -0.16s;
+}
+
+@-webkit-keyframes sk-bouncedelay {
+  0%,
+  80%,
+  100% {
+    -webkit-transform: scale(0);
+  }
+  40% {
+    -webkit-transform: scale(1);
+  }
+}
+
+@keyframes sk-bouncedelay {
+  0%,
+  80%,
+  100% {
+    -webkit-transform: scale(0);
+    transform: scale(0);
+  }
+  40% {
+    -webkit-transform: scale(1);
+    transform: scale(1);
+  }
+}
 </style>

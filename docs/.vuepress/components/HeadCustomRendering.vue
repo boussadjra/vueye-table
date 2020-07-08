@@ -19,7 +19,7 @@
 </template>
 
 <script>
-import users from "../assets/github_users.json";
+import users from "../assets/github_users.js";
 export default {
   name: "HeadCustomRendering",
   data: () => ({

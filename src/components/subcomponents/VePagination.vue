@@ -6,12 +6,19 @@
         <option v-for="ppval in perPageValues " :value="ppval" :key="ppval">{{ppval}}</option>
       </select>
     </div>
-    <div class="ve-pagination-page-desc">
+    <div v-if="server && server.total===null" class="ve-pagination-page-desc" >
+         <div class="spinner spinner--small">
+              <div class="bounce1"></div>
+              <div class="bounce2"></div>
+              <div class="bounce3"></div>
+            </div>
+    </div>
+    <div v-else class="ve-pagination-page-desc" >
       <span>
         <span>
           {{lowerBound}}
           <strong>-</strong>
-          {{upperBound}} {{config.of}} {{notPagedData.length}}
+          {{upperBound}} {{config.of}} {{server?server.total:notPagedData.length}}
         </span>
       </span>
     </div>
@@ -32,9 +39,9 @@ import { store, mutations } from "../store";
 
 export default {
   name: "ve-pagination",
-  props: ["perPageValues", "perPage","config"],
+  props: ["perPageValues", "perPage","config","server"],
   setup(props, context) {
-    const { perPage } = props;
+    const { perPage,server } = props;
     const {
       pages,
       pagesCount,
@@ -47,9 +54,11 @@ export default {
       setPerPage,
       notPagedData,
       setNotPagedData
-    } = usePaginator([], perPage);
+    } = usePaginator([], perPage,server);
 
     const nbRowPerPage = ref(perPage);
+
+
 
     watch(
       () => store.allData,
@@ -65,12 +74,13 @@ export default {
       }
     );
     watch(currentPage, () => {
-      context.emit("update-page", currentPageItems, setNotPagedData);
+
+      context.emit("update-page", currentPageItems, currentPage ,nbRowPerPage);
     });
 
     watch(nbRowPerPage, newVal => {
       setPerPage(newVal);
-      context.emit("update-page", currentPageItems, setNotPagedData);
+      context.emit("update-page", currentPageItems,currentPage,nbRowPerPage );
     });
 
     watch(currentPageItems, newVal => {
@@ -83,11 +93,11 @@ export default {
       return (currentPage.value - 1) * nbRowPerPage.value + 1;
     });
     const upperBound = computed(() => {
-      return currentPage.value * nbRowPerPage.value > notPagedData.value.length
+      return currentPage.value * nbRowPerPage.value > notPagedData.value.length && !server
         ? notPagedData.value.length
         : currentPage.value * nbRowPerPage.value;
     });
-
+ 
     return {
       allData,
       nbRowPerPage,
