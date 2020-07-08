@@ -4,9 +4,9 @@ actionText: GET STARTED
 actionLink: /guide/
 features:
     - title: Pagination
-      details: It allows you to organize data per pages and navigate between pages easily
+      details: It allows you to organize data per pages and navigate between pages easily, it also support server side pagination
     - title: Custom rendering
-      details: You could a given column in some format
+      details: You could render a given full cell or only its content in any desired format
     - title: Sort Columns
       details: You have the possibility to sort the columns in both direction, and you could also define which columns that can be sorted
 footer: VueyeTable Component

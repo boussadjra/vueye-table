@@ -7,12 +7,12 @@ your data per pages in order to navigate easily.
 
 This component allows you to :
 
--   Paginate data
+-   Paginate data (server/client side)
 -   Filter by field
 -   Sort columns
 -   Show only desired columns
 -   Custom cells rendering
--   Other features are coming soon
+    
 
 ## Docs
 
