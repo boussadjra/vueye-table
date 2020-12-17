@@ -62,16 +62,12 @@ The `columns` prop value could have the following structure :
 
 ### Basic Example
 
-::: details Input
+
 <<< @/docs/.vuepress/components/BasicExample.vue
 
-:::
-
-::: details Output
 
  <BasicExample />
 
-:::
 
 ### Display table header
 
