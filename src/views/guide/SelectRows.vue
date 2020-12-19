@@ -17,7 +17,7 @@
     </div>
 
     <hr>
-    <div class="max-h-96">
+    <div class="max-h-96" v-if="!showCode">
         <prism language="javascript">
             {{selectedUsers}}
         </prism>
