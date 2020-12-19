@@ -1,0 +1,65 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body{
+    @apply bg-purple-50;
+    overflow-y: hidden;
+font-family: Roboto,Arial, Helvetica, sans-serif;
+}
+
+#app{
+    overflow-x: hidden;
+}
+::-webkit-scrollbar {
+    width: 2px;
+    border-radius: 5px
+}
+
+::-webkit-scrollbar-track {
+    background: inherit;
+    border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb {
+   @apply bg-green-700;
+    border-radius: 5px;
+}
+.section__title{
+    @apply text-xl ml-2 pt-16 pb-8 text-gray-700
+}
+
+.grid--auto-cols{
+    display: grid;
+    grid-template-columns: repeat(auto-fill,minmax(320px,1fr));
+    place-items: center;
+    &-xs{
+        grid-template-columns: repeat(auto-fill,minmax(240px,1fr));    
+    }
+    
+}
+
+.home{
+    overflow-y: auto;
+    max-height: calc(100vh - 64px);
+
+}
+
+.drop-enter-active,
+.drop-leave-active {
+    transition: all 0.5s ease-out;
+    max-height: 400px;
+    //   max-width: 280px;
+}
+
+.drop-enter,
+.drop-leave-to
+/* .drop-leave-active below version 2.1.8 */
+
+{
+    max-height: 0;
+    opacity: 0;
+    //   max-width: 0;
+    transform: translateY(-200px);
+    transform: scaleY(0);
+}
