@@ -8,14 +8,14 @@
 }
 
 body{
-    @apply bg-purple-50 text-gray-200;
+    @apply bg-purple-50 text-gray-500;
     overflow-y: hidden;
 font-family: 'Inter',Arial, Helvetica, sans-serif;
 }
 
 #app{
     overflow-x: hidden;
-    @apply text-gray-200;
+    @apply text-gray-500;
 }
 ::-webkit-scrollbar {
     width: 2px;

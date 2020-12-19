@@ -5,7 +5,7 @@
 
         <ul class="flex flex-row justify-between w-10/12 sm:w-6/12 lg:w-4/12 text-sm uppercase cursor-pointer">
             <li class="min-w-max">
-                <router-link to="/" active-class="text-yellow-300">Home</router-link>
+                <router-link to="/" exact active-class="text-yellow-300">Home</router-link>
             </li>
             <li class="min-w-max">
                 <router-link to="/guide" active-class="text-yellow-300">Guide</router-link>
