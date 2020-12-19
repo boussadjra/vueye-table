@@ -13,7 +13,7 @@
                     <li class="relative w-full " v-for="(component, index) in components" :key="index">
                         <router-link active-class="text-green-700 bg-green-200" class="relative flex  text-gray-600 w-full pl-4 p-2 items-center" :to="'/guide/'+component.path">
 
-                            <span>{{ component.name }}</span>
+                            <span class="text-sm py-1 whitespace-nowrap">{{ component.name }}</span>
                         </router-link>
                     </li>
                 </ul>
@@ -43,12 +43,6 @@ export default {
         }
     },
 
-    mounted() {
-        console.log('--------------------')
-        console.log(routes)
-        console.log(this.$router)
-        console.log('--------------------')
-    },
 }
 </script>
 

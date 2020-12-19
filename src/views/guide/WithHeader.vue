@@ -4,7 +4,8 @@
         <div class="section__title">Table with header</div>
 
         <p class="p-2 text-sm">
-            To get a basic usage of this data table try to give false to header-display prop
+            The table header contains the title, search input and the export and
+            print buttons
         </p>
         <tab-view :items="items" @change-tab="changeTab"></tab-view>
         <div class="p-4 bg-green-50">

@@ -86,6 +86,8 @@ table {
     border-spacing: 0;
     padding: 12px;
     display: table;
+    color:#444;
+    
     thead {
         color: rgba($color: #000000, $alpha: 0.5);
         font-size: 10pt;
@@ -333,6 +335,9 @@ td {
         width: 96px;
         display: flex;
         justify-content: space-between;
+     svg{
+        fill:#444
+     }
     }
 }
 
@@ -415,12 +420,13 @@ td {
     color: #635e5e;
     display: block;
     height:32px;
-    padding: 4px 10px;
+    padding:6px 10px;
     font-weight: 400;
     line-height: 1.5;
     background-clip: padding-box;
-    border-radius: 6px;
+    border-radius: 6px 0 0 6px;
     border: thin solid #b8b6b6;
+    border-right:none;
     transition: border-color 0.15s ease-in-out,
     box-shadow 0.15s ease-in-out;
     &:focus {
@@ -437,6 +443,12 @@ td {
         cursor: pointer;
         svg {
             fill: #777;
+        transform: scale(.8);
         }
     }
+}
+.ve-input-search-box{
+    border-radius:  0 6px  6px 0;
+    border-right: thin solid #b8b6b6;
+    border-left:none;
 }

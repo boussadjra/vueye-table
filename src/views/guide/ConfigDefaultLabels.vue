@@ -1,17 +1,15 @@
 <template>
 <div>
     <div class="desc">
-        <div class="section__title">Table with header</div>
+        <div class="section__title">Select rows</div>
 
-        <p class="p-2 text-sm">
-            To get a basic usage of this data table try to give false to header-display prop
-        </p>
+        <p class="p-2 text-sm"></p>
         <tab-view :items="items" @change-tab="changeTab"></tab-view>
         <div class="p-4 bg-green-50">
             <div v-if="showCode">
                 <prism language="html">{{ code }}</prism>
             </div>
-            <VueyeTable v-else :data="employees" :columns="columns" title="Employees">
+            <VueyeTable v-else :data="employees" :columns="columns" title="Employees" :config="config">
             </VueyeTable>
         </div>
     </div>
@@ -20,11 +18,12 @@
 
 <script>
 import employees from "@/data/employees.js";
+
 import snippets from "@/utils/snippets";
 export default {
-    name: "BasicExample",
+    name: "ConfigDefaultLabels",
     data: () => ({
-        code: snippets.withHeader,
+        code: snippets.configDefaultLabels,
         showCode: false,
         items: [{
                 header: "Preview",
@@ -33,7 +32,13 @@ export default {
                 header: "Code",
             },
         ],
-
+        employees: employees,
+        config: {
+            filterBy: "Chercher par",
+            search: "Chercher",
+            nbRowsPerPage: "Nombre des lignes par page",
+            of: "de",
+        },
         columns: [{
                 key: "id",
                 label: "ID",
@@ -66,16 +71,10 @@ export default {
             },
         ],
     }),
-    computed: {
-        employees() {
-            return employees.slice();
-        },
-    },
     methods: {
         changeTab(item) {
             this.showCode = item.header === "Code";
         },
     },
-    mounted() {},
 };
 </script>

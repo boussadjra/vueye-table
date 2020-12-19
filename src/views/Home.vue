@@ -103,14 +103,16 @@ export default {
         code: snippets.BasicExample,
         showCode: false,
         todos,
-        mainjs: `import Vue from 'vue';
+        mainjs: `
+import Vue from 'vue';
 import App from './App.vue';
 import VueComp from '@vue/composition-api';
 
 Vue.use(VueComp);
 
 new Vue({
-	render: h => h(App),
+
+render: h => h(App),
 }).$mount('#app');`,
 
         columnsConfig: ` columns: [
