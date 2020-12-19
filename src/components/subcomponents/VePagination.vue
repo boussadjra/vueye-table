@@ -39,11 +39,10 @@ import {
     computed
 } from "@vue/composition-api";
 import usePaginator from "../@use/usePaginator.js";
-import store from "../store";
 
 export default {
     name: "ve-pagination",
-    props: ["perPageValues", "perPage", "config", "server"],
+    props: ["perPageValues", "perPage", "config", "server", "sharedState"],
     setup(props, context) {
         const {
             perPage,
@@ -62,21 +61,18 @@ export default {
             notPagedData,
             setNotPagedData
         } = usePaginator([], perPage, server);
-        const {
-            sharedState,
-            mutations
-        } = store()
+
         const nbRowPerPage = ref(perPage);
 
         watch(
-            () => sharedState.allData,
+            () => props.sharedState.allData,
             (newVal, oldVal) => {
                 setNotPagedData(newVal);
             }
         );
 
         watch(
-            () => sharedState.handledData,
+            () => props.sharedState.handledData,
             (newVal, oldVal) => {
                 setNotPagedData(newVal);
             }
@@ -92,10 +88,11 @@ export default {
         });
 
         watch(currentPageItems, newVal => {
-            mutations.setCurrentPageItems(newVal);
+            //   mutations.setCurrentPageItems(newVal);
+            context.emit('mutate:current-page-items', newVal)
         });
         const allData = computed(() => {
-            return sharedState.allData;
+            return props.sharedState.allData;
         });
         const lowerBound = computed(() => {
             return (currentPage.value - 1) * nbRowPerPage.value + 1;

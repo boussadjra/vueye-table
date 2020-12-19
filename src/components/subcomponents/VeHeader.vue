@@ -48,7 +48,7 @@
 <script>
 import Icon from "../icons";
 import Card from "./Card";
-import store from "../store";
+
 import {
     getDeepNestedFieldValue
 } from "../helpers";
@@ -58,7 +58,7 @@ import {
 
 export default {
     name: "ve-header",
-    props: ["columns", "title", "value", "config"],
+    props: ["columns", "title", "value", "config", "sharedState"],
     data() {
         return {
             toggleCustomColumns: false,
@@ -68,12 +68,9 @@ export default {
     },
 
     setup(props) {
-        const {
-            sharedState,
-            mutations
-        } = store()
+
         const items = computed(() => {
-            return sharedState.currentPageItems;
+            return props.sharedState.currentPageItems;
         });
 
         return {
@@ -163,7 +160,7 @@ export default {
       <title>` +
                 this.title +
                 `</title>
-      
+
 <style>
 * {
     font-family: serif

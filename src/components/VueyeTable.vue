@@ -1,7 +1,7 @@
 <template>
 <div class="ve-table-wrapper" :class="classes">
-    <ve-header v-if="headerDisplay" :title="title" :columns="columns" @select-columns="onSelectColumns" @select-filter-by="selectFilterBy" v-model="state.searchValue" :config="config" />
-    <ve-grid :columns="state.selectedColumns" :key-transition="keyTransition" :sort-by="sortBy" :search-value="state.searchValue" :filter-by="state.selectedFilterBy" :selectRows="selectRows" :expand="expand">
+    <ve-header v-if="headerDisplay" :title="title" :columns="columns" @select-columns="onSelectColumns" @select-filter-by="selectFilterBy" v-model="state.searchValue" :config="config" :shared-state="sharedState" />
+    <ve-grid :columns="state.selectedColumns" :key-transition="keyTransition" :sort-by="sortBy" :search-value="state.searchValue" :filter-by="state.selectedFilterBy" :selectRows="selectRows" :expand="expand" :shared-state="sharedState" @mutate:selected-rows="mutations.setSelectedRows" @mutate:handled-data="mutations.setHandledData">
         <template v-for="slot in Object.keys($scopedSlots)" v-slot:[slot]="scope">
             <slot :name="slot" v-bind="scope" />
         </template>
@@ -10,8 +10,8 @@
         </template>
     </ve-grid>
 
-    <ve-footer>
-        <ve-pagination @update-page="updatePage" :per-page-values="perPageOptions" :per-page="server?server.perPage:perPage" :config="config" :server="server" />
+    <ve-footer v-show="!onePage">
+        <ve-pagination @update-page="updatePage" :per-page-values="perPageOptions" :per-page="server ? server.perPage : perPage" :config="config" :server="server" :shared-state="sharedState" @mutate:current-page-items="mutations.setCurrentPageItems" />
     </ve-footer>
 </div>
 </template>
@@ -31,7 +31,6 @@ import {
 import {
     getDeepNestedFieldValue
 } from "./helpers";
-import store from "./store";
 /*
  *
  ****
@@ -45,47 +44,47 @@ export default {
         value: Array,
         server: {
             type: Object,
-            default: null
+            default: null,
         },
         keyTransition: {
             type: String,
-            default: "id"
+            default: "id",
         },
         sortBy: {
             type: String,
-            default: null
+            default: null,
         },
         filterBy: {
             type: String,
-            default: null
+            default: null,
         },
         perPageValues: {
             type: Array,
-            default: () => [5, 10, 25, 50, 100]
+            default: () => [5, 10, 25, 50, 100],
         },
         perPage: {
             type: Number,
-            default: 10
+            default: 10,
         },
         selectRows: {
             type: Boolean,
-            default: false
+            default: false,
         },
         dense: {
             type: Boolean,
-            default: false
+            default: false,
         },
         striped: {
             type: Boolean,
-            default: false
+            default: false,
         },
         bordered: {
             type: Boolean,
-            default: false
+            default: false,
         },
         headerDisplay: {
             type: Boolean,
-            default: true
+            default: true,
         },
         config: {
             type: Object,
@@ -93,9 +92,9 @@ export default {
                 filterBy: "Filter by",
                 search: "Search",
                 nbRowsPerPage: "Number of rows per page",
-                of: "of"
-            })
-        }
+                of: "of",
+            }),
+        },
     },
     setup(props, context) {
         const {
@@ -105,25 +104,51 @@ export default {
             bordered,
             perPage,
             perPageValues,
-            server
+            server,
         } = props;
         const state = reactive({
             displayedData: [...props.data],
             allData: [...props.data],
             selectedColumns: [],
             searchValue: "",
-            selectedFilterBy: props.filterBy
+            selectedFilterBy: props.filterBy,
         });
-        const {
-            sharedState,
-            mutations
-        } = store()
+
+        /*** shared state along the components */
+        const sharedState = reactive({
+            allData: [],
+            currentPageItems: [],
+            handledData: [],
+            selectedRows: [],
+            currentPage: 1,
+        });
+
+        const mutations = {
+            setAllData(data) {
+                sharedState.allData = data;
+            },
+            setHandledData(data) {
+                sharedState.handledData = data;
+            },
+            setCurrentPageItems(data) {
+                sharedState.currentPageItems = data;
+            },
+
+            setSelectedRows(data) {
+                sharedState.selectedRows = data;
+            },
+
+            setCurrentPage(page) {
+                sharedState.currentPage = page;
+            },
+        };
+
+        /**** */
 
         function updatePage(items, currentPage, nbRowPerPage) {
             state.displayedData = items.value;
 
             if (server && currentPage) {
-
                 context.emit("update-request", currentPage.value, nbRowPerPage.value);
             }
         }
@@ -136,28 +161,29 @@ export default {
             state.selectedFilterBy = selectedFilterBy.key;
         }
         onMounted(() => {
-            state.selectedColumns = props.columns.filter(col => col);
+            state.selectedColumns = props.columns.filter((col) => col);
         });
 
         watch(
             () => props.data,
             (newVal, oldVal) => {
-                console.log('------------stp--------')
-                console.log(mutations)
-                console.log('--------------------')
                 mutations.setAllData(newVal);
             }
         );
 
         watch(
             () => sharedState.selectedRows,
-            newV => {
+            (newV) => {
                 context.emit("input", newV);
             }
         );
 
         const expand = computed(() => {
             return context.slots.expand !== undefined;
+        });
+        // return true if the items count is lower than the per page count
+        const onePage = computed(() => {
+            return props.data.length < props.perPage
         });
         const perPageOptions = computed(() => {
             if (server && !perPageValues.includes(server.perPage)) {
@@ -173,7 +199,7 @@ export default {
                 "ve-table-wrapper-dense": dense,
                 "ve-table-wrapper-no-header": !headerDisplay,
                 "ve-table-wrapper-striped": striped,
-                "ve-table-wrapper-bordered": bordered
+                "ve-table-wrapper-bordered": bordered,
             };
         });
         return {
@@ -183,15 +209,22 @@ export default {
             selectFilterBy,
             expand,
             classes,
-            perPageOptions
+            perPageOptions,
+            onePage,
+            /*** */
+
+            sharedState,
+            mutations,
+
+            /*** */
         };
     },
     components: {
         VeHeader,
         VeGrid,
         VeFooter,
-        VePagination
-    }
+        VePagination,
+    },
 };
 </script>
 

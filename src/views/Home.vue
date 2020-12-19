@@ -52,15 +52,7 @@
                 {{columnsConfig}}
             </prism>
             <div class="">
-                <VueyeTable id="table1" :data="todos" :columns="todoCols" title="Todos">
-                    <template v-slot:cell.completed="{ item }">
-                        <td :style="{ background: colors[item.userId - 1], color: 'white' }" data-label="Completed">
-                            {{ item.userId }}
-                        </td>
-                    </template>
-                    <template v-slot:completed="{ item }">{{
-        item.completed ? "Yes" : "No"
-      }}</template>
+                <VueyeTable bordered :header-display="false" :data="colConfigProperties" :columns="colConfigFields" title="col">
                 </VueyeTable>
             </div>
         </div>
@@ -74,7 +66,7 @@
     </div>
     <div v-else>
 
-        <VueyeTable id="table2" :data="employees" :columns="columns" title="Employees" filter-by="employee_salary">
+        <VueyeTable :data="employees" :columns="columns" title="Employees" filter-by="employee_salary">
             <template v-slot:employee_salary="{ item }">
                 <b v-if="item.employee_salary > 100000" class="bg-green-600 text-green-50 p-1 rounded">{{ item.employee_salary }}</b>
                 <b v-else class="bg-red-600 text-red-50 p-1 rounded">{{
@@ -110,19 +102,7 @@ export default {
         employees: employees,
         code: snippets.BasicExample,
         showCode: false,
-        todos: todos,
-        colors: [
-            "#004D40",
-            "#00695C",
-            "#2e003e",
-            "#3d2352",
-            "#05386B",
-            "#379683",
-            "#022140",
-            "#265077",
-            "#0c0023",
-            "#fc0023",
-        ],
+        todos,
         mainjs: `import Vue from 'vue';
 import App from './App.vue';
 import VueComp from '@vue/composition-api';
@@ -263,7 +243,7 @@ new Vue({
         },
     },
     components: {
-        // VueyeTable,
+        VueyeTable,
         TabView,
     },
 };

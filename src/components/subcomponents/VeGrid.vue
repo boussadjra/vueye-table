@@ -53,8 +53,8 @@
                         </template>
                     </template>
 
-                    <td>
-                        <icon v-if="expand" name="chevron-right" fill="#888" height="14px" width="14px" class="ve-table-row-expand-icon" :class="{'ve-table-row-expand-icon-open':expandRow===i}" @click.native="expandRow===i?expandRow=-1:expandRow=i" />
+                    <td v-if="expand">
+                        <icon name="chevron-right" fill="#888" height="14px" width="14px" class="ve-table-row-expand-icon" :class="{'ve-table-row-expand-icon-open':expandRow===i}" @click.native="expandRow===i?expandRow=-1:expandRow=i" />
                     </td>
                 </tr>
                 <tr :key="'ex'+i" class="ve-table-row-item ve-table-row-expand" v-if="expandRow===i">
@@ -92,7 +92,6 @@ import {
 import useMapper from "../@use/useMapper.js";
 import useSorter from "../@use/useSorter.js";
 import useFilter from "../@use/useFilter.js";
-import store from "../store";
 
 export default {
     name: "ve-grid",
@@ -125,9 +124,16 @@ export default {
         expand: {
             type: Boolean,
             default: false
+        },
+
+        sharedState: {
+
+            type: Object
         }
     },
-    setup(props) {
+    setup(props, {
+        emit
+    }) {
         const {
             columns,
             sortBy,
@@ -146,17 +152,12 @@ export default {
         const someSelected = ref(false);
         const expandRow = ref(-1);
 
-        const {
-            sharedState,
-            mutations
-        } = store();
-
         const items = computed(() => {
-            return sharedState.currentPageItems;
+            return props.sharedState.currentPageItems;
         });
 
         watch(
-            () => sharedState.allData,
+            () => props.sharedState.allData,
             (newV, oldV) => {
                 sorter.resetSortedBy();
                 mapper.setNotMappedData(newV);
@@ -166,7 +167,7 @@ export default {
             }
         );
         watch(
-            () => sharedState.selectedRows,
+            () => props.sharedState.selectedRows,
             (newV, oldV) => {
                 someSelected.value =
                     items.value.length !== newV.length && newV.length > 0;
@@ -174,10 +175,11 @@ export default {
             }
         );
         watch(allSelected, newVal => {
-            newVal
-                ?
-                mutations.setSelectedRows(items.value) :
-                mutations.setSelectedRows([]);
+            emit('mutate:selected-rows', newVal ? items.value : [])
+            /* newVal
+                 ?
+                 mutations.setSelectedRows(items.value) :
+                 mutations.setSelectedRows([]);*/
         });
         watch("columns", (newV, oldV) => {
             mapper.setColumns(newV);
@@ -193,7 +195,8 @@ export default {
 
             filter.handler();
             sorter.setSortedData(filter.filteredItems.value);
-            mutations.setHandledData(filter.filteredItems.value);
+            emit('mutate:handled-data', filter.filteredItems.value)
+            // mutations.setHandledData(filter.filteredItems.value);
         });
 
         watch("filterBy", (newV, oldV) => {
@@ -201,14 +204,17 @@ export default {
 
             filter.handler();
             sorter.setSortedData(filter.filteredItems.value);
-            mutations.setHandledData(filter.filteredItems.value);
+            emit('mutate:handled-data', filter.filteredItems.value)
+            //   mutations.setHandledData(filter.filteredItems.value);
         });
         watch(sorter.data, newVal => {
-            mutations.setHandledData(newVal);
+            emit('mutate:handled-data', newVal)
+            //  mutations.setHandledData(newVal);
         });
 
         function checkRows() {
-            mutations.setSelectedRows(selectedRows.value);
+            emit('mutate:selected-rows', selectedRows.value)
+            // mutations.setSelectedRows(selectedRows.value);
         }
 
         return {
