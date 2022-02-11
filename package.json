@@ -28,7 +28,7 @@
     "@vue/cli-service": "^4.2.0",
     "autoprefixer": "^9.8.6",
     "axios": "^0.21.1",
-    "node-sass": "^4.12.0",
+    "node-sass": "^7.0.0",
     "postcss": "^8.2.10",
     "sass-loader": "^8.0.2",
     "tailwindcss": "npm:@tailwindcss/postcss7-compat@^2.0.2",
