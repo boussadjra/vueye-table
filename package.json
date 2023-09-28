@@ -1,6 +1,6 @@
 {
   "name": "vueye-table",
-  "version": "2.0.0-alpha.0",
+  "version": "2.0.0-alpha.3",
   "private": false,
   "description": "Vue data table",
   "author": "Brahim Boussadjra",
@@ -16,7 +16,7 @@
     "dev": "pnpm --filter vueye-table dev",
     "test:unit": "pnpm --filter vueye-table test:unit",
     "commit": "git-cz",
-    "release": "bumpp package.json packages/**/package.json",
+    "release": "bumpp package.json packages/**/package.json docs/package.json --tag --tag-name v${version}",
     "up": "taze -w",
     "clean-all": "rimraf node_modules && rimraf packages/*/node_modules && rimraf docs/node_modules",
     "prepare": "pnpm simple-git-hooks",
