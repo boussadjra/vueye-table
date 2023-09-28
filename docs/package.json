@@ -2,7 +2,6 @@
   "name": "docs",
   "version": "2.0.0-alpha.0",
   "description": "",
-  "main": "index.js",
   "scripts": {
     "docs:dev": "vitepress dev",
     "docs:build": "vitepress build",

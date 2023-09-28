@@ -21,7 +21,8 @@
     "exports": {
         ".": {
             "import": "./dist/vueye-table.js",
-            "require": "./dist/vueye-table.umd.cjs"
+            "require": "./dist/vueye-table.umd.cjs",
+            "types": "./dist/index.d.ts"
         },
         "./*": "./dist/vueye-table.js",
         "./dist/style.css": "./dist/style.css"

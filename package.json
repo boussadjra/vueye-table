@@ -9,7 +9,6 @@
     "packages/*"
   ],
   "license": "MIT",
-  "main": "index.js",
   "scripts": {
     "docs:dev": "pnpm --filter docs docs:dev",
     "docs:build": "pnpm --filter docs docs:build",
