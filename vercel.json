@@ -1,0 +1,15 @@
+{
+    "version": 2,
+    "buildCommand": "pnpm run docs:build",
+    "framework": "vitepress",
+    "installCommand": "pnpm install",
+    "outputDirectory": "docs/.vitepress/dist",
+    "public": true,
+    "alias": "vueye-table-docs.vercel.app",
+    "builds": [
+        {
+            "src": "docs/.vitepress/dist/**/*",
+            "use": "@vercel/static"
+        }
+    ],
+}
