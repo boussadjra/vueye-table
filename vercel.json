@@ -11,5 +11,5 @@
             "src": "docs/.vitepress/dist/**/*",
             "use": "@vercel/static"
         }
-    ],
+    ]
 }
