@@ -1,16 +1,11 @@
 # Vueye-table
 
-:warning: **This project is still in development.**
+<img src="./docs/.vitepress/theme/assets/colored-logo.png" alt="logo" width="200" height="200">
 
-## Tools and conventions
+:warning: **This project is still in development.** 🚧
 
-- [x] Eslint
-- [x] Prettier
-- [x] Conventional Commit
-- [x] Pre-commit
-- [x] Lint-staged
-- [x] Semantic-release
-- [x] TypeScript
+>for the legacy version, please check [the legacy branch](https://github.com/boussadjra/vueye-table/tree/legacy) and the its respective [docs](https://boussadjra.github.io/vueye-table).
+
 
 ## TODO
 
