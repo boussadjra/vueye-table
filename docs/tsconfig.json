@@ -1,0 +1,24 @@
+{
+  "extends": "../tsconfig.json",
+  "include": ["/**/*.vue", "components/**/*.vue", ".vitepress/**/*.vue", "/**/*.ts", ".vitepress/**/*.ts", ".vitepress/**/*.vue", "src/lib/**/*"],
+  "exclude": ["node_modules"],
+  "compilerOptions": {
+    "target": "esnext",
+    "module": "esnext",
+    "moduleResolution": "node",
+    "strict": true,
+    "jsx": "preserve",
+    "sourceMap": true,
+    "resolveJsonModule": true,
+    "esModuleInterop": true,
+    "declaration": false,
+    "lib": ["esnext", "dom"],
+    "baseUrl": ".",
+    "skipLibCheck": true,
+    "outDir": "dist",
+    "types": ["unplugin-icons/types/vue", "node"],
+    "paths": {
+      "@/*": ["./src/*"]
+    }
+  }
+}

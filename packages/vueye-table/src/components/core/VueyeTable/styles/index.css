@@ -1,0 +1,31 @@
+/* @tailwind base;
+@tailwind components;
+@tailwind utilities; */
+
+table {
+    @apply border-collapse border border-primary-400 tracking-wide text-sm !rounded min-w-[800px];
+}
+
+th {
+    @apply bg-primary-100 dark:bg-primary-950 border border-primary-400 dark:border-primary-800 py-2 px-4;
+}
+
+td {
+    @apply border border-primary-400 dark:border-primary-800 py-2 px-4;
+}
+
+table {
+    @apply text-center;
+}
+
+tr:nth-child(even) td {
+    @apply bg-primary-100 dark:bg-primary-950;
+}
+
+tr:nth-child(odd) td {
+    @apply bg-primary-50 dark:bg-primary-900;
+}
+
+caption {
+    @apply p-2;
+}

@@ -1,0 +1,26 @@
+{
+  "extends": "@vue/tsconfig/tsconfig.dom.json",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "target": "esnext",
+    "module": "esnext",
+    "lib": ["esnext", "DOM"],
+    "moduleResolution": "node",
+    "esModuleInterop": true,
+    "strict": true,
+    "strictNullChecks": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "skipDefaultLibCheck": true,
+    "skipLibCheck": true,
+    "noUncheckedIndexedAccess": true,
+    "jsx": "preserve",
+    "types": ["node"],
+    "paths": {
+      "vueye-table": ["./packages/vueye-table/src/index.ts"],
+      "@/*": ["./packages/vueye-table/src/*"]
+    }
+  },
+  "include": ["./packages/*/src/**/*", "./packages/vueye-table/env.d.ts", "./packages/vueye-table/src/auto-imports.d.ts", "./scripts/**/*.ts"],
+  "exclude": ["**/dist/**", "**/node_modules/**", "**/playground/**"]
+}

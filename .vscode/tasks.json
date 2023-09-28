@@ -1,0 +1,41 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Build (all)",
+      "type": "shell",
+      "command": "pnpm build",
+      "problemMatcher": []
+    },
+    {
+      "label": "Build (Components)",
+      "type": "shell",
+      "command": "pnpm build:components",
+      "problemMatcher": []
+    },
+    {
+      "label": "Build (Composables)",
+      "type": "shell",
+      "command": "pnpm build:composables",
+      "problemMatcher": []
+    },
+    {
+      "label": "Build Watch (Components and Composables)",
+      "type": "shell",
+      "command": "pnpm build:watch",
+      "problemMatcher": []
+    },
+    {
+      "label": "Dev Serve (App1)",
+      "type": "shell",
+      "command": "pnpm app1:dev",
+      "problemMatcher": []
+    },
+    {
+      "label": "Dev Serve (App2)",
+      "type": "shell",
+      "command": "pnpm app2:dev",
+      "problemMatcher": []
+    }
+  ]
+}

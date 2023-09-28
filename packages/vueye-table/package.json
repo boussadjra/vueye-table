@@ -1,0 +1,77 @@
+{
+    "name": "vueye-table",
+    "version": "2.0.0-alpha.0",
+    "private": false,
+    "description": "Vue data table",
+    "author": "Brahim Boussadjra",
+    "repository": "https://github.com/boussadjra/vueye-table",
+    "license": "MIT",
+    "files": [
+        "dist"
+    ],
+    "keywords": [
+        "vue",
+        "vite",
+        "template"
+    ],
+    "type": "module",
+    "main": "./dist/vueye-table.umd.cjs",
+    "module": "./dist/vueye-table.js",
+    "types": "./dist/index.d.ts",
+    "exports": {
+        ".": {
+            "import": "./dist/vueye-table.js",
+            "require": "./dist/vueye-table.umd.cjs"
+        },
+        "./*": "./dist/vueye-table.js",
+        "./dist/style.css": "./dist/style.css"
+    },
+    "scripts": {
+        "dev": "vite",
+        "build": " vite build",
+        "preview": "vite preview",
+        "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts --fix --ignore-path .gitignore",
+        "format": "prettier .  --write --ignore-path .gitignore",
+        "test:unit": "vitest"
+    },
+    "devDependencies": {
+        "@antfu/eslint-config": "^0.43.1",
+        "@egoist/tailwindcss-icons": "^1.2.0",
+        "@faker-js/faker": "^8.1.0",
+        "@iconify-json/solar": "^1.1.5",
+        "@iconify-json/tabler": "^1.1.92",
+        "@rushstack/eslint-patch": "^1.5.0",
+        "@testing-library/vue": "^7.0.0",
+        "@types/node": "^20.7.1",
+        "@vitejs/plugin-vue": "^4.3.4",
+        "@vue/eslint-config-prettier": "^8.0.0",
+        "@vue/eslint-config-typescript": "^12.0.0",
+        "@vue/tsconfig": "^0.4.0",
+        "@vueuse/core": "^10.4.1",
+        "@vueuse/head": "^2.0.0",
+        "autoprefixer": "^10.4.16",
+        "eslint": "^8.50.0",
+        "eslint-plugin-import": "^2.28.1",
+        "eslint-plugin-vue": "^9.17.0",
+        "pathe": "^1.1.1",
+        "pnpm": "^8.8.0",
+        "postcss": "^8.4.30",
+        "prettier": "^3.0.3",
+        "tailwindcss": "^3.3.3",
+        "typescript": "~5.2.2",
+        "unplugin-auto-import": "^0.16.6",
+        "unplugin-icons": "^0.17.0",
+        "vite": "^4.4.9",
+        "vite-plugin-dts": "^3.6.0",
+        "vitest": "^0.34.5",
+        "vue-router": "^4.2.5",
+        "vue-tsc": "^1.8.15"
+    },
+    "peerDependencies": {
+        "vue": "^3.3.4"
+    },
+    "lint-staged": {
+        "*.{js,ts,vue}": "eslint --fix",
+        "*.{js,ts,vue,css,scss,json,md}": "prettier --write"
+    }
+}

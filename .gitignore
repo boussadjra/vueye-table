@@ -1,0 +1,26 @@
+# Logs
+logs
+*.log
+pnpm-debug.log*
+
+# misc
+node_modules
+.DS_Store
+dist
+dist-ssr
+coverage
+*.local
+
+# Editor directories and files
+.idea
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Nested dist folders
+**/dist
+**/cache 
+**/build
+**/node_modules
