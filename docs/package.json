@@ -13,6 +13,8 @@
   },
   "devDependencies": {
     "@egoist/tailwindcss-icons": "^1.2.0",
+    "@iconify-json/solar": "^1.1.5",
+    "@iconify-json/tabler": "^1.1.93",
     "@tailwindcss/typography": "^0.5.10",
     "autoprefixer": "^10.4.16",
     "pnpm": "^8.8.0",
