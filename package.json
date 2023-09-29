@@ -5,9 +5,6 @@
   "description": "Vue data table",
   "author": "Brahim Boussadjra",
   "repository": "https://github.com/boussadjra/vueye-table",
-  "workspaces": [
-    "packages/*"
-  ],
   "license": "MIT",
   "scripts": {
     "docs:dev": "pnpm --filter docs docs:dev",
