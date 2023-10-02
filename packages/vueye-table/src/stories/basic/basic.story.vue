@@ -1,14 +1,14 @@
 <script setup lang="ts">
-import { VueyeTable } from '../components/core/VueyeTable'
-import { fakerAR as faker } from '@faker-js/faker'
+import { VueyeTable } from '../../components/core/VueyeTable'
+import { fakerFR as faker } from '@faker-js/faker'
 const items = Array.from({ length: 11 }, () => ({
-    id: faker.datatype.uuid().slice(0, 4),
+    id: faker.number.int({ min: 1, max: 100 }),
     name: {
-        first_name: faker.name.firstName(),
-        last_name: faker.name.lastName(),
+        first_name: faker.person.firstName(),
+        last_name: faker.person.lastName(),
     },
-    age: faker.datatype.number({ min: 18, max: 100 }),
-    country: faker.address.country(),
+    age: faker.number.int({ min: 18, max: 100 }),
+    country: faker.location.country(),
 }))
 
 const columns = [

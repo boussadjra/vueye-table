@@ -20,7 +20,6 @@ coverage
 *.sw?
 
 # Nested dist folders
-**/dist
 **/cache 
 **/build
 **/node_modules

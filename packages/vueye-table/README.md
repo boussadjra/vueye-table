@@ -1,30 +1,56 @@
-# Vueye-table
+# VueyeTableProps TypeScript Definition
 
-:warning: **This project is still in development.**
+This Markdown file provides documentation for the TypeScript `VueyeTableProps` type and its associated default values.
 
-## Tools and conventions
+## VueyeTableProps Type
 
--   [x] Eslint
--   [x] Prettier
--   [x] Conventional Commit
--   [x] Pre-commit
--   [x] Lint-staged
--   [x] Semantic-release
--   [x] TypeScript
+`VueyeTableProps` is a TypeScript type that represents the properties for a Vueye table component.
 
-## TODO
+### Properties
 
-1. Data Rendering ✅
-2. Sorting
-3. Filtering
-4. Pagination ✅
-5. Selection
-6. Editing
-7. Resizing and Reordering
-8. Row Expansion
-9. Grouping by columns ✅
-10. Exporting
-11. Responsive Design
-12. Customization
-13. Accessibility
-14. ...
+-   `itemValue?: string` (Optional)
+
+    -   The key used to identify items in the data array.
+    -   Default: `'id'`
+
+-   `columnHeaders: TColumn[]`
+
+    -   An array of column headers.
+
+-   `data: TData[]`
+
+    -   An array of data.
+
+-   `perPage?: number` (Optional)
+
+    -   The number of items to display per page.
+    -   Default: `10`
+
+-   `currentPage?: number` (Optional)
+
+    -   The current page number.
+    -   Default: `1`
+
+-   `perPageOptions?: number[]` (Optional)
+
+    -   An array of options for the number of items to display per page.
+    -   Default: `[5, 10, 20, 30]`
+
+-   `loading?: boolean` (Optional)
+
+    -   Indicates whether the table is in a loading state.
+    -   Default: `false`
+
+-   `selectable?: boolean` (Optional)
+
+    -   Indicates whether items in the table are selectable.
+    -   Default: `false`
+
+-   `caption?: string` (Optional)
+
+    -   A caption for the table.
+    -   Default: `''`
+
+-   `summary?: string` (Optional)
+    -   A summary for the table.
+    -   Default: `''`

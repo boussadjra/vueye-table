@@ -11,4 +11,15 @@ export default defineConfig({
             primary: defaultColors.cyan,
         },
     },
+    vite: {
+        plugins: [
+            {
+                name: 'vite-plugin-vue',
+                config(config) {
+                    config.build.lib = false
+                    config.build.rollupOptions.external = []
+                },
+            },
+        ],
+    },
 })

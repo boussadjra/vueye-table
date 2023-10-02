@@ -7,7 +7,7 @@ withDefaults(
     }>(),
     {
         columnHeaders: () => [],
-    },
+    }
 )
 
 defineSlots<SlotHeader<Record<string, string>>>()

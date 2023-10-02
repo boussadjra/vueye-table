@@ -47,7 +47,7 @@ export type ColumnHeaderBase<TData extends Record<string, unknown>> = FiltrableC
         showOverflowTooltip?: boolean
     }
 
-export type ColumnHeader = ColumnHeaderBase<{}> & {
+export type ColumnHeader = ColumnHeaderBase<Record<string, never>> & {
     rowSpan?: number
     colSpan?: number
 

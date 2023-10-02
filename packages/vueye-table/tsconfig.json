@@ -12,6 +12,7 @@
         "lib": ["ESNext", "DOM"],
         "skipLibCheck": true,
         "noEmit": true,
+        "forceConsistentCasingInFileNames": true,
         "paths": {
             "@/*": ["./src/*"]
         }

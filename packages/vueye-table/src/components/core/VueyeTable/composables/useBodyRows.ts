@@ -14,7 +14,6 @@ export function useBodyRows(rows: Row[], headers: Ref<ColumnHeader[]>, paginatio
 
         return getBodyRows(rows, unref(headers), start, end)
     })
-    // const bodyRows = computed(() => (rows && headers ? getBodyRows(rows, unref(headers)) : []))
     return {
         bodyRows,
     }

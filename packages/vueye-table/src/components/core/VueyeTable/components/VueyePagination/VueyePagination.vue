@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import VueyeDropdown, { OptionValue } from '../util-components/VueyeDropdown.vue'
+import { VueyeDropdown, OptionValue } from '../VueyeDropdown'
 const props = withDefaults(
     defineProps<{
         perPage: number
@@ -12,20 +12,20 @@ const props = withDefaults(
         currentPage: 1,
         total: 0,
         perPageOptions: () => [10, 20, 30, 40, 50],
-    },
+    }
 )
 
 const pagesCount = computed(() => Math.ceil(props.total / props.perPage))
 
 const dropdownOptions = computed(() => {
     return props.perPageOptions.map((option) => ({
-        value: option,
+        content: option,
         label: option.toString(),
     }))
 })
 
 const dropdownDefaultValue = computed(() => {
-    return dropdownOptions.value.find((option) => option.value === props.perPage)
+    return dropdownOptions.value.find((option) => option.content === props.perPage)
 })
 
 const pagesButtons = computed(() => {
@@ -42,7 +42,7 @@ const pagesButtons = computed(() => {
             }
             return acc
         },
-        [] as (number | string)[],
+        [] as (number | string)[]
     )
 })
 
@@ -145,7 +145,7 @@ function updatePerPage(perPage: OptionValue) {
     </div>
 </template>
 
-<style scoped>
+<style>
 .pagination__wrapper {
     @apply flex gap-x-3 items-center;
 }

@@ -1,53 +1,21 @@
 <script setup lang="ts" generic="TData extends Record<string, unknown>, TColumn extends ColumnHeader">
-import VueyePagination from './VueyePagination/VueyePagination.vue'
-import { useBodyRows } from './composables/useBodyRows'
-import { useHeaders } from './composables/useHeaders'
-import { ColumnHeader, SlotHeader } from './types'
-import { VueyeBody } from './VueyeBody'
-import { VueyeHead } from './VueyeHead'
+import { VueyeTableProps, VueyeTablePropsDefaults } from './api'
+import { VueyeBody, VueyeHead, VueyePagination } from './components'
+import { useBodyRows, useHeaders, usePagination } from './composables'
+import type { ColumnHeader, SlotHeader } from './types'
+import { generateColumns } from './utils'
 
-const props = withDefaults(
-    defineProps<{
-        itemValue?: string
-        columnHeaders: TColumn[]
-        data: TData[]
+defineOptions({
+    inheritAttrs: false,
+})
 
-        perPage?: number
-        currentPage?: number
-        perPageOptions?: number[]
+const props = withDefaults(defineProps<VueyeTableProps<TColumn, TData>>(), VueyeTablePropsDefaults)
 
-        loading?: boolean
-        selectable?: boolean
-
-        caption?: string
-        summary?: string
-    }>(),
-    {
-        itemValue: 'id',
-        columnHeaders: () => [],
-        data: () => [],
-
-        perPage: 10,
-        currentPage: 1,
-        perPageOptions: () => [5, 10, 20, 30],
-
-        loading: false,
-        selectable: false,
-
-        caption: '',
-        summary: '',
-    },
+const _columnHeaders = computed(() =>
+    props.columnHeaders.length === 0 ? generateColumns(props.data[0]) : props.columnHeaders
 )
 
-const _columnHeaders = toRef(props, 'columnHeaders') as Ref<ColumnHeader[]>
-const pagination = ref({
-    perPage: props.perPage || 10,
-    currentPage: props.currentPage || 1,
-})
-console.log(props)
 const { headers } = useHeaders(_columnHeaders)
-const { bodyRows } = useBodyRows(props.data, _columnHeaders, pagination)
-
 const slots = defineSlots<
     SlotHeader<TData> & {
         caption: () => any
@@ -57,22 +25,15 @@ const slots = defineSlots<
 
 const headerSlots = Object.keys(slots).filter((slot) => slot.startsWith('headerCell'))
 
-function updateCurrentPage(page: number) {
-    pagination.value.currentPage = page
-}
+const { pagination, updateCurrentPage, updatePerPage } = usePagination(props)
 
-function updatePerPage(perPage: number) {
-    pagination.value.perPage = perPage
-}
-defineOptions({
-    inheritAttrs: false,
-})
+const { bodyRows } = useBodyRows(props.data, _columnHeaders, pagination)
 </script>
 <template>
     <div class="table__wrapper">
         <table :class="$attrs.class ?? 'table'">
             <slot name="caption">
-                <caption class="table__caption">
+                <caption v-if="caption" class="table__caption">
                     {{
                         caption
                     }}

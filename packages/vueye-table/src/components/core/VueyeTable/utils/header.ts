@@ -1,4 +1,5 @@
 import { ColumnHeader } from '../types'
+import { humanize } from './humanize'
 
 export function depthCount(headers: ColumnHeader[]) {
     let depth = 1
@@ -27,7 +28,7 @@ export function flatHeadersToRows(
     depth: number,
     rows: ColumnHeader[][] = [],
     currentRow = 0,
-    level: number = 0,
+    level: number = 0
 ) {
     headers.forEach((header) => {
         if (!rows[currentRow]) {
@@ -74,4 +75,27 @@ export function defineColumnHeaders(headers: any[]) {
     const rows = flatHeadersToRows(headers, depth)
     const columnHeaders = rows.reduce((acc, row) => [...acc, ...row], [])
     return columnHeaders
+}
+
+export function generateColumns<T>(dataItem: T): ColumnHeader[] {
+    const columns: ColumnHeader[] = []
+
+    for (const key in dataItem) {
+        const label = humanize(key)
+        const column: ColumnHeader = {
+            key,
+            label,
+        }
+
+        if (typeof dataItem[key] === 'object' && dataItem[key] !== null) {
+            const children = generateColumns(dataItem[key])
+            if (children.length > 0) {
+                column.children = children
+            }
+        }
+
+        columns.push(column)
+    }
+
+    return columns
 }

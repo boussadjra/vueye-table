@@ -2,15 +2,15 @@
 import AppHeader from './components/app/layout/AppHeader.vue'
 
 import { VueyeTable } from './components/core/VueyeTable'
-import { fakerAR as faker } from '@faker-js/faker'
+import { faker } from '@faker-js/faker'
 const items = Array.from({ length: 11 }, () => ({
-    id: faker.datatype.uuid().slice(0, 4),
+    id: faker.number.int({ min: 1, max: 100 }),
     name: {
-        first_name: faker.name.firstName(),
-        last_name: faker.name.lastName(),
+        first_name: faker.person.firstName(),
+        last_name: faker.person.lastName(),
     },
-    age: faker.datatype.number({ min: 18, max: 100 }),
-    country: faker.address.country(),
+    age: faker.number.int({ min: 18, max: 100 }),
+    country: faker.location.country(),
 }))
 
 const columns = [
@@ -47,7 +47,7 @@ const columns = [
     <div class="w-full">
         <AppHeader class="docs__header" />
         <main class="flex justify-center p-4">
-            <VueyeTable :data="items" :column-headers="columns" />
+            <VueyeTable :data="items" />
         </main>
     </div>
 </template>

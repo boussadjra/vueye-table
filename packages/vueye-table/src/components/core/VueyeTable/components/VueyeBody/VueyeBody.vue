@@ -10,7 +10,7 @@ const props = withDefaults(
         loading: false,
         bodyRows: () => [],
         itemValue: 'id',
-    },
+    }
 )
 
 const columnnsLength = computed(() => {
