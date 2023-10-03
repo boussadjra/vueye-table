@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { dropdownProps, dropdownPropsDefaults, OptionValue } from './api'
+import { DropdownProps, dropdownPropsDefaults, DropdownEmits } from './api'
 
-const props = withDefaults(defineProps<dropdownProps>(), dropdownPropsDefaults)
+const props = withDefaults(defineProps<DropdownProps>(), dropdownPropsDefaults)
 
 const isOpen = ref(false)
 const selectedIndex = ref(-1)
@@ -27,9 +27,7 @@ watchEffect(() => {
     }
 })
 
-const emit = defineEmits<{
-    (event: 'update:modelValue', value: OptionValue): void
-}>()
+const emit = defineEmits<DropdownEmits>()
 </script>
 
 <template>

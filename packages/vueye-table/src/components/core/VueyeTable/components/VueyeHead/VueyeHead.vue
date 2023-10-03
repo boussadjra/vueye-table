@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { ColumnHeader, SlotHeader } from '../types'
+import type { ColumnHeader, SlotHeader } from '../../types'
 
 withDefaults(
     defineProps<{

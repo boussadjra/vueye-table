@@ -5,7 +5,7 @@ interface Option {
     label: string
 }
 
-export type dropdownProps = {
+export type DropdownProps = {
     options: Option[]
     modelValue: string | number
     label: string
@@ -16,4 +16,8 @@ export const dropdownPropsDefaults = {
     options: () => [],
     modelValue: '',
     label: '',
+}
+
+export type DropdownEmits = {
+    (event: 'update:modelValue', value: OptionValue): void
 }

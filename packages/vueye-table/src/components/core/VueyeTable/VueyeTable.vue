@@ -1,27 +1,22 @@
 <script setup lang="ts" generic="TData extends Record<string, unknown>, TColumn extends ColumnHeader">
-import { VueyeTableProps, VueyeTablePropsDefaults } from './api'
+import { VueyeTableProps, vueyeTablePropDefaults, VueyeTableSlots } from './api'
 import { VueyeBody, VueyeHead, VueyePagination } from './components'
 import { useBodyRows, useHeaders, usePagination } from './composables'
-import type { ColumnHeader, SlotHeader } from './types'
+import type { ColumnHeader } from './types'
 import { generateColumns } from './utils'
 
 defineOptions({
     inheritAttrs: false,
 })
 
-const props = withDefaults(defineProps<VueyeTableProps<TColumn, TData>>(), VueyeTablePropsDefaults)
+const props = withDefaults(defineProps<VueyeTableProps<TColumn, TData>>(), vueyeTablePropDefaults)
 
 const _columnHeaders = computed(() =>
     props.columnHeaders.length === 0 ? generateColumns(props.data[0]) : props.columnHeaders
 )
 
 const { headers } = useHeaders(_columnHeaders)
-const slots = defineSlots<
-    SlotHeader<TData> & {
-        caption: () => any
-        summary: () => any
-    }
->()
+const slots = defineSlots<VueyeTableSlots<TData>>()
 
 const headerSlots = Object.keys(slots).filter((slot) => slot.startsWith('headerCell'))
 
@@ -45,7 +40,11 @@ const { bodyRows } = useBodyRows(props.data, _columnHeaders, pagination)
                     <slot :name="slotName" v-bind="scope" />
                 </template>
             </VueyeHead>
-            <VueyeBody :bodyRows="bodyRows" :loading="loading" />
+            <VueyeBody :bodyRows="bodyRows" :loading="loading">
+                <template #loading>
+                    <slot name="loading" />
+                </template>
+            </VueyeBody>
             <slot name="summary">
                 <caption class="table__summary">
                     {{
@@ -54,16 +53,15 @@ const { bodyRows } = useBodyRows(props.data, _columnHeaders, pagination)
                 </caption>
             </slot>
         </table>
-        <div class="table__pagination-wrapper">
-            <VueyePagination
-                :perPage="pagination.perPage"
-                :currentPage="pagination.currentPage"
-                :perPageOptions="perPageOptions"
-                :total="data.length"
-                @update:current-page="updateCurrentPage"
-                @update:per-page="updatePerPage"
-            />
-        </div>
+        <VueyePagination
+            :perPage="pagination.perPage"
+            :currentPage="pagination.currentPage"
+            :perPageOptions="perPageOptions"
+            :total="data.length"
+            @update:current-page="updateCurrentPage"
+            @update:per-page="updatePerPage"
+            class="table__pagination"
+        />
     </div>
 </template>
 
@@ -73,7 +71,7 @@ const { bodyRows } = useBodyRows(props.data, _columnHeaders, pagination)
     @apply flex flex-col w-max;
 }
 
-.table__pagination-wrapper {
-    @apply py-4 flex justify-end;
+.table__pagination {
+    @apply mt-4 self-end;
 }
 </style>

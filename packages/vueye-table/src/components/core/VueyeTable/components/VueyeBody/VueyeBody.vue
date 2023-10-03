@@ -1,17 +1,7 @@
 <script setup lang="ts">
-import { Row } from '../types'
-const props = withDefaults(
-    defineProps<{
-        loading: boolean
-        bodyRows: Row[]
-        itemValue: string
-    }>(),
-    {
-        loading: false,
-        bodyRows: () => [],
-        itemValue: 'id',
-    }
-)
+import { BodyProps, bodyPropDefaults } from './api'
+
+const props = withDefaults(defineProps<BodyProps>(), bodyPropDefaults)
 
 const columnnsLength = computed(() => {
     return Object.keys(props.bodyRows[0]).length
@@ -21,11 +11,9 @@ const columnnsLength = computed(() => {
     <tbody>
         <tr v-if="loading">
             <td :colspan="columnnsLength">
-                <div class="flex justify-center items-center">
-                    <div
-                        class="loader animate-spin ease-linear rounded-full border-8 border-t-8 border-t-primary-300 dark:border-t-primary-800 dark:border-primary-600 border-primary-200 h-16 w-16"
-                    ></div>
-                </div>
+                <slot name="loading">
+                    <div class="table_loader"></div>
+                </slot>
             </td>
         </tr>
         <tr v-else v-for="row in bodyRows" :key="row[itemValue]">
@@ -40,4 +28,8 @@ const columnnsLength = computed(() => {
     </tbody>
 </template>
 
-<style scoped></style>
+<style scoped>
+.table_loader {
+    @apply mx-auto animate-spin ease-linear rounded-full border-8 border-t-8 border-t-primary-300 dark:border-t-primary-800 dark:border-primary-600 border-primary-200 h-16 w-16;
+}
+</style>

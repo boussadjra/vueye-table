@@ -1,4 +1,4 @@
-import { InferDefaults } from './types'
+import { InferDefaults, SlotHeader } from './types'
 
 export type VueyeTableProps<TColumn = any, TData = any> = {
     data: TData[]
@@ -16,7 +16,7 @@ export type VueyeTableProps<TColumn = any, TData = any> = {
     summary?: string
 }
 
-export const VueyeTablePropsDefaults: InferDefaults<VueyeTableProps> = {
+export const vueyeTablePropDefaults: InferDefaults<VueyeTableProps> = {
     itemValue: 'id',
     columnHeaders: () => [],
     data: () => [],
@@ -30,4 +30,18 @@ export const VueyeTablePropsDefaults: InferDefaults<VueyeTableProps> = {
 
     caption: '',
     summary: '',
+}
+
+export type VueyeTableEmits = {
+    (event: 'update:currentPage', value: number): void
+    (event: 'update:perPage', value: number): void
+    (event: 'update:perPageOptions', value: number[]): void
+    (event: 'update:loading', value: boolean): void
+    (event: 'update:selectable', value: boolean): void
+}
+
+export type VueyeTableSlots<TData> = SlotHeader<TData> & {
+    caption: () => any
+    summary: () => any
+    loading: () => any
 }

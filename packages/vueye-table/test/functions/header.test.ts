@@ -1,8 +1,10 @@
 import {
+    defineColumnHeaders,
     depthCount,
     flatHeadersToRows,
     generateColumns,
     getHeaderKeys,
+    leafCount,
 } from '../../src/components/core/VueyeTable/utils/header'
 import { describe, expect, it } from 'vitest'
 
@@ -162,5 +164,141 @@ describe('generateColumnHeaders', () => {
     it('should generate column headers from data', () => {
         const actual = generateColumns(data[0])
         expect(actual).toEqual(expected)
+    })
+})
+
+describe('leafCount', () => {
+    it('returns the correct number of leaf nodes', () => {
+        const headers = [
+            { key: 'a', label: 'A' },
+            { key: 'b', label: 'B' },
+            {
+                key: 'c',
+                label: 'C',
+                children: [
+                    { key: 'd', label: 'D' },
+                    { key: 'e', label: 'E' },
+                ],
+            },
+        ]
+        expect(leafCount(headers)).toBe(4)
+    })
+})
+
+describe('flatHeadersToRows', () => {
+    it('returns the headers as rows', () => {
+        const headers = [
+            { key: 'a', label: 'A' },
+            { key: 'b', label: 'B' },
+            {
+                key: 'c',
+                label: 'C',
+                children: [
+                    { key: 'd', label: 'D' },
+                    { key: 'e', label: 'E' },
+                ],
+            },
+        ]
+        const rows = flatHeadersToRows(headers, depthCount(headers))
+
+        expect(rows).toEqual([
+            [
+                { key: 'a', label: 'A', rowSpan: 2, scope: 'col' },
+                { key: 'b', label: 'B', rowSpan: 2, scope: 'col' },
+                { key: 'c', label: 'C', colSpan: 2, scope: 'colgroup' },
+            ],
+            [
+                { key: 'd', label: 'D', rowSpan: 1, scope: 'col' },
+                { key: 'e', label: 'E', rowSpan: 1, scope: 'col' },
+            ],
+        ])
+    })
+})
+
+describe('getHeaderKeys', () => {
+    it('returns an array of header keys', () => {
+        const headers = [
+            { key: 'a', label: 'A' },
+            { key: 'b', label: 'B' },
+            {
+                key: 'c',
+                label: 'C',
+                children: [
+                    { key: 'd', label: 'D' },
+                    { key: 'e', label: 'E' },
+                ],
+            },
+        ]
+        const keys = getHeaderKeys(headers)
+        expect(keys).toEqual(['a', 'b', 'c.d', 'c.e'])
+    })
+})
+
+describe('defineColumnHeaders', () => {
+    it('returns an array of column headers', () => {
+        const headers = [
+            { key: 'a', label: 'A' },
+            { key: 'b', label: 'B' },
+            {
+                key: 'c',
+                label: 'C',
+                children: [
+                    { key: 'd', label: 'D' },
+                    { key: 'e', label: 'E' },
+                ],
+            },
+        ]
+        const columnHeaders = defineColumnHeaders(headers)
+
+        expect(columnHeaders).toEqual([
+            { key: 'a', label: 'A', rowSpan: 2, scope: 'col' },
+            { key: 'b', label: 'B', rowSpan: 2, scope: 'col' },
+            { key: 'c', label: 'C', colSpan: 2, scope: 'colgroup' },
+            { key: 'd', label: 'D', rowSpan: 1, scope: 'col' },
+            { key: 'e', label: 'E', rowSpan: 1, scope: 'col' },
+        ])
+    })
+})
+
+describe('generateColumns', () => {
+    it('returns an array of column headers', () => {
+        const dataItem = {
+            a: 1,
+            b: 'hello',
+            c: {
+                d: true,
+                e: {
+                    f: 'world',
+                },
+            },
+        }
+        const columns = generateColumns(dataItem)
+        expect(columns).toEqual([
+            { key: 'a', label: 'A' },
+            { key: 'b', label: 'B' },
+            {
+                key: 'c',
+                label: 'C',
+                children: [
+                    { key: 'd', label: 'D' },
+                    {
+                        key: 'e',
+                        label: 'E',
+                        children: [{ key: 'f', label: 'F' }],
+                    },
+                ],
+            },
+        ])
+    })
+})
+
+describe('depthCount', () => {
+    it('returns the depth of the headers', () => {
+        const headers = [
+            { key: 'a', label: 'A' },
+            { key: 'b', label: 'B' },
+            { key: 'c', label: 'C', children: [{ key: 'd', label: 'D', children: [{ key: 'e', label: 'E' }] }] },
+        ]
+        expect(depthCount(headers)).toBe(3)
     })
 })

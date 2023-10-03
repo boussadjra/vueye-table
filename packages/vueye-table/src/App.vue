@@ -47,7 +47,9 @@ const columns = [
     <div class="w-full">
         <AppHeader class="docs__header" />
         <main class="flex justify-center p-4">
-            <VueyeTable :data="items" />
+            <VueyeTable :data="items" loading>
+                <template #loading> loading... </template>
+            </VueyeTable>
         </main>
     </div>
 </template>
