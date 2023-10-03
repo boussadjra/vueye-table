@@ -1,6 +1,6 @@
 {
     "name": "vueye-table",
-    "version": "2.0.0-alpha.4",
+    "version": "2.0.0-alpha.5",
     "private": false,
     "description": "Vue data table",
     "author": "Brahim Boussadjra",
@@ -16,6 +16,7 @@
         "dev": "pnpm --filter vueye-table dev",
         "build": "pnpm --filter vueye-table build",
         "test:unit": "pnpm --filter vueye-table test:unit",
+        "test:coverage": "pnpm --filter vueye-table test:coverage",
         "commit": "git-cz",
         "release": "bumpp package.json packages/**/package.json docs/package.json --tag --tag-name v${version}",
         "pub:release": "cd packages/vueye-table && pnpm pub:release",
@@ -24,7 +25,8 @@
         "prepare": "pnpm simple-git-hooks",
         "lint": "eslint . --ignore-path .gitignore",
         "lint:fix": "eslint . --fix --ignore-path .gitignore",
-        "format": "prettier --write ."
+        "format": "prettier --write .",
+        "analyse": "pnpm --filter vueye-table analyse"
     },
     "devDependencies": {
         "@antfu/eslint-config": "^0.43.1",
