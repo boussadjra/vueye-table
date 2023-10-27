@@ -1,12 +1,17 @@
 <script setup lang="ts">
 import { DropdownProps, dropdownPropsDefaults, DropdownEmits } from './api'
-
+import { MaybeRefOrGetter } from 'vue'
 const props = withDefaults(defineProps<DropdownProps>(), dropdownPropsDefaults)
 
 const isOpen = ref(false)
 const selectedIndex = ref(-1)
 
-const selectedOption = computed(() => props.options[selectedIndex.value] ?? props.defaultValue)
+const selectedOption = computed(() => {
+    if (selectedIndex.value === -1) {
+        return props.options[0]
+    }
+    return props.options[selectedIndex.value]
+})
 
 const labelId = `dropdown-label-${Math.random().toString(36).substring(2, 9)}`
 
@@ -24,6 +29,10 @@ watchEffect(() => {
     const index = props.options.findIndex((option) => option.content === props.modelValue)
     if (index !== -1) {
         selectedIndex.value = index
+    }
+
+    if (props.modelValue === undefined) {
+        selectedIndex.value = -1
     }
 })
 

@@ -93,7 +93,6 @@ const columnHeaders = [
     {
         key: 'name',
         label: 'Name',
-        className: 'dark:text-green-500',
         children: [
             {
                 key: 'first_name',

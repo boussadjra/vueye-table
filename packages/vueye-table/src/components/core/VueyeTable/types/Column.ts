@@ -57,6 +57,23 @@ export type ColumnHeader = ColumnHeaderBase<Record<string, never>> & {
     scope?: string
 }
 
+export function defineTableColumnHeaders<TData extends Record<string, unknown>>(
+    columnHeaders: ColumnHeaderBase<TData>[]
+): ColumnHeader[] {
+    const headers: ColumnHeader[] = []
+
+    for (const header of columnHeaders) {
+        const children = header.children ? defineTableColumnHeaders(header.children) : undefined
+
+        headers.push({
+            ...header,
+            children,
+        })
+    }
+
+    return headers
+}
+
 export type SlotHeaderCell<T> = {
     [K in DeepKeys<T> as K extends string ? `headerCell.${K}` : never]: (props: { headerCell: ColumnHeader }) => any
 }

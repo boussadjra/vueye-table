@@ -3,28 +3,58 @@ import { BodyProps, bodyPropDefaults } from './api'
 
 const props = withDefaults(defineProps<BodyProps>(), bodyPropDefaults)
 
-const columnnsLength = computed(() => {
-    return Object.keys(props.bodyRows[0]).length
+const rowKeys = computed(() => {
+    return Object.keys(props.bodyRows[0])
+})
+
+const rowKeyLeaves = computed(() => {
+    console.log('computed rowKeyLeaves')
+    return rowKeys.value.reduce(
+        (acc, key) => {
+            return {
+                ...acc,
+                [key]: key.split('.').pop() ?? '',
+            }
+        },
+        {} as Record<string, string>
+    )
 })
 </script>
 <template>
     <tbody>
         <tr v-if="loading">
-            <td :colspan="columnnsLength">
+            <td :colspan="columnsLength">
                 <slot name="loading">
                     <div class="table_loader"></div>
                 </slot>
             </td>
         </tr>
-        <tr v-else v-for="row in bodyRows" :key="row[itemValue]">
-            <slot :row="row">
-                <td v-for="key in Object.keys(row)" :key="`${row[itemValue]}.${key}`" :id="`${row[itemValue]}.${key}`">
-                    <slot :cell="row[key]" :key="`${row[itemValue]}.${key}`">
-                        {{ row[key] }}
+        <template v-else-if="bodyRows.length === 0">
+            <tr>
+                <td :colspan="columnsLength">
+                    <slot name="empty">
+                        <div class="text-center">No data available</div>
                     </slot>
                 </td>
-            </slot>
-        </tr>
+            </tr>
+        </template>
+        <template v-else>
+            <template v-for="row in bodyRows" :key="row[itemValue]">
+                <slot name="row" :row="row">
+                    <tr>
+                        <template v-for="key in rowKeys" :key="`${row[itemValue]}.${key}`">
+                            <slot :name="`itemCell.${rowKeyLeaves[key]}`" :itemCell="row">
+                                <td>
+                                    <slot :name="`itemCellContent.${rowKeyLeaves[key]}`" :itemCellContent="row">
+                                        {{ row[key] }}
+                                    </slot>
+                                </td>
+                            </slot>
+                        </template>
+                    </tr>
+                </slot>
+            </template>
+        </template>
     </tbody>
 </template>
 

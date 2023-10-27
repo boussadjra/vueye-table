@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import AppHeader from './components/app/layout/AppHeader.vue'
 
-import { VueyeTable } from './components/core/VueyeTable'
+import { VueyeTable, defineTableColumnHeaders } from './components/core/VueyeTable'
 import { faker } from '@faker-js/faker'
 const items = Array.from({ length: 11 }, () => ({
     id: faker.number.int({ min: 1, max: 100 }),
@@ -13,7 +13,7 @@ const items = Array.from({ length: 11 }, () => ({
     country: faker.location.country(),
 }))
 
-const columns = [
+const columns = defineTableColumnHeaders([
     {
         key: 'id',
         label: 'ID',
@@ -21,6 +21,8 @@ const columns = [
     {
         key: 'name',
         label: 'Name',
+        labelClassName: 'font-bold text-blue-500',
+        className: 'dark:bg-blue-900',
         children: [
             {
                 key: 'first_name',
@@ -40,15 +42,17 @@ const columns = [
         key: 'country',
         label: 'Country',
     },
-]
+])
 </script>
 
 <template>
     <div class="w-full">
         <AppHeader class="docs__header" />
         <main class="flex justify-center p-4">
-            <VueyeTable :data="items" loading>
-                <template #loading> loading... </template>
+            <VueyeTable :data="items" :column-headers="columns">
+                <template #empty>
+                    <p class="text-4xl text-gray-400 i-solar-inbox-broken"></p>
+                </template>
             </VueyeTable>
         </main>
     </div>

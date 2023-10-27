@@ -15,10 +15,12 @@ const _columnHeaders = computed(() =>
     props.columnHeaders.length === 0 ? generateColumns(props.data[0]) : props.columnHeaders
 )
 
-const { headers } = useHeaders(_columnHeaders)
+const { headers, headersCount } = useHeaders(_columnHeaders)
 const slots = defineSlots<VueyeTableSlots<TData>>()
 
 const headerSlots = Object.keys(slots).filter((slot) => slot.startsWith('headerCell'))
+
+const rowItemSlots = Object.keys(slots).filter((slot) => slot.startsWith('itemCell'))
 
 const { pagination, updateCurrentPage, updatePerPage } = usePagination(props)
 
@@ -40,9 +42,16 @@ const { bodyRows } = useBodyRows(props.data, _columnHeaders, pagination)
                     <slot :name="slotName" v-bind="scope" />
                 </template>
             </VueyeHead>
-            <VueyeBody :bodyRows="bodyRows" :loading="loading">
+            <VueyeBody :bodyRows="bodyRows" :loading="loading" :itemValue="itemValue" :columns-length="headersCount">
                 <template #loading>
                     <slot name="loading" />
+                </template>
+                <template #empty>
+                    <slot name="empty" />
+                </template>
+                <template v-for="slotName in rowItemSlots" v-slot:[slotName]="scope">
+                    <!-- @vue-ignore -->
+                    <slot :name="slotName" v-bind="scope" />
                 </template>
             </VueyeBody>
             <slot name="summary">

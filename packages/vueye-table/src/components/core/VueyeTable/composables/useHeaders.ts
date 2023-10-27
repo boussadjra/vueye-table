@@ -1,4 +1,4 @@
-import { depthCount, flatHeadersToRows } from '../utils'
+import { depthCount, leafCount, flatHeadersToRows } from '../utils'
 
 import { ColumnHeader } from '../types'
 
@@ -8,5 +8,6 @@ export function useHeaders(columnHeaders: Ref<ColumnHeader[]>) {
 
     return {
         headers,
+        headersCount: leafCount(_columnHeaders),
     }
 }

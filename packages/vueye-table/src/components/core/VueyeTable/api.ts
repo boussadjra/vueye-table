@@ -1,4 +1,4 @@
-import { InferDefaults, SlotHeader } from './types'
+import { InferDefaults, SlotHeader, SlotRow } from './types'
 
 export type VueyeTableProps<TColumn = any, TData = any> = {
     data: TData[]
@@ -40,8 +40,10 @@ export type VueyeTableEmits = {
     (event: 'update:selectable', value: boolean): void
 }
 
-export type VueyeTableSlots<TData> = SlotHeader<TData> & {
-    caption: () => any
-    summary: () => any
-    loading: () => any
-}
+export type VueyeTableSlots<TData> = SlotHeader<TData> &
+    SlotRow<TData> & {
+        caption: () => any
+        summary: () => any
+        loading: () => any
+        empty: () => any
+    }

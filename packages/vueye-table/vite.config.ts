@@ -22,7 +22,7 @@ export default defineConfig({
             insertTypesEntry: true,
         }),
         AutoImport({
-            imports: ['vue', 'vue-router', 'vue-i18n', 'vue/macros'],
+            imports: ['vue', 'vue-router', 'vitest', 'vue-i18n', 'vue/macros'],
             dts: 'src/auto-imports.d.ts',
             eslintrc: {
                 enabled: true,
@@ -59,6 +59,7 @@ export default defineConfig({
         deps: {
             inline: ['@vue'],
         },
+        silent: true,
         alias: {
             '@/': `${path.resolve(__dirname, 'src')}/`,
         },

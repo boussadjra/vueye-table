@@ -7,8 +7,8 @@ interface Option {
 
 export type DropdownProps = {
     options: Option[]
-    modelValue: string | number
-    label: string
+    modelValue?: string | number
+    label?: string
     defaultValue?: Option
 }
 

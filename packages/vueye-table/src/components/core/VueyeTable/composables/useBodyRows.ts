@@ -19,6 +19,7 @@ export function useBodyRows(
 
         return getBodyRows(toValue(rows), toValue(headers), start, end)
     })
+
     return {
         bodyRows,
     }

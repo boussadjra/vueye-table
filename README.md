@@ -4,8 +4,7 @@
 
 :warning: **This project is still in development.** 🚧
 
->for the legacy version, please check [the legacy branch](https://github.com/boussadjra/vueye-table/tree/legacy) and the its respective [docs](https://boussadjra.github.io/vueye-table).
-
+> for the legacy version, please check [the legacy branch](https://github.com/boussadjra/vueye-table/tree/legacy) and the its respective [docs](https://boussadjra.github.io/vueye-table).
 
 ## TODO
 

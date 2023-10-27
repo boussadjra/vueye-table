@@ -46,25 +46,25 @@ npm install vueye-table
 
 ```vue
 <script setup>
-import { ref } from 'vue';
+import { ref } from 'vue'
 
 const data = ref([
-  { id: 1, name: 'John Doe', age: 20 },
-  { id: 2, name: 'Jane Doe', age: 24 },
-  { id: 3, name: 'John Smith', age: 30 },
-  { id: 4, name: 'Jane Smith', age: 32 },
-]);
+    { id: 1, name: 'John Doe', age: 20 },
+    { id: 2, name: 'Jane Doe', age: 24 },
+    { id: 3, name: 'John Smith', age: 30 },
+    { id: 4, name: 'Jane Smith', age: 32 },
+])
 
 const columns = ref([
-  { key: 'id', label: 'ID' },
-  { key: 'name', label: 'Name' },
-  { key: 'age', label: 'Age' },
-]);
+    { key: 'id', label: 'ID' },
+    { key: 'name', label: 'Name' },
+    { key: 'age', label: 'Age' },
+])
 </script>
 <template>
-  <div>
-    <vueye-table :data="data" :columns="columns" />
-  </div>
+    <div>
+        <vueye-table :data="data" :columns="columns" />
+    </div>
 </template>
 ```
 

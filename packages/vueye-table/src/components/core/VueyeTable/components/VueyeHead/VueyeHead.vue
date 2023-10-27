@@ -21,8 +21,8 @@ defineSlots<SlotHeader<Record<string, string>>>()
                         :colspan="columnHeader.colSpan"
                         :rowspan="columnHeader.rowSpan"
                         :scope="columnHeader.scope"
-                        :class="columnHeader.className"
                         class="th"
+                        :class="columnHeader.className"
                     >
                         <slot :name="`headerCellContent.${columnHeader.key}`" :headerCellContent="columnHeader">
                             <span :class="columnHeader.labelClassName">
