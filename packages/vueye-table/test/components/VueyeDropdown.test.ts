@@ -18,7 +18,6 @@ describe('VueyeDropdown', () => {
                 },
             })
         } catch (e) {
-            console.log('message ', e)
             expect(e.message).toContain('Missing required prop: "modelValue"')
         }
     })

@@ -28,7 +28,6 @@ describe('VueyePagination', () => {
 
     it('should emit an update:perPage event when the per page dropdown is changed', async () => {
         const wrapper = mount(VueyePagination, { propsData })
-        console.log(wrapper.html())
 
         await wrapper.find('.vueye-dropdown__trigger').trigger('click')
         await wrapper.find('.vueye-dropdown__option:nth-child(2)').trigger('click')

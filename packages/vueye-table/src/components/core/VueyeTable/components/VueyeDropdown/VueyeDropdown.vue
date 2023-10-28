@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { DropdownProps, dropdownPropsDefaults, DropdownEmits } from './api'
-import { MaybeRefOrGetter } from 'vue'
 const props = withDefaults(defineProps<DropdownProps>(), dropdownPropsDefaults)
 
 const isOpen = ref(false)
