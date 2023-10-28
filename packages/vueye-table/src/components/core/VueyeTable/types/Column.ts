@@ -74,14 +74,11 @@ export function defineTableColumnHeaders<TData extends Record<string, unknown>>(
     return headers
 }
 
-export type SlotHeaderCell<T> = {
-    [K in DeepKeys<T> as K extends string ? `headerCell.${K}` : never]: (props: { headerCell: ColumnHeader }) => any
+type SlotGenerator<T, Prefix extends string> = {
+    [K in DeepKeys<T> as K extends string ? `${Prefix}.${K}` : never]: (props: { headerItem: ColumnHeader }) => any
 }
 
-export type SlotHeaderCellContent<T> = {
-    [K in DeepKeys<T> as K extends string ? `headerCellContent.${K}` : never]: (props: {
-        headerCellContent: ColumnHeader
-    }) => any
-}
+export type SlotHeaderCell<T> = SlotGenerator<T, 'headerCell'>
+export type SlotHeaderCellContent<T> = SlotGenerator<T, 'headerCellContent'>
 
 export type SlotHeader<T> = SlotHeaderCell<T> & SlotHeaderCellContent<T>

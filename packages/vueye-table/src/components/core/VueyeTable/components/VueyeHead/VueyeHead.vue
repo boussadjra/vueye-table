@@ -16,7 +16,7 @@ defineSlots<SlotHeader<Record<string, string>>>()
     <thead>
         <tr v-for="(row, index) in columnHeaders" :key="index">
             <template v-for="columnHeader in row" :key="columnHeader.key">
-                <slot :name="`headerCell.${columnHeader.key}`" :headerCell="columnHeader">
+                <slot :name="`headerCell.${columnHeader.key}`" :headerItem="columnHeader">
                     <th
                         :colspan="columnHeader.colSpan"
                         :rowspan="columnHeader.rowSpan"
@@ -24,7 +24,7 @@ defineSlots<SlotHeader<Record<string, string>>>()
                         class="th"
                         :class="columnHeader.className"
                     >
-                        <slot :name="`headerCellContent.${columnHeader.key}`" :headerCellContent="columnHeader">
+                        <slot :name="`headerCellContent.${columnHeader.key}`" :headerItem="columnHeader">
                             <span :class="columnHeader.labelClassName">
                                 {{ columnHeader.label }}
                             </span>

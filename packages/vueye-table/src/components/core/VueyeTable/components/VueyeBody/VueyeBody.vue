@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { Row, SlotRow } from '../../types'
+import { nestedObjectTransformer } from '../../utils'
 import { BodyProps, bodyPropDefaults } from './api'
 
 const props = withDefaults(defineProps<BodyProps>(), bodyPropDefaults)
@@ -8,7 +10,6 @@ const rowKeys = computed(() => {
 })
 
 const rowKeyLeaves = computed(() => {
-    console.log('computed rowKeyLeaves')
     return rowKeys.value.reduce(
         (acc, key) => {
             return {
@@ -19,6 +20,25 @@ const rowKeyLeaves = computed(() => {
         {} as Record<string, string>
     )
 })
+
+const rows = computed(() => {
+    return props.bodyRows.map((row) => {
+        return {
+            flat: row,
+            nest: nestedObjectTransformer(row) as Row,
+        }
+    })
+})
+
+defineSlots<
+    SlotRow<Record<string, string>> & {
+        row: (row: Record<string, any>) => any
+        itemCell: (itemCell: Record<string, string>) => any
+        itemCellContent: (itemCellContent: Record<string, string>) => any
+        loading: () => any
+        empty: () => any
+    }
+>()
 </script>
 <template>
     <tbody>
@@ -39,14 +59,14 @@ const rowKeyLeaves = computed(() => {
             </tr>
         </template>
         <template v-else>
-            <template v-for="row in bodyRows" :key="row[itemValue]">
+            <template v-for="row in rows" :key="row[itemValue]">
                 <slot name="row" :row="row">
                     <tr>
                         <template v-for="key in rowKeys" :key="`${row[itemValue]}.${key}`">
-                            <slot :name="`itemCell.${rowKeyLeaves[key]}`" :itemCell="row">
+                            <slot :name="`itemCell.${key}`" :itemCell="row.nest">
                                 <td>
-                                    <slot :name="`itemCellContent.${rowKeyLeaves[key]}`" :itemCellContent="row">
-                                        {{ row[key] }}
+                                    <slot :name="`itemCellContent.${rowKeyLeaves[key]}`" :itemCellContent="row.nest">
+                                        {{ row.flat[key] }}
                                     </slot>
                                 </td>
                             </slot>

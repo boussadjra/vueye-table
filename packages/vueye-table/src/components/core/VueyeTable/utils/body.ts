@@ -30,3 +30,24 @@ export function getBodyRows(rows: Row[], headers: ColumnHeader[], start = 0, end
         })
         .slice(start, end)
 }
+
+export function nestedObjectTransformer(obj: object) {
+    const result: Record<string, any> = {}
+    for (const [key, value] of Object.entries(obj)) {
+        if (key.includes('.')) {
+            const [prefix, suffix] = key.split('.')
+            if (!result[prefix]) {
+                result[prefix] = {}
+            }
+            result[prefix][suffix] = value
+        } else {
+            result[key] = value
+        }
+    }
+    for (const [key, value] of Object.entries(result)) {
+        if (typeof value === 'object') {
+            result[key] = nestedObjectTransformer(value)
+        }
+    }
+    return result
+}

@@ -10,7 +10,7 @@ const items = Array.from({ length: 11 }, () => ({
         last_name: faker.person.lastName(),
     },
     age: faker.number.int({ min: 18, max: 100 }),
-    country: faker.location.country(),
+    country: faker.location.country() === 'Israel' ? 'Palestine' : faker.location.country(),
 }))
 
 const columns = defineTableColumnHeaders([
@@ -21,8 +21,6 @@ const columns = defineTableColumnHeaders([
     {
         key: 'name',
         label: 'Name',
-        labelClassName: 'font-bold text-blue-500',
-        className: 'dark:bg-blue-900',
         children: [
             {
                 key: 'first_name',
@@ -50,8 +48,18 @@ const columns = defineTableColumnHeaders([
         <AppHeader class="docs__header" />
         <main class="flex justify-center p-4">
             <VueyeTable :data="items" :column-headers="columns">
-                <template #empty>
-                    <p class="text-4xl text-gray-400 i-solar-inbox-broken"></p>
+                <template #headerCell.name="{ headerItem }">
+                    <th class="dark:!bg-yellow-700" :colSpan="headerItem.colSpan">{{ headerItem.label }}</th>
+                </template>
+                <template #itemCell.name.first_name="{ itemCell }">
+                    <td class="!bg-indigo-800">{{ itemCell.name.first_name }}</td>
+                </template>
+                <template #itemCell.name.last_name="{ itemCell }">
+                    <td class="!bg-green-900 text-green-200">{{ itemCell.name.last_name }}</td>
+                </template>
+
+                <template #itemCell.country="{ itemCell }">
+                    <td class="!bg-blue-800 text-blue-400">{{ itemCell.country }}</td>
                 </template>
             </VueyeTable>
         </main>

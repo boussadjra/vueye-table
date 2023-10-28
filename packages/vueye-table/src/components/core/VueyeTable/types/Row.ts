@@ -1,15 +1,15 @@
-import { DeepKeys } from './Utils'
+import { FlattenKeys } from './Utils'
 
 export type Row = {
     [key: string]: any
 }
 
 export type SlotRowItem<T> = {
-    [K in DeepKeys<T> as K extends string ? `itemCell.${K}` : never]: (props: { itemCell: Row }) => any
+    [K in `itemCell.${FlattenKeys<T>}`]: (props: { itemCell: T }) => any
 }
 
 export type SlotRowItemContent<T> = {
-    [K in DeepKeys<T> as K extends string ? `itemCellContent.${K}` : never]: (props: { itemCellContent: Row }) => any
+    [K in `itemCellContent.${FlattenKeys<T>}`]: (props: { itemCellContent: T }) => any
 }
 
 export type SlotRow<T> = SlotRowItem<T> & SlotRowItemContent<T>
