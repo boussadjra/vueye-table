@@ -12,4 +12,8 @@ export type SlotRowItemContent<T> = {
     [K in `itemCellContent.${FlattenKeys<T>}`]: (props: { itemCellContent: T }) => any
 }
 
-export type SlotRow<T> = SlotRowItem<T> & SlotRowItemContent<T>
+export type SlotRow<T> = SlotRowItem<T> &
+    SlotRowItemContent<T> & {
+        rows: (props: { rows: T[] }) => any
+        row: (props: { row: T }) => any
+    }

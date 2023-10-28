@@ -81,4 +81,7 @@ type SlotGenerator<T, Prefix extends string> = {
 export type SlotHeaderCell<T> = SlotGenerator<T, 'headerCell'>
 export type SlotHeaderCellContent<T> = SlotGenerator<T, 'headerCellContent'>
 
-export type SlotHeader<T> = SlotHeaderCell<T> & SlotHeaderCellContent<T>
+export type SlotHeader<T> = SlotHeaderCell<T> &
+    SlotHeaderCellContent<T> & {
+        headers: (props: { headers: ColumnHeader[][] }) => any
+    }

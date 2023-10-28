@@ -37,6 +37,9 @@ const { bodyRows } = useBodyRows(props.data, _columnHeaders, pagination)
                 </caption>
             </slot>
             <VueyeHead :columnHeaders="headers">
+                <template #headers="scope">
+                    <slot name="headers" v-bind="scope" />
+                </template>
                 <template v-for="slotName in headerSlots" v-slot:[slotName]="scope">
                     <!-- @vue-ignore -->
                     <slot :name="slotName" v-bind="scope" />
@@ -49,6 +52,13 @@ const { bodyRows } = useBodyRows(props.data, _columnHeaders, pagination)
                 <template #empty>
                     <slot name="empty" />
                 </template>
+                <template #rows="scope">
+                    <slot name="rows" v-bind="scope" />
+                </template>
+                <template #row="scope">
+                    <slot name="row" v-bind="scope" />
+                </template>
+
                 <template v-for="slotName in rowItemSlots" v-slot:[slotName]="scope">
                     <!-- @vue-ignore -->
                     <slot :name="slotName" v-bind="scope" />

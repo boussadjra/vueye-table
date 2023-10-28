@@ -30,9 +30,14 @@ const rows = computed(() => {
     })
 })
 
+const nestRows = computed(() => {
+    return rows.value.map((row) => row.nest)
+})
+
 defineSlots<
     SlotRow<Record<string, string>> & {
         row: (row: Record<string, any>) => any
+        rows: (props: Record<string, any>[]) => any
         itemCell: (itemCell: Record<string, string>) => any
         itemCellContent: (itemCellContent: Record<string, string>) => any
         loading: () => any
@@ -59,21 +64,26 @@ defineSlots<
             </tr>
         </template>
         <template v-else>
-            <template v-for="row in rows" :key="row[itemValue]">
-                <slot name="row" :row="row">
-                    <tr>
-                        <template v-for="key in rowKeys" :key="`${row[itemValue]}.${key}`">
-                            <slot :name="`itemCell.${key}`" :itemCell="row.nest">
-                                <td>
-                                    <slot :name="`itemCellContent.${rowKeyLeaves[key]}`" :itemCellContent="row.nest">
-                                        {{ row.flat[key] }}
-                                    </slot>
-                                </td>
-                            </slot>
-                        </template>
-                    </tr>
-                </slot>
-            </template>
+            <slot name="rows" :rows="nestRows">
+                <template v-for="row in rows" :key="row[itemValue]">
+                    <slot name="row" :row="row.nest">
+                        <tr>
+                            <template v-for="key in rowKeys" :key="`${row[itemValue]}.${key}`">
+                                <slot :name="`itemCell.${key}`" :itemCell="row.nest">
+                                    <td>
+                                        <slot
+                                            :name="`itemCellContent.${rowKeyLeaves[key]}`"
+                                            :itemCellContent="row.nest"
+                                        >
+                                            {{ row.flat[key] }}
+                                        </slot>
+                                    </td>
+                                </slot>
+                            </template>
+                        </tr>
+                    </slot>
+                </template>
+            </slot>
         </template>
     </tbody>
 </template>
