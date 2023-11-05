@@ -30,7 +30,7 @@ const columns = defineTableColumnHeaders([
 ])
 </script>
 <template>
-    <Story title="Loading" icon="lucide:table-2">
+    <Story title="Loading" icon="lucide:loader">
         <p>When you're loading data, you can use the <code>loading</code> prop to display a loading indicator.</p>
         <VueyeTable :data="[]" loading />
         <div class="my-12" />

@@ -84,4 +84,5 @@ export type SlotHeaderCellContent<T> = SlotGenerator<T, 'headerCellContent'>
 export type SlotHeader<T> = SlotHeaderCell<T> &
     SlotHeaderCellContent<T> & {
         headers: (props: { headers: ColumnHeader[][] }) => any
+        checkbox: () => any
     }

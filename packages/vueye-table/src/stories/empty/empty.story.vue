@@ -30,7 +30,7 @@ const columns = defineTableColumnHeaders([
 ])
 </script>
 <template>
-    <Story title="Empty" icon="lucide:table-2">
+    <Story title="Empty" icon="lucide:inbox">
         <p>When you have no data, you can use the <code>empty</code> slot to display a message.</p>
         <VueyeTable :data="[]" :column-headers="columns" />
         <div class="my-12" />

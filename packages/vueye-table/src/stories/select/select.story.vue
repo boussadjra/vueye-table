@@ -1,7 +1,5 @@
 <script setup lang="ts">
-import AppHeader from './components/app/layout/AppHeader.vue'
-
-import { VueyeTable, defineTableColumnHeaders } from './components/core/VueyeTable'
+import { VueyeTable, defineTableColumnHeaders } from '@/components/core/VueyeTable'
 import { faker } from '@faker-js/faker'
 const items = Array.from({ length: 11 }, () => ({
     id: faker.number.int({ min: 1, max: 100 }),
@@ -46,21 +44,21 @@ const selected = ref([])
 </script>
 
 <template>
-    <div class="w-full">
-        <AppHeader class="docs__header" />
-        <main class="flex justify-center flex-col items-center p-4">
-            <VueyeTable
-                class="tbl"
-                :data="items"
-                :column-headers="columns"
-                :per-page="5"
-                v-model:selected="selected"
-                select-mode="page"
-            >
-            </VueyeTable>
+    <Story title="Selection" icon="lucide:check-square">
+        <Variant title="Default">
+            <p>Binding the <code>selected</code> prop to an array will enable selection.</p>
+            <VueyeTable :data="items" :column-headers="columns" v-model:selected="selected"> </VueyeTable>
+        </Variant>
 
-            {{ selected }}
-        </main>
-    </div>
+        <Variant title="Select mode">
+            <p>
+                You can change the select mode by using the <code>select-mode</code> prop. The default value is
+                <code>`all`</code>. which selects all the rows across all pages.
+            </p>
+            <p>You can also use <code>`page`</code> to select all the rows on the current page</p>
+            <VueyeTable :data="items" :column-headers="columns" v-model:selected="selected" select-mode="page">
+            </VueyeTable>
+        </Variant>
+    </Story>
 </template>
 <style></style>

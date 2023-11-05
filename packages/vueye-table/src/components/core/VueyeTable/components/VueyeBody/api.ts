@@ -5,6 +5,7 @@ export type BodyProps = {
     bodyRows: Row[]
     itemValue: string
     columnsLength: number
+    selected: Row[] | null
 }
 
 export const bodyPropDefaults: InferDefaults<BodyProps> = {
@@ -12,4 +13,8 @@ export const bodyPropDefaults: InferDefaults<BodyProps> = {
     bodyRows: () => [],
     itemValue: 'id',
     columnsLength: 0,
+}
+
+export type BodyEmits = {
+    (event: 'update:selected', value: Row[]): void
 }

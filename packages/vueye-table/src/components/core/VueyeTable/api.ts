@@ -1,4 +1,5 @@
-import { InferDefaults, SlotHeader, SlotRow } from './types'
+import { PaginationEmits, PaginationProps } from './components/VueyePagination/api'
+import { InferDefaults, Row, SlotHeader, SlotRow } from './types'
 
 export type VueyeTableProps<TColumn = any, TData = any> = {
     data: TData[]
@@ -10,8 +11,8 @@ export type VueyeTableProps<TColumn = any, TData = any> = {
     perPageOptions?: number[]
 
     loading?: boolean
-    selectable?: boolean
-
+    selected?: TData[] | Row[] | null
+    selectMode?: 'page' | 'all'
     caption?: string
     summary?: string
 }
@@ -26,24 +27,23 @@ export const vueyeTablePropDefaults: InferDefaults<VueyeTableProps> = {
     perPageOptions: () => [5, 10, 20, 30],
 
     loading: false,
-    selectable: false,
+    selected: null,
+    selectMode: 'all',
 
     caption: '',
     summary: '',
 }
 
-export type VueyeTableEmits = {
-    (event: 'update:currentPage', value: number): void
-    (event: 'update:perPage', value: number): void
-    (event: 'update:perPageOptions', value: number[]): void
+export type VueyeTableEmits<T> = PaginationEmits & {
     (event: 'update:loading', value: boolean): void
-    (event: 'update:selectable', value: boolean): void
+    (event: 'update:selected', value: T[]): void
 }
 
-export type VueyeTableSlots<TData> = SlotHeader<TData> &
+export type VueyeTableSlots<TData extends Record<string, any>> = SlotHeader<TData> &
     SlotRow<TData> & {
         caption: () => any
         summary: () => any
         loading: () => any
         empty: () => any
+        pagination: (props: { pagination: PaginationProps }) => any
     }

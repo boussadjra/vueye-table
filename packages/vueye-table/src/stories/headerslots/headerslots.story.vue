@@ -41,7 +41,7 @@ const columns = defineTableColumnHeaders([
 ])
 </script>
 <template>
-    <Story title="Header slots" icon="lucide:table-2">
+    <Story title="Header slots" icon="lucide:layout-template">
         <Variant title="headers">
             <p>You can use the <code>`headers`</code> slot to customize the headers.</p>
             <VueyeTable :data="items" :column-headers="columns">

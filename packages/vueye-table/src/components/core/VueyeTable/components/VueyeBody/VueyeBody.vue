@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Row, SlotRow } from '../../types'
 import { nestedObjectTransformer } from '../../utils'
-import { BodyProps, bodyPropDefaults } from './api'
+import { BodyProps, bodyPropDefaults, BodyEmits } from './api'
 
 const props = withDefaults(defineProps<BodyProps>(), bodyPropDefaults)
 
@@ -34,12 +34,18 @@ const nestRows = computed(() => {
     return rows.value.map((row) => row.nest)
 })
 
+const emit = defineEmits<BodyEmits>()
+const _selected = computed({
+    get() {
+        return props.selected as Row[]
+    },
+    set(value: Row[]) {
+        emit('update:selected', value)
+    },
+})
+
 defineSlots<
-    SlotRow<Record<string, string>> & {
-        row: (row: Record<string, any>) => any
-        rows: (props: Record<string, any>[]) => any
-        itemCell: (itemCell: Record<string, string>) => any
-        itemCellContent: (itemCellContent: Record<string, string>) => any
+    SlotRow & {
         loading: () => any
         empty: () => any
     }
@@ -68,6 +74,16 @@ defineSlots<
                 <template v-for="row in rows" :key="row[itemValue]">
                     <slot name="row" :row="row.nest">
                         <tr>
+                            <slot v-if="selected" name="checkbox" :row="row.nest">
+                                <td>
+                                    <input
+                                        type="checkbox"
+                                        v-model="_selected"
+                                        :value="row.nest"
+                                        aria-label="select row"
+                                    />
+                                </td>
+                            </slot>
                             <template v-for="key in rowKeys" :key="`${row[itemValue]}.${key}`">
                                 <slot :name="`itemCell.${key}`" :itemCell="row.nest">
                                     <td>
