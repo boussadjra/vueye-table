@@ -13,6 +13,7 @@ const data = ref([
   { id: 2, name: 'Jane Doe', age: 24 },
   { id: 3, name: 'John Smith', age: 30 },
   { id: 4, name: 'Jane Smith', age: 32 },
+  { id: 5, name: 'Brahim', age:32}
 ])
 
 const columns = ref([
@@ -20,6 +21,8 @@ const columns = ref([
   { key: 'name', label: 'Name' },
   { key: 'age', label: 'Age' },
 ])
+
+const selected = ref([])
 </script>
 
 # Quick start
@@ -68,4 +71,4 @@ const columns = ref([
 </template>
 ```
 
-<vueye-table :data="data" :columns="columns" />
+<vueye-table :data="data" :columns="columns" :selected="selected" :per-page="2" />

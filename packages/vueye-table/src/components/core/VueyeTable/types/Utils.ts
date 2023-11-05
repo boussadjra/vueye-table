@@ -25,8 +25,9 @@ export type DeepKeyValues<T extends readonly object[]> = {
 /* from vue runtime core */
 type NativeType = null | number | string | boolean | symbol
 
-// eslint-disable-next-line @typescript-eslint/ban-types
-type InferDefault<P, T> = ((props: P) => T & {}) | (T extends NativeType ? T : never)
+type InferDefault<P, T> =
+    // eslint-disable-next-line @typescript-eslint/ban-types
+    ((props: P) => T & {}) | (T extends NativeType ? T : never) | (T extends (...args: any[]) => any ? T : never)
 
 export type InferDefaults<T> = {
     [K in keyof T]?: InferDefault<T, T[K]>

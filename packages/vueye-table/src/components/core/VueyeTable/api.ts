@@ -1,5 +1,6 @@
 import { PaginationEmits, PaginationProps } from './components/VueyePagination/api'
 import { InferDefaults, Row, SlotHeader, SlotRow } from './types'
+import { deepValues } from './utils'
 
 export type VueyeTableProps<TColumn = any, TData = any> = {
     data: TData[]
@@ -15,6 +16,9 @@ export type VueyeTableProps<TColumn = any, TData = any> = {
     selectMode?: 'page' | 'all'
     caption?: string
     summary?: string
+
+    filterQuery?: string
+    filterMethod?: (query: string | undefined, item: TData) => boolean
 }
 
 export const vueyeTablePropDefaults: InferDefaults<VueyeTableProps> = {
@@ -32,6 +36,16 @@ export const vueyeTablePropDefaults: InferDefaults<VueyeTableProps> = {
 
     caption: '',
     summary: '',
+
+    filterQuery: '',
+    filterMethod: (query: string | undefined, item: any) => {
+        if (!query) return true
+        const values = deepValues(item)
+        for (const value of values) {
+            if (value?.toString().toLowerCase().includes(query.toLowerCase())) return true
+        }
+        return false
+    },
 }
 
 export type VueyeTableEmits<T> = PaginationEmits & {

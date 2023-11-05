@@ -12,7 +12,7 @@
 2. Sorting
 3. Filtering
 4. Pagination ✅
-5. Selection
+5. Selection ✅
 6. Editing
 7. Resizing and Reordering
 8. Row Expansion

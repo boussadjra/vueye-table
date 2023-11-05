@@ -1,17 +1,6 @@
 <script setup lang="ts">
-import AppHeader from './components/app/layout/AppHeader.vue'
-
-import { VueyeTable, defineTableColumnHeaders } from './components/core/VueyeTable'
-//import { faker } from '@faker-js/faker'
-// const items = Array.from({ length: 11 }, () => ({
-//     id: faker.number.int({ min: 1, max: 100 }),
-//     name: {
-//         first_name: faker.person.firstName(),
-//         last_name: faker.person.lastName(),
-//     },
-//     age: faker.number.int({ min: 18, max: 100 }),
-//     country: faker.location.country() === 'Israel' ? 'Palestine' : faker.location.country(),
-// }))
+import { VueyeTable, defineTableColumnHeaders } from '@/components/core/VueyeTable'
+import { ref } from 'vue'
 const items = [
     {
         id: 60,
@@ -150,24 +139,30 @@ function filterMethod(query: string | undefined, item: any): boolean {
 </script>
 
 <template>
-    <div class="w-full">
-        <AppHeader class="docs__header" />
-        <main class="flex justify-center flex-col items-center p-4">
-            <input
-                type="text"
-                v-model="search"
-                class="w-1/2 p-2 border bg-primary-50 dark:bg-primary-950 border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
-            <VueyeTable
-                class="tbl"
-                :data="items"
-                :column-headers="columns"
-                :per-page="5"
-                :filter-query="search"
-                :filter-method="filterMethod"
-            >
+    <Story title="Filter" icon="lucide:filter">
+        <Variant title="Default">
+            <p>You can enable filtering by setting the <code>`filter-query`</code> prop to a string.</p>
+            <input v-model="search" class="input" placeholder="Search..." />
+            <VueyeTable :data="items" :column-headers="columns" :filter-query="search"> </VueyeTable>
+        </Variant>
+
+        <Variant title="Custom filter method">
+            <p>
+                You can also use a custom filter method by using the <code>`filter-method`</code> prop. The method
+                receives the query and the item as arguments and should return a boolean.
+            </p>
+            <input v-model="search" class="input" placeholder="Search..." />
+
+            <VueyeTable :data="items" :column-headers="columns" :filter-query="search" :filter-method="filterMethod">
             </VueyeTable>
-        </main>
-    </div>
+        </Variant>
+    </Story>
 </template>
-<style></style>
+<style>
+.input {
+    @apply w-1/2 p-2 border bg-primary-50 dark:bg-primary-950 border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent;
+}
+p {
+    @apply mb-4;
+}
+</style>

@@ -1,56 +1,89 @@
-# VueyeTableProps TypeScript Definition
+# Vueye Table
 
-This Markdown file provides documentation for the TypeScript `VueyeTableProps` type and its associated default values.
+Vueye Table is a Vue 3 component for displaying data in a table.
 
-## VueyeTableProps Type
+## Installation
 
-`VueyeTableProps` is a TypeScript type that represents the properties for a Vueye table component.
+```bash
+npm install vueye-table
+```
 
-### Properties
+## Usage
 
--   `itemValue?: string` (Optional)
+```vue
+<template>
+    <VueyeTable
+        :data="data"
+        :columnHeaders="columnHeaders"
+        :itemValue="itemValue"
+        :perPage="perPage"
+        :currentPage="currentPage"
+        :perPageOptions="perPageOptions"
+        :loading="loading"
+        :selected="selected"
+        :selectMode="selectMode"
+        :caption="caption"
+        :summary="summary"
+        @update:loading="updateLoading"
+        @update:selected="updateSelected"
+    >
+        <template #headerCellContent.name="props">
+            {{ props.columnHeader.name }}
+        </template>
+        <template #itemCellContent.name="props">
+            {{ props.item.name }}
+        </template>
+    </VueyeTable>
+</template>
+```
 
-    -   The key used to identify items in the data array.
-    -   Default: `'id'`
+### VueyeTableProps
 
--   `columnHeaders: TColumn[]`
+| Prop Name | Type | Default Value | Description |
+| --- | --- | --- | --- |
+| data | TData[] | [] | An array of data for the table. |
+| columnHeaders | TColumn[] or a function returning an array | [] | An array of column headers for the table. |
+| itemValue | string | 'id' | The property name used as a unique identifier for each item. |
+| perPage | number | 10 | The number of items displayed per page. |
+| currentPage | number | 1 | The current page number. |
+| perPageOptions | number[] or a function returning an array | [5, 10, 20, 30] | An array of options for the number of items per page. |
+| loading | boolean | false | Indicates whether the table is in a loading state. |
+| selected | TData[], Row[], or null | null | An array of selected items or rows. |
+| selectMode | 'page' or 'all' | 'all' | The mode for selecting items: 'page' or 'all'. |
+| caption | string | '' | The table's caption. |
+| summary | string | '' | The table's summary. |
 
-    -   An array of column headers.
+### VueyeTableEmits
 
--   `data: TData[]`
+| Emit Name       | Parameters     | Description                           |
+| --------------- | -------------- | ------------------------------------- |
+| update:loading  | value: boolean | Emits when the loading state changes. |
+| update:selected | value: T[]     | Emits when the selected items change. |
 
-    -   An array of data.
+### PaginationEmits
 
--   `perPage?: number` (Optional)
+| Emit Name          | Parameters    | Description                                      |
+| ------------------ | ------------- | ------------------------------------------------ |
+| update:currentPage | value: number | Emits when the current page changes.             |
+| update:perPage     | value: number | Emits when the number of items per page changes. |
 
-    -   The number of items to display per page.
-    -   Default: `10`
+### SlotHeader
 
--   `currentPage?: number` (Optional)
+The SlotHeader component defines various slots for customizing the table header.
 
-    -   The current page number.
-    -   Default: `1`
+-   `headerCell.<ColumnKey>`: Slot for customizing the content of a specific column header.
+-   `headerCellContent.<ColumnKey>`: Slot for customizing the content within a specific column header cell.
+-   `headers`: Slot for customizing the entire table header, containing all column headers.
+-   `checkbox`: Slot for customizing the checkbox used for selecting all items.
 
--   `perPageOptions?: number[]` (Optional)
+### SlotRow
 
-    -   An array of options for the number of items to display per page.
-    -   Default: `[5, 10, 20, 30]`
+The SlotRow component defines various slots for customizing the table rows.
 
--   `loading?: boolean` (Optional)
+-   `itemCell.<ItemKey>`: Slot for customizing the content of a specific item cell within a row.
+-   `itemCellContent.<ItemKey>`: Slot for customizing the content within a specific item cell.
+-   `rows`: Slot for customizing the entire table rows, containing all rows.
+-   `row`: Slot for customizing a specific row.
+-   `checkbox`: Slot for customizing the checkbox used for selecting a specific row.
 
-    -   Indicates whether the table is in a loading state.
-    -   Default: `false`
-
--   `selectable?: boolean` (Optional)
-
-    -   Indicates whether items in the table are selectable.
-    -   Default: `false`
-
--   `caption?: string` (Optional)
-
-    -   A caption for the table.
-    -   Default: `''`
-
--   `summary?: string` (Optional)
-    -   A summary for the table.
-    -   Default: `''`
+You can use these Markdown tables to document the props, emits, and slot definitions for the data table and pagination components in your Vue 3 project.

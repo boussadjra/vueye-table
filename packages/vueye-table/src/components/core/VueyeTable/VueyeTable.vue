@@ -26,7 +26,7 @@ const rowItemSlots = Object.keys(slots).filter((slot) => slot.startsWith('itemCe
 
 const { pagination, updateCurrentPage, updatePerPage } = usePagination(props, emit)
 
-const { bodyRows } = useBodyRows(props.data, _columnHeaders, pagination)
+const { bodyRows } = useBodyRows(props, _columnHeaders, pagination)
 
 const { selected: _selected, selectAll } = useSelection(props, bodyRows, emit)
 </script>

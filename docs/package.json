@@ -9,7 +9,7 @@
     },
     "dependencies": {
         "@vueuse/core": "^10.4.1",
-        "vueye-table": "^2.0.0-alpha.3"
+        "vueye-table": "^2.0.0-alpha.7"
     },
     "devDependencies": {
         "@egoist/tailwindcss-icons": "^1.2.0",

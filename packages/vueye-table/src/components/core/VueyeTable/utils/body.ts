@@ -51,3 +51,15 @@ export function nestedObjectTransformer(obj: object) {
     }
     return result
 }
+
+export function deepValues(obj: any): any[] {
+    const values: any[] = []
+    for (const key in obj) {
+        if (typeof obj[key] === 'object') {
+            values.push(...deepValues(obj[key]))
+        } else {
+            values.push(obj[key])
+        }
+    }
+    return values
+}
