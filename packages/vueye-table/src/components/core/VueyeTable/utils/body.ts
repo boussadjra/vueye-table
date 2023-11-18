@@ -1,5 +1,4 @@
-import { ColumnHeader, Row } from '../types'
-
+import type { ColumnHeader, FlattenObject, NativeType } from '../types'
 import { getHeaderKeys } from './header'
 
 const getObjectValueByPath = (obj: any, path: string) => {
@@ -15,20 +14,22 @@ const getObjectValueByPath = (obj: any, path: string) => {
     return current
 }
 
-export function getBodyRows(rows: Row[], headers: ColumnHeader[], start = 0, end = rows.length) {
-    return rows
-        .map((row) => {
-            return getHeaderKeys(headers)
-                .map((key) => {
-                    return {
-                        [key]: getObjectValueByPath(row, key),
-                    }
-                })
-                .reduce((acc, cur) => {
-                    return { ...acc, ...cur }
-                }, {})
-        })
-        .slice(start, end)
+export function getBodyRows<TData>(rows: TData[], headers: ColumnHeader[]) {
+    return rows.map((row) => {
+        return getHeaderKeys(headers)
+            .map((key) => {
+                return {
+                    [key]: getObjectValueByPath(row, key),
+                }
+            })
+            .reduce((acc, cur) => {
+                return { ...acc, ...cur }
+            }, {})
+    }) as FlattenObject<TData>[]
+}
+
+export function paginateRows<TData>(rows: TData[], start = 0, end = rows.length) {
+    return rows.slice(start, end)
 }
 
 export function nestedObjectTransformer(obj: object) {
@@ -62,4 +63,8 @@ export function deepValues(obj: any): any[] {
         }
     }
     return values
+}
+
+export function isPrimitive(value: NativeType) {
+    return typeof value !== 'function' || typeof value !== 'object'
 }

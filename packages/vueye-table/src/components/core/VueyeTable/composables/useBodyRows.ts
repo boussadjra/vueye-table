@@ -1,7 +1,7 @@
-import { ColumnHeader, Row } from '../types'
+import { ColumnHeader } from '../types'
 
 import { MaybeRef } from 'vue'
-import { getBodyRows } from '../utils'
+import { getBodyRows, paginateRows } from '../utils'
 import { VueyeTableProps } from '../api'
 
 interface PaginationProps {
@@ -9,27 +9,23 @@ interface PaginationProps {
     currentPage: number
 }
 
-export function useBodyRows(
-    props: VueyeTableProps,
+export function useBodyRows<TData extends Record<string, unknown>, TColumn extends ColumnHeader<TData>>(
+    props: VueyeTableProps<TData, TColumn>,
 
     headers: MaybeRef<ColumnHeader[]>,
     pagination: MaybeRef<PaginationProps>
 ) {
-    const rows = computed(() => {
-        if (props.filterQuery) {
-            return props.data.filter((item) => props.filterMethod?.(props.filterQuery, item))
-        } else {
-            return props.data
-        }
-    })
     const bodyRows = computed(() => {
         const start = toValue(pagination).perPage * (toValue(pagination).currentPage - 1)
         const end = toValue(pagination).perPage * toValue(pagination).currentPage
 
-        return getBodyRows(toValue(rows), toValue(headers), start, end)
+        const rows = getBodyRows(toValue(props.data), toValue(headers))
+        const filteredRows = rows.filter((item) => props.filterMethod?.(props.filterQuery, item, props.filterBy))
+        return paginateRows(filteredRows, start, end)
     })
 
     return {
         bodyRows,
+        rowsCount: computed(() => toValue(props.data).length),
     }
 }

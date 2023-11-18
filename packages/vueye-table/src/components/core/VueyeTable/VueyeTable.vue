@@ -1,5 +1,12 @@
-<script setup lang="ts" generic="TData extends Record<string, unknown>, TColumn extends ColumnHeader">
-import { VueyeTableProps, vueyeTablePropDefaults, VueyeTableSlots, VueyeTableEmits } from './api'
+<script
+    setup
+    lang="ts"
+    generic="
+        TData extends Record<string, unknown> = Record<string, unknown>,
+        TColumn extends ColumnHeader<TData> = ColumnHeader<TData>
+    "
+>
+import { VueyeTableProps, VueyeTableSlots, VueyeTableEmits, getVueyeTablePropDefaults } from './api'
 import { VueyeBody, VueyeHead, VueyePagination } from './components'
 import { useBodyRows, useHeaders, usePagination } from './composables'
 import type { ColumnHeader } from './types'
@@ -9,7 +16,7 @@ defineOptions({
     inheritAttrs: false,
 })
 
-const props = withDefaults(defineProps<VueyeTableProps<TColumn, TData>>(), vueyeTablePropDefaults)
+const props = withDefaults(defineProps<VueyeTableProps<TData, TColumn>>(), getVueyeTablePropDefaults<TData, TColumn>())
 
 const emit = defineEmits<VueyeTableEmits<TData>>()
 
@@ -26,7 +33,7 @@ const rowItemSlots = Object.keys(slots).filter((slot) => slot.startsWith('itemCe
 
 const { pagination, updateCurrentPage, updatePerPage } = usePagination(props, emit)
 
-const { bodyRows } = useBodyRows(props, _columnHeaders, pagination)
+const { bodyRows, rowsCount } = useBodyRows(props, _columnHeaders, pagination)
 
 const { selected: _selected, selectAll } = useSelection(props, bodyRows, emit)
 </script>
@@ -87,12 +94,12 @@ const { selected: _selected, selectAll } = useSelection(props, bodyRows, emit)
                 </caption>
             </slot>
         </table>
-        <slot name="pagination" :pagination="{ ...pagination, perPageOptions, total: data.length }">
+        <slot name="pagination" :pagination="{ ...pagination, perPageOptions, total: rowsCount }">
             <VueyePagination
                 :perPage="pagination.perPage"
                 :currentPage="pagination.currentPage"
                 :perPageOptions="perPageOptions"
-                :total="data.length"
+                :total="rowsCount"
                 @update:current-page="updateCurrentPage"
                 @update:per-page="updatePerPage"
                 class="table__pagination"

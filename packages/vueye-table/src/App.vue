@@ -142,32 +142,28 @@ const columns = defineTableColumnHeaders([
     },
 ])
 
-const search = ref('b')
-
-function filterMethod(query: string | undefined, item: any): boolean {
-    return item.name.first_name.toLowerCase().includes(query?.toLowerCase())
-}
+const search = ref('')
 </script>
 
 <template>
     <div class="w-full">
         <AppHeader class="docs__header" />
         <main class="flex justify-center flex-col items-center p-4">
-            <input
-                type="text"
-                v-model="search"
-                class="w-1/2 p-2 border bg-primary-50 dark:bg-primary-950 border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
+            <input v-model="search" class="input" placeholder="Search..." aria-label="Search" />
             <VueyeTable
                 class="tbl"
                 :data="items"
                 :column-headers="columns"
                 :per-page="5"
                 :filter-query="search"
-                :filter-method="filterMethod"
+                :filter-by="['name.first_name', 'age']"
             >
             </VueyeTable>
         </main>
     </div>
 </template>
-<style></style>
+<style scoped>
+.input {
+    @apply p-2 border bg-primary-50 dark:bg-primary-950 border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent;
+}
+</style>
