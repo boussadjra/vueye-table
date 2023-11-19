@@ -1,4 +1,4 @@
-import { ColumnHeader } from '../types'
+import { ColumnHeader, FlattenKeys } from '../types'
 
 import { MaybeRef } from 'vue'
 import { getBodyRows, paginateRows } from '../utils'
@@ -11,7 +11,6 @@ interface PaginationProps {
 
 export function useBodyRows<TData extends Record<string, unknown>, TColumn extends ColumnHeader<TData>>(
     props: VueyeTableProps<TData, TColumn>,
-
     headers: MaybeRef<ColumnHeader[]>,
     pagination: MaybeRef<PaginationProps>
 ) {
@@ -20,7 +19,13 @@ export function useBodyRows<TData extends Record<string, unknown>, TColumn exten
         const end = toValue(pagination).perPage * toValue(pagination).currentPage
 
         const rows = getBodyRows(toValue(props.data), toValue(headers))
-        const filteredRows = rows.filter((item) => props.filterMethod?.(props.filterQuery, item, props.filterBy))
+        const filterBy = computed(() => {
+            if (props.filterBy === undefined || props.filterBy.length === 0) {
+                return Object.keys(rows[0]) as FlattenKeys<TData>[]
+            }
+            return props.filterBy
+        })
+        const filteredRows = rows.filter((item) => props.filterMethod?.(props.filterQuery, item, toValue(filterBy)))
         return paginateRows(filteredRows, start, end)
     })
 

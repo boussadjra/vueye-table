@@ -53,6 +53,7 @@ export function getVueyeTablePropDefaults<
         filterBy: undefined,
         filterMethod: (query, item, filterBy) => {
             if (query === '' || query === undefined || filterBy === undefined || filterBy.length === 0) return true
+
             const found = filterBy?.some((key) => {
                 const value = item[key] as NativeType
 

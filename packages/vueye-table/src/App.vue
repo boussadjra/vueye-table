@@ -150,14 +150,7 @@ const search = ref('')
         <AppHeader class="docs__header" />
         <main class="flex justify-center flex-col items-center p-4">
             <input v-model="search" class="input" placeholder="Search..." aria-label="Search" />
-            <VueyeTable
-                class="tbl"
-                :data="items"
-                :column-headers="columns"
-                :per-page="5"
-                :filter-query="search"
-                :filter-by="['name.first_name', 'age']"
-            >
+            <VueyeTable class="tbl" :data="items" :column-headers="columns" :per-page="5" :filter-query="search">
             </VueyeTable>
         </main>
     </div>

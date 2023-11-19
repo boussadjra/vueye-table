@@ -132,10 +132,6 @@ const columns = defineTableColumnHeaders([
 ])
 
 const search = ref('b')
-
-function filterMethod(query: string | undefined, item: any): boolean {
-    return item.name.first_name.toLowerCase().includes(query?.toLowerCase())
-}
 </script>
 
 <template>
@@ -143,7 +139,8 @@ function filterMethod(query: string | undefined, item: any): boolean {
         <Variant title="Default">
             <p>You can enable filtering by setting the <code>`filter-query`</code> prop to a string.</p>
             <input v-model="search" class="input" placeholder="Search..." />
-            <VueyeTable :data="items" :column-headers="columns" :filter-query="search"> </VueyeTable>
+            <VueyeTable class="tbl" :data="items" :column-headers="columns" :per-page="5" :filter-query="search">
+            </VueyeTable>
         </Variant>
 
         <Variant title="Custom filter method">
@@ -153,8 +150,7 @@ function filterMethod(query: string | undefined, item: any): boolean {
             </p>
             <input v-model="search" class="input" placeholder="Search..." />
 
-            <VueyeTable :data="items" :column-headers="columns" :filter-query="search" :filter-method="filterMethod">
-            </VueyeTable>
+            <VueyeTable :data="items" :column-headers="columns" :filter-query="search"> </VueyeTable>
         </Variant>
     </Story>
 </template>
