@@ -11,9 +11,9 @@ export function useSelection<TData extends Record<string, any>>(
             return props.selected === null || props.selected?.length === 0
                 ? 'none'
                 : props.selected?.length === props.data.length ||
-                  (props.selectMode === 'page' && props.selected?.length === bodyRows.value.length)
-                ? 'all'
-                : 'indeterminate'
+                    (props.selectMode === 'page' && props.selected?.length === bodyRows.value.length)
+                  ? 'all'
+                  : 'indeterminate'
         },
         set(value) {
             if (value === 'all') {
