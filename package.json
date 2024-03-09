@@ -13,6 +13,8 @@
         "story:dev": "pnpm --filter vueye-table story:dev",
         "story:build": "pnpm --filter vueye-table story:build",
         "story:preview": "pnpm --filter vueye-table story:preview",
+        "nuxt:dev": "pnpm --filter vueye-table-nuxt dev",
+        "nuxt:build": "pnpm --filter vueye-table-nuxt dev:build",
         "dev": "pnpm --filter vueye-table dev",
         "build": "pnpm --filter vueye-table build",
         "test:unit": "pnpm --filter vueye-table test:unit",
@@ -20,7 +22,7 @@
         "commit": "git-cz",
         "release": "bumpp package.json packages/**/package.json docs/package.json --tag --tag-name v${version}",
         "pub:release": "cd packages/vueye-table && pnpm pub:release",
-        "up": "taze -w",
+        "up": "taze -r -w",
         "clean-all": "rimraf node_modules && rimraf packages/*/node_modules && rimraf docs/node_modules",
         "prepare": "pnpm simple-git-hooks",
         "lint": "eslint . --ignore-path .gitignore",
@@ -73,7 +75,7 @@
         "commit-msg": "pnpm commitlint --edit ${1}"
     },
     "lint-staged": {
-        "*.{js,ts,vue,css}": [
+        "*.{js,ts,vue}": [
             "pnpm run lint:fix",
             "pnpm run format"
         ]

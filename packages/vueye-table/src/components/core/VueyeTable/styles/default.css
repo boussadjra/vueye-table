@@ -1,0 +1,240 @@
+:root {
+    --table-bg-color: #ffffff; /* Table background color */
+    --table-text-color: #52657a; /* Table text color from theme 1 */
+    --table-head-bg-color: #d9e2ec; /* Header background color from theme 1 */
+    --table-head-text-color: #52657a; /* Header text color from theme 1 */
+    --table-border-color: #bcccdc; /* Table border color from theme 1 */
+    --table-row-hover-bg-color: #bcccdc; /* Row hover background color from theme 1 */
+    --table-row-hover-text-color: #52657a; /* Row hover text color from theme 1 */
+    --table-row-selected-bg-color: #9fb3ca; /* Selected row background color from theme 1 */
+    --table-row-selected-text-color: #fff; /* Selected row text color from theme 1 */
+    --button-bg-color: #d9e2ec; /* light grayish blue */
+    --button-text-color: #52657a; /* less contrasting dark grayish blue */
+    --button-bg-color-hover: #bcccdc; /* medium grayish blue */
+    --button-bg-color-active: #9fb3ca; /* medium-dark grayish blue */
+    --button-text-color-active: #fff; /* white */
+    --button-bg-color-disabled: #bcccdc; /* medium grayish blue */
+    --dropdown-bg-color: #d9e2ec; /* light grayish blue */
+    --dropdown-border-color: #bcccdc; /* medium grayish blue */
+    --dropdown-item-bg-color-hover: #bcccdc; /* medium grayish blue */
+
+    --table-cell-padding: 0.5rem 1rem; /* Table padding */
+    --table-margin: 0; /* Table margin */
+    --table-font-family: 'Arial', sans-serif; /* Font family for table */
+    --table-font-size: 16px; /* Font size for table */
+    --table-font-weight: normal; /* Font weight for table */
+    --table-line-height: 1.5; /* Line height for table */
+}
+
+.dark {
+    --table-bg-color: #031e30; /* Table background color */
+    --table-text-color: #ffffff; /* Table text color from theme 2 */
+    --table-head-bg-color: #082c49; /* Header background color from theme 2 */
+    --table-head-text-color: #ffffff; /* Header text color from theme 2 */
+    --table-border-color: #034f82; /* Table border color from theme 2 */
+    --table-row-hover-bg-color: #022e4b; /* Row hover background color from theme 2 */
+    --table-row-hover-text-color: #ffffff; /* Row hover text color from theme 2 */
+    --table-row-selected-bg-color: #01456f; /* Selected row background color from theme 2 */
+    --table-row-selected-text-color: #ffffff; /* Selected row text color from theme 2 */
+    --button-bg-color: #042440; /* dark grayish blue */
+    --button-text-color: #ffffff; /* white */
+    --button-bg-color-hover: #022e4b; /* medium grayish blue */
+    --button-bg-color-active: #01456f; /* medium-dark grayish blue */
+    --button-text-color-active: #ffffff; /* white */
+    --button-bg-color-disabled: #022e4b; /* medium grayish blue */
+    --dropdown-bg-color: #042440; /* dark grayish blue */
+    --dropdown-border-color: #022e4b; /* medium grayish blue */
+    --dropdown-item-bg-color-hover: #022e4b; /* medium grayish blue */
+}
+
+.table {
+    width: 100%;
+    border-collapse: collapse;
+    border-spacing: 0;
+    font-size: 0.9rem;
+    background-color: var(--table-bg-color);
+}
+
+.table__body {
+    background-color: var(--table-bg-color);
+}
+
+.table__wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    font-family: Arial, sans-serif;
+}
+
+.table__caption {
+    caption-side: top;
+    font-weight: bold;
+    text-align: left;
+}
+
+.table__summary {
+    caption-side: bottom;
+    font-weight: bold;
+    text-align: left;
+}
+
+.table__btn {
+    border: none;
+    background-color: var(--button-bg-color);
+    color: var(--button-text-color);
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    border-radius: 0.25rem;
+    height: 100%;
+}
+
+.table__pagination {
+    align-self: center;
+}
+
+.table__head {
+    background-color: var(--table-head-bg-color);
+    color: var(--table-head-text-color);
+}
+
+.table__row {
+    transition: background-color 0.3s ease;
+}
+
+.table__cell {
+    padding: var(--table-cell-padding);
+    text-align: left;
+    border: 1px solid var(--table-border-color);
+    color: var(--table-cell-color);
+}
+
+.table__cell--head {
+    text-align: center;
+}
+
+.table__cell--loading {
+    text-align: center;
+    width: 100%;
+    padding-inline: 50%;
+}
+
+.table__label {
+    display: inline-block;
+    vertical-align: middle;
+}
+
+.table__label--head {
+    font-weight: 500;
+}
+
+.table__checkbox {
+    width: 1.5rem;
+    height: 1.5rem;
+}
+
+/* Pagination */
+.table__pagination-wrapper {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1em;
+}
+
+.table__pagination-btn-list {
+    display: flex;
+    list-style: none;
+    padding: 0;
+    gap: 0.125rem;
+}
+
+.table__pagination-btn {
+    border: none;
+    background-color: var(--button-bg-color);
+    color: var(--button-text-color);
+    padding: 0.5rem 1rem;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.table__pagination-btn:hover {
+    background-color: var(--button-bg-color-hover);
+}
+
+.table__pagination-btn--current {
+    background-color: var(--button-bg-color-active);
+    color: var(--button-text-color-active);
+}
+
+.table__pagination-btn:disabled {
+    background-color: var(--button-bg-color-disabled);
+    cursor: not-allowed;
+    opacity: 0.5;
+}
+
+.table__pagination-details {
+    margin: 0 1em;
+}
+
+/* dropdown */
+.table__dropdown-wrapper {
+    position: relative;
+    display: inline-block;
+}
+
+.table__dropdown-trigger {
+    background-color: var(--button-bg-color);
+    border: none;
+    padding: 0.5rem 1rem;
+    cursor: pointer;
+    border-radius: 0.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.table__dropdown-overlay {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+}
+
+.table__dropdown-menu {
+    position: absolute;
+    left: 0;
+    background-color: var(--dropdown-bg-color);
+    border: 1px solid var(--dropdown-border-color);
+    width: 200px;
+    box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
+    z-index: 1;
+}
+
+.table__dropdown-menu--top {
+    bottom: 100%;
+}
+
+.table__dropdown-menu:not(.table__dropdown-menu--top) {
+    top: 100%;
+}
+
+.table__dropdown-menu-item {
+    display: block;
+    padding: 10px;
+    width: 100%;
+    box-sizing: border-box;
+    text-align: left;
+    border: none;
+    background: none;
+    cursor: pointer;
+}
+
+.table__dropdown-menu-item--selected,
+.table__dropdown-menu-item:hover {
+    background-color: var(--dropdown-item-bg-color-hover);
+}
+/* dropdown end */
+/* Pagination end */

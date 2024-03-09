@@ -4,8 +4,9 @@ import { toggleDark, isDark } from '../../composables'
 
 <template>
     <button class="h-6 w-6" @click="() => toggleDark()">
-        <span :class="isDark ? 'i-tabler-sun' : 'i-tabler-moon'" class="text-2xl" />
+        <span v-if="isDark">🌞</span>
+        <span v-else>🌚</span>
     </button>
 </template>
 
-<style scoped></style>
+<style></style>

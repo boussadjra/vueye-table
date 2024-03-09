@@ -145,3 +145,7 @@ code[v-pre] {
 .docs__main {
     grid-area: main;
 }
+
+p {
+    @apply text-base my-2;
+}

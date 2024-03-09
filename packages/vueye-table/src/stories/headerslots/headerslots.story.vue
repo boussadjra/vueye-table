@@ -53,7 +53,7 @@ const columns = defineTableColumnHeaders([
                                     :colspan="columnHeader.colSpan"
                                     :rowspan="columnHeader.rowSpan"
                                     :scope="columnHeader.scope"
-                                    class="th"
+                                    class="th p-2 border opacity-70 border-gray-200 dark:border-gray-700 dark:bg-blue-800 dark:text-blue-200 bg-blue-400 text-gray-950"
                                     :class="columnHeader.className"
                                 >
                                     <slot :name="`headerCellContent.${columnHeader.key}`" :headerItem="columnHeader">
@@ -67,14 +67,18 @@ const columns = defineTableColumnHeaders([
                     </thead>
                 </template>
                 <template #itemCell.name.first_name="{ itemCell }">
-                    <td class="!bg-indigo-800">{{ itemCell.name.first_name }}</td>
+                    <td class="bg-indigo-200 dark:bg-indigo-800 text-center p-1">{{ itemCell.name.first_name }}</td>
                 </template>
                 <template #itemCell.name.last_name="{ itemCell }">
-                    <td class="!bg-green-900 text-green-200">{{ itemCell.name.last_name }}</td>
+                    <td class="bg-green-300 text-green-950 dark:bg-green-900 dark:text-green-200">
+                        {{ itemCell.name.last_name }}
+                    </td>
                 </template>
 
                 <template #itemCell.country="{ itemCell }">
-                    <td class="!bg-blue-800 text-blue-400">{{ itemCell.country }}</td>
+                    <td class="dark:bg-blue-800 dark:text-blue-200 bg-blue-300 text-blue-950">
+                        {{ itemCell.country }}
+                    </td>
                 </template>
             </VueyeTable>
             <p>
@@ -86,7 +90,7 @@ const columns = defineTableColumnHeaders([
             <p>You can use the <code>`headerCell`</code> slot to customize the header cell.</p>
             <VueyeTable :data="items" :column-headers="columns">
                 <template #headerCell.name="{ headerItem }">
-                    <th class="th" :colspan="headerItem.colSpan" :rowspan="headerItem.rowSpan">
+                    <th class="bg-blue-800 p-4 text-white" :colspan="headerItem.colSpan" :rowspan="headerItem.rowSpan">
                         {{ headerItem.label }}
                     </th>
                 </template>
@@ -126,9 +130,16 @@ const columns = defineTableColumnHeaders([
         </Variant>
     </Story>
 </template>
-
-<style scoped>
-.th {
-    @apply bg-blue-200 text-blue-500 dark:bg-blue-800 dark:text-blue-200;
+<style>
+p {
+    @apply my-2;
+}
+th {
+    @apply p-2;
+}
+td {
+    padding: 0.5rem;
+    border: 1px solid #e2e8f0;
+    text-align: center;
 }
 </style>

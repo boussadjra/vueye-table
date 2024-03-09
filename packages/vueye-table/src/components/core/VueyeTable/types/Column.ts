@@ -2,6 +2,7 @@ import { DeepKeys } from './Utils'
 
 export type ColumnHeader<TData extends Record<string, unknown> = Record<string, unknown>> = {
     key: string
+    fullKey?: string
     label: string
     children?: ColumnHeader<TData>[]
 
@@ -14,6 +15,8 @@ export type ColumnHeader<TData extends Record<string, unknown> = Record<string, 
     colSpan?: number
 
     scope?: string
+
+    sortable?: true
 }
 
 export function defineTableColumnHeaders<TData extends Record<string, unknown>>(

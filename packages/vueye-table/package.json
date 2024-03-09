@@ -11,8 +11,12 @@
     ],
     "keywords": [
         "vue",
-        "vite",
-        "template"
+        "vue3",
+        "vue3 component",
+        "vue3 table",
+        "vue3 data table",
+        "vue3 datatable",
+        "vueye-table"
     ],
     "type": "module",
     "main": "./dist/vueye-table.umd.cjs",

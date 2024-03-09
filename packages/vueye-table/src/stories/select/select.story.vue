@@ -47,6 +47,7 @@ const selected = ref([])
     <Story title="Selection" icon="lucide:check-square">
         <Variant title="Default">
             <p>Binding the <code>selected</code> prop to an array will enable selection.</p>
+
             <VueyeTable :data="items" :column-headers="columns" v-model:selected="selected"> </VueyeTable>
         </Variant>
 
@@ -56,6 +57,7 @@ const selected = ref([])
                 <code>`all`</code>. which selects all the rows across all pages.
             </p>
             <p>You can also use <code>`page`</code> to select all the rows on the current page</p>
+
             <VueyeTable :data="items" :column-headers="columns" v-model:selected="selected" select-mode="page">
             </VueyeTable>
         </Variant>

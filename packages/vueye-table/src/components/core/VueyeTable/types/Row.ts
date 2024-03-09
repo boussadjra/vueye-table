@@ -14,6 +14,7 @@ export type SlotRowItemContent<T> = {
 
 export type SlotRow<T extends Record<string, any> = Record<string, string>> = SlotRowItem<T> &
     SlotRowItemContent<T> & {
+        body: (props: { rows: T[] }) => any
         rows: (props: { rows: T[] }) => any
         row: (props: { row: T }) => any
         checkbox: (props: { row: T }) => any

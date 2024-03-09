@@ -1,6 +1,6 @@
 export type OptionValue = string | number | boolean | object | symbol
 
-interface Option {
+export interface Option {
     content: OptionValue
     label: string
 }

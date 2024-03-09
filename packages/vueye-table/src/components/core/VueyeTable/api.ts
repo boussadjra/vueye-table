@@ -1,11 +1,19 @@
 import { PaginationEmits, PaginationProps } from './components/VueyePagination/api'
 import { InferDefaults, Row, SlotHeader, SlotRow, FlattenKeys, ColumnHeader, FlattenObject, NativeType } from './types'
-import { deepValues, isPrimitive } from './utils'
+import { isPrimitive } from './utils'
+
 export type FilterMethod<TData extends Record<string, unknown>> = (
     query: string | undefined,
     item: FlattenObject<TData>,
     filterBy?: FlattenKeys<TData>[]
 ) => boolean | undefined
+
+export function defineFilterMethod<TData extends Record<string, unknown>>(filterMethod: FilterMethod<TData>) {
+    return (query: string | undefined, item: FlattenObject<TData>, filterBy?: FlattenKeys<TData>[]) => {
+        return filterMethod(query, item, filterBy)
+    }
+}
+
 export type VueyeTableProps<
     TData extends Record<string, unknown> = Record<string, unknown>,
     TColumn extends ColumnHeader<TData> = ColumnHeader<TData>,

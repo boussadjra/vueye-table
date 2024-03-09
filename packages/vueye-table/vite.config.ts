@@ -38,7 +38,7 @@ export default defineConfig({
         watch: {
             include: [resolve(__dirname, 'src')],
         },
-
+        cssCodeSplit: false,
         rollupOptions: {
             external: ['vue'],
             output: {
@@ -46,6 +46,7 @@ export default defineConfig({
                 globals: {
                     vue: 'Vue',
                 },
+                assetFileNames: 'default.css',
             },
         },
     },

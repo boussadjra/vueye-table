@@ -14,4 +14,5 @@ export const headPropDefaults: InferDefaults<HeadProps> = {
 
 export type HeadEmits = {
     (event: 'update:select', value: SelectState): void
+    (event: 'sort', value: { key: any; desc: boolean }): void
 }

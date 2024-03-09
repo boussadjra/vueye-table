@@ -76,6 +76,13 @@ const columns = defineTableColumnHeaders([
 </template>
 
 <style scoped>
+td {
+    @apply text-center p-1 bg-gray-200 dark:bg-gray-700;
+}
+
+tr:nth-child(odd) {
+    @apply opacity-80;
+}
 .td.first_name {
     @apply bg-purple-200 dark:bg-purple-700;
 }
@@ -83,10 +90,10 @@ const columns = defineTableColumnHeaders([
     @apply bg-amber-200 dark:bg-amber-700;
 }
 .td.young {
-    @apply bg-green-200 dark:bg-indigo-700;
+    @apply bg-indigo-200 dark:bg-indigo-700;
 }
 .td.old {
-    @apply bg-red-200 dark:bg-teal-700;
+    @apply bg-teal-200 dark:bg-teal-700;
 }
 .td.country {
     @apply bg-blue-200 dark:bg-blue-700;

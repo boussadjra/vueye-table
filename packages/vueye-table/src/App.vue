@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import AppHeader from './components/app/layout/AppHeader.vue'
 
-import { VueyeTable, defineTableColumnHeaders } from './components/core/VueyeTable'
+import { VueyeTable, defineTableColumnHeaders, defineFilterMethod } from './components/core/VueyeTable'
 //import { faker } from '@faker-js/faker'
 // const items = Array.from({ length: 11 }, () => ({
 //     id: faker.number.int({ min: 1, max: 100 }),
@@ -143,20 +143,37 @@ const columns = defineTableColumnHeaders([
 ])
 
 const search = ref('')
+
+const customFilterMethod = defineFilterMethod<(typeof items)[0]>((query, item, filterBy) => {
+    if (query && filterBy?.includes('country')) {
+        return item.country.toLowerCase().startsWith(query.toLowerCase())
+    }
+    return true
+})
 </script>
 
 <template>
-    <div class="w-full">
+    <div>
         <AppHeader class="docs__header" />
-        <main class="flex justify-center flex-col items-center p-4">
+        <main class="">
             <input v-model="search" class="input" placeholder="Search..." aria-label="Search" />
-            <VueyeTable class="tbl" :data="items" :column-headers="columns" :per-page="5" :filter-query="search">
-            </VueyeTable>
+            <VueyeTable
+                :data="items"
+                :column-headers="columns"
+                :per-page="5"
+                :filter-query="search"
+                :filter-method="customFilterMethod"
+                :filter-by="['country']"
+            />
         </main>
     </div>
 </template>
 <style scoped>
-.input {
-    @apply p-2 border bg-primary-50 dark:bg-primary-950 border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent;
+main {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    justify-content: center;
+    align-items: center;
 }
 </style>

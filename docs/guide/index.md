@@ -1,4 +1,0 @@
----
-home: false
-sidebar: auto
----

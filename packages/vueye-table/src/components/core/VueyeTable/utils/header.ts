@@ -28,7 +28,8 @@ export function flatHeadersToRows(
     depth: number,
     rows: ColumnHeader[][] = [],
     currentRow = 0,
-    level: number = 0
+    level: number = 0,
+    parentKey: string = ''
 ) {
     headers.forEach((header) => {
         if (!rows[currentRow]) {
@@ -44,15 +45,17 @@ export function flatHeadersToRows(
                 scope: 'colgroup',
             })
 
-            flatHeadersToRows(children, depth, rows, currentRow + 1, level + 1)
+            flatHeadersToRows(children, depth, rows, currentRow + 1, level + 1, `${parentKey}${header.key}.`)
         } else {
             const rowSpan = depth - level
             rows[currentRow].push({
                 ...header,
                 key: header.key,
+                fullKey: `${parentKey}${header.key}`,
                 label: header.label,
                 rowSpan,
                 scope: 'col',
+                sortable: Object.prototype.hasOwnProperty.call(header, 'sortable') ? header.sortable : true,
             })
         }
     })

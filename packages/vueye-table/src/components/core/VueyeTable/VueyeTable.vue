@@ -33,7 +33,7 @@ const rowItemSlots = Object.keys(slots).filter((slot) => slot.startsWith('itemCe
 
 const { pagination, updateCurrentPage, updatePerPage } = usePagination(props, emit)
 
-const { bodyRows, rowsCount } = useBodyRows(props, _columnHeaders, pagination)
+const { bodyRows, rowsCount, onSort } = useBodyRows(props, _columnHeaders, pagination)
 
 const { selected: _selected, selectAll } = useSelection(props, bodyRows, emit)
 </script>
@@ -47,7 +47,12 @@ const { selected: _selected, selectAll } = useSelection(props, bodyRows, emit)
                     }}
                 </caption>
             </slot>
-            <VueyeHead :columnHeaders="headers" :selectable="selected !== null" v-model:select="selectAll">
+            <VueyeHead
+                :columnHeaders="headers"
+                :selectable="selected !== null"
+                v-model:select="selectAll"
+                @sort="onSort"
+            >
                 <template #headers="scope">
                     <slot name="headers" v-bind="scope" />
                 </template>
@@ -108,14 +113,4 @@ const { selected: _selected, selectAll } = useSelection(props, bodyRows, emit)
         </slot>
     </div>
 </template>
-
-<style src="./styles/index.css"></style>
-<style>
-.table__wrapper {
-    @apply flex flex-col w-max;
-}
-
-.table__pagination {
-    @apply mt-4 self-end;
-}
-</style>
+<style src="./styles/default.css"></style>

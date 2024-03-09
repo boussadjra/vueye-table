@@ -31,17 +31,36 @@ const columns = defineTableColumnHeaders([
 </script>
 <template>
     <Story title="Loading" icon="lucide:loader">
-        <p>When you're loading data, you can use the <code>loading</code> prop to display a loading indicator.</p>
-        <VueyeTable :data="[]" loading />
-        <div class="my-12" />
+        <Variant title="Default">
+            <p>When you're loading data, you can use the <code>loading</code> prop to display a loading indicator.</p>
+            <VueyeTable :data="[]" loading />
+            <div class="my-12" />
+        </Variant>
 
-        <p>You can also use the `<code>loading</code>` slot to display a custom loading indicator.</p>
-        <VueyeTable :data="[]" :column-headers="columns">
-            <template #loading>
-                <p class="text-center text-red-400 lucide:empty">Loading...</p>
-            </template>
-        </VueyeTable>
+        <Variant title="Custom loader">
+            <p>You can also use the `<code>loading</code>` slot to display a custom loading indicator.</p>
+            <VueyeTable :data="[]" :column-headers="columns" loading>
+                <template #loading>
+                    <span class="text-center text-blue-400">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24">
+                            <path
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48l2.83-2.83"
+                            />
+                        </svg>
+                    </span>
+                </template>
+            </VueyeTable>
+        </Variant>
     </Story>
 </template>
 
-<style scoped></style>
+<style scoped>
+p {
+    margin-bottom: 1.5rem;
+}
+</style>

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { VueyeTable, defineTableColumnHeaders } from '@/components/core/VueyeTable'
+import { VueyeTable, defineTableColumnHeaders, defineFilterMethod } from '@/components/core/VueyeTable'
 import { ref } from 'vue'
 const items = [
     {
@@ -131,26 +131,42 @@ const columns = defineTableColumnHeaders([
     },
 ])
 
-const search = ref('b')
+const search = ref('')
+
+const customFilterMethod = defineFilterMethod<(typeof items)[0]>((query, item, filterBy) => {
+    if (query && filterBy?.includes('country')) {
+        return item.country.toLowerCase().startsWith(query.toLowerCase())
+    }
+    return true
+})
 </script>
 
 <template>
     <Story title="Filter" icon="lucide:filter">
         <Variant title="Default">
             <p>You can enable filtering by setting the <code>`filter-query`</code> prop to a string.</p>
-            <input v-model="search" class="input" placeholder="Search..." />
-            <VueyeTable class="tbl" :data="items" :column-headers="columns" :per-page="5" :filter-query="search">
+            <input v-model="search" class="input my-2" placeholder="Search..." />
+            <VueyeTable class="tbl mt-2" :data="items" :column-headers="columns" :per-page="5" :filter-query="search">
             </VueyeTable>
         </Variant>
 
         <Variant title="Custom filter method">
-            <p>
-                You can also use a custom filter method by using the <code>`filter-method`</code> prop. The method
-                receives the query and the item as arguments and should return a boolean.
-            </p>
-            <input v-model="search" class="input" placeholder="Search..." />
-
-            <VueyeTable :data="items" :column-headers="columns" :filter-query="search"> </VueyeTable>
+            <div class="space-y-2">
+                <p>
+                    You can also use a custom filter method by using the <code>`filter-method`</code> prop. The method
+                    receives the query and the item as arguments and should return a boolean.
+                </p>
+                <input v-model="search" class="input" placeholder="Search..." aria-label="Search" />
+                <VueyeTable
+                    class="tbl"
+                    :data="items"
+                    :column-headers="columns"
+                    :per-page="5"
+                    :filter-query="search"
+                    :filter-method="customFilterMethod"
+                    :filter-by="['country']"
+                />
+            </div>
         </Variant>
     </Story>
 </template>
