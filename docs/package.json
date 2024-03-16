@@ -32,5 +32,5 @@
         "shadcn-nuxt": "^0.10.0",
         "typescript": "~5.2.2"
     },
-    "version": "2.0.0-alpha.12"
+    "version": "2.0.0-alpha.13"
 }
