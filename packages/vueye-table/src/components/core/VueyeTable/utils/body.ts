@@ -1,5 +1,4 @@
-import type { ColumnHeader, FlattenObject, NativeType } from '../types'
-import { getHeaderKeys } from './header'
+import type { FlattenObject, NativeType } from '../types'
 
 const getObjectValueByPath = (obj: any, path: string) => {
     const paths = path.split('.')
@@ -14,17 +13,19 @@ const getObjectValueByPath = (obj: any, path: string) => {
     return current
 }
 
-export function getBodyRows<TData>(rows: TData[], headers: ColumnHeader[]) {
+export function getBodyRows<TData>(rows: TData[], headerKeys: string[]) {
     return rows.map((row) => {
-        return getHeaderKeys(headers)
-            .map((key) => {
-                return {
-                    [key]: getObjectValueByPath(row, key),
-                }
-            })
-            .reduce((acc, cur) => {
-                return { ...acc, ...cur }
-            }, {})
+        const mappedHeaderKeys = headerKeys.map((key) => {
+            return {
+                [key]: getObjectValueByPath(row, key),
+                // ...row,
+            }
+        })
+        const reducedHeaderKeys = mappedHeaderKeys.reduce((acc, cur) => {
+            return { ...acc, ...cur }
+        }, {})
+
+        return reducedHeaderKeys
     }) as FlattenObject<TData>[]
 }
 

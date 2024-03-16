@@ -17,6 +17,15 @@ export function usePagination(
         pagination.value.currentPage = props.currentPage || 1
     })
 
+    watch(
+        () => pagination.value.perPage,
+        (newPerPage, oldPerPage) => {
+            if (newPerPage !== oldPerPage) {
+                updateCurrentPage(1)
+            }
+        }
+    )
+
     function updateCurrentPage(page: number) {
         pagination.value.currentPage = page
 

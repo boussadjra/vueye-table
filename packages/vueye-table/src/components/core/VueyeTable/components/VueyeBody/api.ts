@@ -3,6 +3,7 @@ import { InferDefaults, Row } from '../../types'
 export type BodyProps = {
     loading: boolean
     bodyRows: Row[]
+    notListedKeys: string[]
     itemValue: string
     columnsLength: number
     selected: Row[] | null

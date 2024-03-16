@@ -2,16 +2,7 @@
 import AppHeader from './components/app/layout/AppHeader.vue'
 
 import { VueyeTable, defineTableColumnHeaders, defineFilterMethod } from './components/core/VueyeTable'
-//import { faker } from '@faker-js/faker'
-// const items = Array.from({ length: 11 }, () => ({
-//     id: faker.number.int({ min: 1, max: 100 }),
-//     name: {
-//         first_name: faker.person.firstName(),
-//         last_name: faker.person.lastName(),
-//     },
-//     age: faker.number.int({ min: 18, max: 100 }),
-//     country: faker.location.country() === 'Israel' ? 'Palestine' : faker.location.country(),
-// }))
+
 const items = [
     {
         id: 60,
@@ -20,7 +11,10 @@ const items = [
             last_name: 'Champlin',
         },
         age: 57,
-        country: 'Saint Kitts and Nevis',
+        address: {
+            country: 'Saint Kitts and Nevis',
+            city: 'Basseterre',
+        },
     },
     {
         id: 14,
@@ -29,7 +23,10 @@ const items = [
             last_name: 'Labadie',
         },
         age: 80,
-        country: 'Saint Vincent and the Grenadines',
+        address: {
+            country: 'Saint Vincent and the Grenadines',
+            city: 'Kingstown',
+        },
     },
     {
         id: 8,
@@ -38,7 +35,10 @@ const items = [
             last_name: 'Walker',
         },
         age: 97,
-        country: 'Mayotte',
+        address: {
+            country: 'Mayotte',
+            city: 'Mamoudzou',
+        },
     },
     {
         id: 88,
@@ -47,7 +47,10 @@ const items = [
             last_name: 'Baumbach',
         },
         age: 86,
-        country: 'Somalia',
+        address: {
+            country: 'Somalia',
+            city: 'Mogadishu',
+        },
     },
     {
         id: 87,
@@ -56,7 +59,10 @@ const items = [
             last_name: 'Ruecker',
         },
         age: 21,
-        country: 'Australia',
+        address: {
+            country: 'Australia',
+            city: 'Sydney',
+        },
     },
     {
         id: 15,
@@ -65,7 +71,10 @@ const items = [
             last_name: 'Volkman-Pfannerstill',
         },
         age: 56,
-        country: 'Tajikistan',
+        address: {
+            country: 'Tajikistan',
+            city: 'Dushanbe',
+        },
     },
     {
         id: 62,
@@ -74,7 +83,10 @@ const items = [
             last_name: 'Schumm',
         },
         age: 48,
-        country: 'Lithuania',
+        address: {
+            country: 'Lithuania',
+            city: 'Vilnius',
+        },
     },
     {
         id: 88,
@@ -83,7 +95,10 @@ const items = [
             last_name: 'Schuster',
         },
         age: 89,
-        country: 'Hungary',
+        address: {
+            country: 'Hungary',
+            city: 'Budapest',
+        },
     },
     {
         id: 87,
@@ -92,7 +107,10 @@ const items = [
             last_name: 'Romaguera',
         },
         age: 79,
-        country: 'Jamaica',
+        address: {
+            country: 'Jamaica',
+            city: 'Kingston',
+        },
     },
     {
         id: 62,
@@ -101,7 +119,10 @@ const items = [
             last_name: 'Bailey',
         },
         age: 57,
-        country: 'Angola',
+        address: {
+            country: 'Angola',
+            city: 'Luanda',
+        },
     },
     {
         id: 4,
@@ -110,7 +131,10 @@ const items = [
             last_name: 'Batz',
         },
         age: 31,
-        country: 'Sint Maarten',
+        address: {
+            country: 'Sint Maarten',
+            city: 'Philipsburg',
+        },
     },
 ]
 const columns = defineTableColumnHeaders([
@@ -136,17 +160,17 @@ const columns = defineTableColumnHeaders([
         key: 'age',
         label: 'Age',
     },
-    {
-        key: 'country',
-        label: 'Country',
-    },
+    // {
+    //     key: 'country',
+    //     label: 'Country',
+    // },
 ])
 
 const search = ref('')
 
 const customFilterMethod = defineFilterMethod<(typeof items)[0]>((query, item, filterBy) => {
-    if (query && filterBy?.includes('country')) {
-        return item.country.toLowerCase().startsWith(query.toLowerCase())
+    if (query && filterBy?.includes('address.country')) {
+        return item['address.country'].toLowerCase().startsWith(query.toLowerCase())
     }
     return true
 })
@@ -163,8 +187,9 @@ const customFilterMethod = defineFilterMethod<(typeof items)[0]>((query, item, f
                 :per-page="5"
                 :filter-query="search"
                 :filter-method="customFilterMethod"
-                :filter-by="['country']"
-            />
+                :filter-by="['address.country']"
+            >
+            </VueyeTable>
         </main>
     </div>
 </template>

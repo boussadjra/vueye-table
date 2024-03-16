@@ -33,7 +33,7 @@ const rowItemSlots = Object.keys(slots).filter((slot) => slot.startsWith('itemCe
 
 const { pagination, updateCurrentPage, updatePerPage } = usePagination(props, emit)
 
-const { bodyRows, rowsCount, onSort } = useBodyRows(props, _columnHeaders, pagination)
+const { bodyRows, rowsCount, notListedKeys, onSort } = useBodyRows(props, _columnHeaders, pagination)
 
 const { selected: _selected, selectAll } = useSelection(props, bodyRows, emit)
 </script>
@@ -67,6 +67,7 @@ const { selected: _selected, selectAll } = useSelection(props, bodyRows, emit)
                 :loading="loading"
                 :itemValue="itemValue"
                 :columns-length="headersCount"
+                :not-listed-keys="notListedKeys"
             >
                 <template #checkbox="scope">
                     <slot name="checkbox" v-bind="scope" />

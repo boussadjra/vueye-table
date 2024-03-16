@@ -10,7 +10,7 @@ const props = defineProps({
     id: String,
     label: String,
     indeterminate: Boolean,
-    modelValue: Boolean,
+    modelValue: [Boolean, Array],
 })
 
 const emit = defineEmits(['change', 'update:modelValue'])
@@ -26,7 +26,7 @@ const model = computed({
     },
 })
 
-const onCheckChange = (event) => {
+const onCheckChange = (event: any) => {
     emit('change', event)
 }
 </script>

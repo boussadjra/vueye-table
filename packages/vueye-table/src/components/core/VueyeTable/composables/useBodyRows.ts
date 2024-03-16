@@ -1,7 +1,7 @@
 import { ColumnHeader, FlattenKeys, FlattenObject } from '../types'
 
 import { MaybeRef } from 'vue'
-import { getBodyRows, paginateRows } from '../utils'
+import { generateColumns, getBodyRows, getHeaderKeys, paginateRows } from '../utils'
 import { VueyeTableProps } from '../api'
 
 interface PaginationProps {
@@ -21,11 +21,33 @@ export function useBodyRows<TData extends Record<string, unknown>, TColumn exten
         sortDesc.value = desc
     }
 
+    const headerKeys = computed(() => {
+        const nativeHeaders = generateColumns(toValue(props.data)[0])
+        const nativeHeaderKeys = getHeaderKeys(nativeHeaders)
+        const headerKeys = getHeaderKeys(toValue(headers))
+
+        const notListedKeys = []
+        const allKeys = [...headerKeys]
+
+        for (const key of nativeHeaderKeys) {
+            if (!headerKeys.includes(key)) {
+                notListedKeys.push(key)
+                allKeys.push(key)
+            }
+        }
+
+        return {
+            notListedKeys,
+            allKeys,
+        }
+    })
+
     const bodyRows = computed(() => {
         const start = toValue(pagination).perPage * (toValue(pagination).currentPage - 1)
         const end = toValue(pagination).perPage * toValue(pagination).currentPage
 
-        const rows = getBodyRows(toValue(props.data), toValue(headers))
+        const rows = getBodyRows(toValue(props.data), headerKeys.value.allKeys)
+
         const filterBy = computed(() => {
             if (props.filterBy === undefined || props.filterBy.length === 0) {
                 return Object.keys(rows[0]) as FlattenKeys<TData>[]
@@ -55,6 +77,7 @@ export function useBodyRows<TData extends Record<string, unknown>, TColumn exten
 
     return {
         bodyRows,
+        notListedKeys: computed(() => headerKeys.value.notListedKeys),
         rowsCount: computed(() => toValue(props.data).length),
         onSort,
     }

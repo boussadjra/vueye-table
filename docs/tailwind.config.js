@@ -1,4 +1,5 @@
 const animate = require('tailwindcss-animate')
+import { getIconCollections, iconsPlugin } from '@egoist/tailwindcss-icons'
 
 /** @type {import('tailwindcss').Config} */
 module.exports = {
@@ -49,6 +50,33 @@ module.exports = {
                     DEFAULT: 'hsl(var(--card))',
                     foreground: 'hsl(var(--card-foreground))',
                 },
+
+                vprimary: {
+                    50: '#f0f8ff',
+                    100: '#e0f1fe',
+                    200: '#bae3fd',
+                    300: '#7ccdfd',
+                    400: '#37b3f9',
+                    500: '#0c93df',
+                    600: '#017ac8',
+                    700: '#0261a2',
+                    800: '#065386',
+                    900: '#0b456f',
+                    950: '#082c49',
+                },
+                vsecondary: {
+                    50: '#fdf5f3',
+                    100: '#fce8e4',
+                    200: '#fbd5cd',
+                    300: '#f6b8ab',
+                    400: '#ef8f7a',
+                    500: '#e1583a',
+                    600: '#d04e32',
+                    700: '#af3f26',
+                    800: '#913723',
+                    900: '#793223',
+                    950: '#41170e',
+                },
             },
             borderRadius: {
                 xl: 'calc(var(--radius) + 4px)',
@@ -82,5 +110,11 @@ module.exports = {
             },
         },
     },
-    plugins: [animate],
+    plugins: [
+        animate,
+        iconsPlugin({
+            collections: getIconCollections(['solar', 'tabler']),
+            scale: 1,
+        }),
+    ],
 }

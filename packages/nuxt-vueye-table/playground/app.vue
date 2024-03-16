@@ -105,7 +105,7 @@ const items = [
 <template>
     <div class="w-full">
         <main class="flex justify-center flex-col items-center p-4">
-            <VueyeTable :data="items" :per-page="5" />
+            <VueyeTable :data="items" :per-page="10" />
         </main>
     </div>
 </template>

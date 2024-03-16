@@ -29,7 +29,7 @@
             "types": "./dist/index.d.ts"
         },
         "./*": "./dist/vueye-table.js",
-        "./dist/style.css": "./dist/style.css"
+        "./dist/default.css": "./dist/default.css"
     },
     "scripts": {
         "dev": "vite",

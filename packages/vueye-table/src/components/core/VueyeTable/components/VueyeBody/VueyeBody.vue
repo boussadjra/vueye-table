@@ -6,8 +6,17 @@ import VueyeCheckbox from '../utils/VueyeCheckbox.vue'
 
 const props = withDefaults(defineProps<BodyProps>(), bodyPropDefaults)
 
+const emit = defineEmits<BodyEmits>()
+
+defineSlots<
+    SlotRow & {
+        loading: () => any
+        empty: () => any
+    }
+>()
+
 const rowKeys = computed(() => {
-    return Object.keys(props.bodyRows[0])
+    return Object.keys(props.bodyRows[0]).filter((key) => !props.notListedKeys.includes(key))
 })
 
 const rowKeyLeaves = computed(() => {
@@ -35,7 +44,6 @@ const nestRows = computed(() => {
     return rows.value.map((row) => row.nest)
 })
 
-const emit = defineEmits<BodyEmits>()
 const _selected = computed({
     get() {
         return props.selected as Row[]
@@ -44,13 +52,6 @@ const _selected = computed({
         emit('update:selected', value)
     },
 })
-
-defineSlots<
-    SlotRow & {
-        loading: () => any
-        empty: () => any
-    }
->()
 </script>
 <template>
     <slot name="body" :rows="bodyRows">
