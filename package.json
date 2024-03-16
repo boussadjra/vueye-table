@@ -1,91 +1,91 @@
 {
-    "name": "vueye-table",
-    "version": "2.0.0-alpha.13",
-    "private": false,
-    "description": "Vue data table",
-    "author": "Brahim Boussadjra",
-    "repository": "https://github.com/boussadjra/vueye-table",
-    "license": "MIT",
-    "scripts": {
-        "docs:dev": "pnpm --filter docs dev",
-        "docs:build": "pnpm --filter docs build",
-        "docs:preview": "pnpm --filter docs preview",
-        "story:dev": "pnpm --filter vueye-table story:dev",
-        "story:build": "pnpm --filter vueye-table story:build",
-        "story:preview": "pnpm --filter vueye-table story:preview",
-        "nuxt:dev": "pnpm --filter nuxt-vueye-table dev",
-        "nuxt:build": "pnpm --filter nuxt-vueye-table prepack",
-        "dev": "pnpm --filter vueye-table dev",
-        "build": "pnpm --filter vueye-table build",
-        "test:unit": "pnpm --filter vueye-table test:unit",
-        "test:coverage": "pnpm --filter vueye-table test:coverage",
-        "commit": "git-cz",
-        "release": "bumpp package.json packages/**/package.json docs/package.json --tag --tag-name v${version}",
-        "pub:release": "cd packages/vueye-table && pnpm pub:release",
-        "up": "taze -r -w",
-        "clean-all": "rimraf node_modules && rimraf packages/*/node_modules && rimraf docs/node_modules",
-        "prepare": "pnpm simple-git-hooks",
-        "lint": "eslint . --ignore-path .gitignore",
-        "lint:fix": "eslint . --fix --ignore-path .gitignore",
-        "format": "prettier --write .",
-        "analyse": "pnpm --filter vueye-table analyse"
-    },
-    "devDependencies": {
-        "@antfu/eslint-config": "^0.43.1",
-        "@antfu/ni": "^0.21.12",
-        "@commitlint/cli": "^17.8.1",
-        "@commitlint/config-conventional": "^17.8.1",
-        "@types/markdown-it": "^13.0.7",
-        "@types/node": "^20.11.25",
-        "@typescript-eslint/eslint-plugin": "^6.21.0",
-        "@typescript-eslint/parser": "^6.21.0",
-        "@vue/tsconfig": "^0.4.0",
-        "bumpp": "^9.4.0",
-        "commitizen": "^4.3.0",
-        "concurrently": "^8.2.2",
-        "eslint": "^8.57.0",
-        "eslint-config-airbnb-base": "^15.0.0",
-        "eslint-import-resolver-typescript": "^3.6.1",
-        "eslint-plugin-eslint-comments": "^3.2.0",
-        "eslint-plugin-import": "^2.29.1",
-        "eslint-plugin-jsonc": "^2.13.0",
-        "eslint-plugin-unicorn": "^48.0.1",
-        "eslint-plugin-vue": "^9.22.0",
-        "lint-staged": "^14.0.1",
-        "pathe": "^1.1.2",
-        "pnpm": "^8.15.4",
-        "rimraf": "^5.0.5",
-        "semver": "^7.6.0",
-        "simple-git-hooks": "^2.10.0",
-        "taze": "^0.11.4",
-        "tsx": "^3.14.0",
-        "typescript": "^5.4.2",
-        "unbuild": "^2.0.0",
-        "vitest": "^0.34.6"
-    },
-    "packageManager": "pnpm@8.10.5",
-    "commitlint": {
-        "extends": [
-            "@commitlint/config-conventional"
-        ]
-    },
-    "simple-git-hooks": {
-        "pre-commit": "pnpm lint-staged",
-        "commit-msg": "pnpm commitlint --edit ${1}"
-    },
-    "lint-staged": {
-        "*.{js,ts,vue}": [
-            "pnpm run lint:fix",
-            "pnpm run format"
-        ]
-    },
-    "keywords": [
-        "vue",
-        "vue3",
-        "vue3 component",
-        "vue3 table",
-        "vue3 data table",
-        "vue3 datatable",
-        "vueye-table"
+  "name": "vueye-table",
+  "version": "2.0.0-alpha.13",
+  "private": false,
+  "description": "Vue data table",
+  "author": "Brahim Boussadjra",
+  "repository": "https://github.com/boussadjra/vueye-table",
+  "license": "MIT",
+  "scripts": {
+    "docs:dev": "pnpm --filter docs dev",
+    "docs:build": "pnpm --filter docs build",
+    "docs:generate": "pnpm --filter docs generate",
+    "docs:preview": "pnpm --filter docs preview",
+    "story:dev": "pnpm --filter vueye-table story:dev",
+    "story:build": "pnpm --filter vueye-table story:build",
+    "story:preview": "pnpm --filter vueye-table story:preview",
+    "nuxt:dev": "pnpm --filter nuxt-vueye-table dev",
+    "nuxt:build": "pnpm --filter nuxt-vueye-table prepack",
+    "dev": "pnpm --filter vueye-table dev",
+    "build": "pnpm --filter vueye-table build",
+    "test:unit": "pnpm --filter vueye-table test:unit",
+    "test:coverage": "pnpm --filter vueye-table test:coverage",
+    "commit": "git-cz",
+    "release": "bumpp package.json packages/**/package.json docs/package.json --tag --tag-name v${version}",
+    "pub:release": "cd packages/vueye-table && pnpm pub:release",
+    "up": "taze -r -w",
+    "clean-all": "rimraf node_modules && rimraf packages/*/node_modules && rimraf docs/node_modules",
+    "prepare": "pnpm simple-git-hooks",
+    "lint": "eslint . --ignore-path .gitignore",
+    "lint:fix": "eslint . --fix --ignore-path .gitignore",
+    "format": "prettier --write .",
+    "analyse": "pnpm --filter vueye-table analyse"
+  },
+  "devDependencies": {
+    "@antfu/eslint-config": "^0.43.1",
+    "@antfu/ni": "^0.21.12",
+    "@commitlint/cli": "^17.8.1",
+    "@commitlint/config-conventional": "^17.8.1",
+    "@types/markdown-it": "^13.0.7",
+    "@types/node": "^20.11.25",
+    "@typescript-eslint/eslint-plugin": "^6.21.0",
+    "@typescript-eslint/parser": "^6.21.0",
+    "@vue/tsconfig": "^0.4.0",
+    "bumpp": "^9.4.0",
+    "commitizen": "^4.3.0",
+    "concurrently": "^8.2.2",
+    "eslint": "^8.57.0",
+    "eslint-config-airbnb-base": "^15.0.0",
+    "eslint-import-resolver-typescript": "^3.6.1",
+    "eslint-plugin-eslint-comments": "^3.2.0",
+    "eslint-plugin-import": "^2.29.1",
+    "eslint-plugin-jsonc": "^2.13.0",
+    "eslint-plugin-unicorn": "^48.0.1",
+    "eslint-plugin-vue": "^9.22.0",
+    "lint-staged": "^14.0.1",
+    "pathe": "^1.1.2",
+    "pnpm": "^8.15.4",
+    "rimraf": "^5.0.5",
+    "semver": "^7.6.0",
+    "simple-git-hooks": "^2.10.0",
+    "taze": "^0.11.4",
+    "tsx": "^3.14.0",
+    "typescript": "^5.4.2",
+    "unbuild": "^2.0.0",
+    "vitest": "^0.34.6"
+  },
+  "packageManager": "pnpm@8.10.5",
+  "commitlint": {
+    "extends": [
+      "@commitlint/config-conventional"
     ]
+  },
+  "simple-git-hooks": {
+    "pre-commit": "pnpm lint-staged",
+    "commit-msg": "pnpm commitlint --edit ${1}"
+  },
+  "lint-staged": {
+    "*.{js,ts,vue}": [
+      "pnpm run lint:fix"
+    ]
+  },
+  "keywords": [
+    "vue",
+    "vue3",
+    "vue3 component",
+    "vue3 table",
+    "vue3 data table",
+    "vue3 datatable",
+    "vueye-table"
+  ]
 }

@@ -4,37 +4,56 @@ Vueye Table is a Vue 3 component for displaying data in a table.
 
 ## Installation
 
+Vue 3:
+
 ```bash
 npm install vueye-table
 ```
 
+Nuxt :
+
+```bash
+npm install nuxt-vueye-table
+```
+
 ## Usage
 
-```vue
+Vue :
+
+```html
+<script setup lang="ts">
+    import { VueyeTable } from 'vueye-table'
+
+    const items = [
+        {
+            id: 60,
+            name: {
+                first_name: 'Brahim',
+                last_name: 'Boussadjra',
+            },
+            age: 30,
+            address: {
+                country: 'Algeria',
+                city: 'Algiers',
+            },
+        },
+        //...
+    ]
+</script>
+
 <template>
-    <VueyeTable
-        :data="data"
-        :columnHeaders="columnHeaders"
-        :itemValue="itemValue"
-        :perPage="perPage"
-        :currentPage="currentPage"
-        :perPageOptions="perPageOptions"
-        :loading="loading"
-        :selected="selected"
-        :selectMode="selectMode"
-        :caption="caption"
-        :summary="summary"
-        @update:loading="updateLoading"
-        @update:selected="updateSelected"
-    >
-        <template #headerCellContent.name="props">
-            {{ props.columnHeader.name }}
-        </template>
-        <template #itemCellContent.name="props">
-            {{ props.item.name }}
-        </template>
-    </VueyeTable>
+    <VueyeTable :data="items" />
 </template>
+```
+
+Nuxt :
+
+```js
+// nuxt.config.js
+export default defineNuxtConfig({
+    modules: ['nuxt-vueye-table'],
+    // ...
+})
 ```
 
 ### VueyeTableProps

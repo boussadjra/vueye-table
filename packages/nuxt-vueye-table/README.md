@@ -1,88 +1,108 @@
-<!--
-Get your module up and running quickly.
+# Vueye Table
 
-Find and replace all on all files (CMD+SHIFT+F):
-- Name: My Module
-- Package name: my-module
-- Description: My new Nuxt module
--->
+Vueye Table is a Vue 3 component for displaying data in a table.
 
-# My Module
+## Installation
 
-[![npm version][npm-version-src]][npm-version-href] [![npm downloads][npm-downloads-src]][npm-downloads-href] [![License][license-src]][license-href] [![Nuxt][nuxt-src]][nuxt-href]
-
-My new Nuxt module for doing amazing things.
-
--   [✨ &nbsp;Release Notes](/CHANGELOG.md)
-    <!-- - [🏀 Online playground](https://stackblitz.com/github/your-org/my-module?file=playground%2Fapp.vue) -->
-    <!-- - [📖 &nbsp;Documentation](https://example.com) -->
-
-## Features
-
-<!-- Highlight some of the features your module provide here -->
-
--   ⛰ &nbsp;Foo
--   🚠 &nbsp;Bar
--   🌲 &nbsp;Baz
-
-## Quick Setup
-
-1. Add `my-module` dependency to your project
+Vue 3:
 
 ```bash
-# Using pnpm
-pnpm add -D my-module
-
-# Using yarn
-yarn add --dev my-module
-
-# Using npm
-npm install --save-dev my-module
+npm install vueye-table
 ```
 
-2. Add `my-module` to the `modules` section of `nuxt.config.ts`
+Nuxt : 
+    
+```bash
+npm install nuxt-vueye-table
+```
 
-```js
+## Usage
+
+Vue : 
+
+```html
+<script setup lang="ts">
+import { VueyeTable } from "vueye-table";
+
+const items = [
+  {
+    id: 60,
+    name: {
+      first_name: "Brahim",
+      last_name: "Boussadjra",
+    },
+    age: 30,
+    address: {
+      country: "Algeria",
+      city: "Algiers",
+    },
+  },
+  //...
+];
+</script>
+
+<template>
+  <VueyeTable :data="items" />
+</template>
+```
+
+Nuxt : 
+
+```js 
+// nuxt.config.js
 export default defineNuxtConfig({
-    modules: ['my-module'],
+    modules: ['nuxt-vueye-table'],
+    // ...
 })
 ```
 
-That's it! You can now use My Module in your Nuxt app ✨
+### VueyeTableProps
 
-## Development
+| Prop Name | Type | Default Value | Description |
+| --- | --- | --- | --- |
+| data | TData[] | [] | An array of data for the table. |
+| columnHeaders | TColumn[] or a function returning an array | [] | An array of column headers for the table. |
+| itemValue | string | 'id' | The property name used as a unique identifier for each item. |
+| perPage | number | 10 | The number of items displayed per page. |
+| currentPage | number | 1 | The current page number. |
+| perPageOptions | number[] or a function returning an array | [5, 10, 20, 30] | An array of options for the number of items per page. |
+| loading | boolean | false | Indicates whether the table is in a loading state. |
+| selected | TData[], Row[], or null | null | An array of selected items or rows. |
+| selectMode | 'page' or 'all' | 'all' | The mode for selecting items: 'page' or 'all'. |
+| caption | string | '' | The table's caption. |
+| summary | string | '' | The table's summary. |
 
-```bash
-# Install dependencies
-npm install
+### VueyeTableEmits
 
-# Generate type stubs
-npm run dev:prepare
+| Emit Name       | Parameters     | Description                           |
+| --------------- | -------------- | ------------------------------------- |
+| update:loading  | value: boolean | Emits when the loading state changes. |
+| update:selected | value: T[]     | Emits when the selected items change. |
 
-# Develop with the playground
-npm run dev
+### PaginationEmits
 
-# Build the playground
-npm run dev:build
+| Emit Name          | Parameters    | Description                                      |
+| ------------------ | ------------- | ------------------------------------------------ |
+| update:currentPage | value: number | Emits when the current page changes.             |
+| update:perPage     | value: number | Emits when the number of items per page changes. |
 
-# Run ESLint
-npm run lint
+### SlotHeader
 
-# Run Vitest
-npm run test
-npm run test:watch
+The SlotHeader component defines various slots for customizing the table header.
 
-# Release new version
-npm run release
-```
+-   `headerCell.<ColumnKey>`: Slot for customizing the content of a specific column header.
+-   `headerCellContent.<ColumnKey>`: Slot for customizing the content within a specific column header cell.
+-   `headers`: Slot for customizing the entire table header, containing all column headers.
+-   `checkbox`: Slot for customizing the checkbox used for selecting all items.
 
-<!-- Badges -->
+### SlotRow
 
-[npm-version-src]: https://img.shields.io/npm/v/my-module/latest.svg?style=flat&colorA=18181B&colorB=28CF8D
-[npm-version-href]: https://npmjs.com/package/my-module
-[npm-downloads-src]: https://img.shields.io/npm/dm/my-module.svg?style=flat&colorA=18181B&colorB=28CF8D
-[npm-downloads-href]: https://npmjs.com/package/my-module
-[license-src]: https://img.shields.io/npm/l/my-module.svg?style=flat&colorA=18181B&colorB=28CF8D
-[license-href]: https://npmjs.com/package/my-module
-[nuxt-src]: https://img.shields.io/badge/Nuxt-18181B?logo=nuxt.js
-[nuxt-href]: https://nuxt.com
+The SlotRow component defines various slots for customizing the table rows.
+
+-   `itemCell.<ItemKey>`: Slot for customizing the content of a specific item cell within a row.
+-   `itemCellContent.<ItemKey>`: Slot for customizing the content within a specific item cell.
+-   `rows`: Slot for customizing the entire table rows, containing all rows.
+-   `row`: Slot for customizing a specific row.
+-   `checkbox`: Slot for customizing the checkbox used for selecting a specific row.
+
+You can use these Markdown tables to document the props, emits, and slot definitions for the data table and pagination components in your Vue 3 project.

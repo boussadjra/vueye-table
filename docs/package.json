@@ -15,7 +15,7 @@
         "clsx": "^2.1.0",
         "lucide-vue-next": "^0.352.0",
         "nuxt": "^3.10.3",
-        "nuxt-vueye-table": "workspace:*",
+        "nuxt-vueye-table": "^2.0.0-alpha.13",
         "radix-vue": "^1.5.1",
         "tailwind-merge": "^2.2.1",
         "tailwindcss-animate": "^1.0.7",

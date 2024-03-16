@@ -278,11 +278,7 @@ const columns = [
         key: 'price',
         sortable: true,
     },
-    {
-        label: 'discount',
-        key: 'discount',
-        sortable: true,
-    },
+
     // {
     //     label: 'Description',
     //     key: 'description',
@@ -311,18 +307,21 @@ const columns = [
         <div class="container mx-auto text-sm">
             <VueyeTable class="max-w-3xl mx-auto" :column-headers="columns" :data="items" :per-page="10">
                 <template #itemCellContent.price="{ itemCellContent }">
-                    <div v-if="itemCellContent.discount">
+                    <div v-if="itemCellContent.discount" class="w-32">
                         <span class="flex items-center old-price">
                             <span>$</span>
                             <span>{{ itemCellContent.price }}</span>
                         </span>
                         <span class="flex items-center text-green-400">
                             <span>$</span>
-                            <span class="">{{
-                                Math.round(
-                                    itemCellContent.price - (itemCellContent.price * itemCellContent.discount) / 100
-                                )
-                            }}</span>
+                            <span class=""
+                                >{{
+                                    Math.round(
+                                        itemCellContent.price - (itemCellContent.price * itemCellContent.discount) / 100
+                                    )
+                                }}
+                                (-{{ itemCellContent.discount }}%)
+                            </span>
                         </span>
                     </div>
                     <div v-else>

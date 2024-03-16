@@ -4,10 +4,7 @@
         "baseUrl": ".",
         "target": "esnext",
         "module": "esnext",
-        "lib": [
-            "esnext",
-            "DOM"
-        ],
+        "lib": ["esnext", "DOM"],
         "moduleResolution": "node",
         "esModuleInterop": true,
         "strict": true,
@@ -18,16 +15,10 @@
         "skipLibCheck": true,
         "noUncheckedIndexedAccess": true,
         "jsx": "preserve",
-        "types": [
-            "node"
-        ],
+        "types": ["node"],
         "paths": {
-            "vueye-table": [
-                "./packages/vueye-table/src/index.ts"
-            ],
-            "@/*": [
-                "./packages/vueye-table/src/*"
-            ]
+            "vueye-table": ["./packages/vueye-table/src/index.ts"],
+            "@/*": ["./packages/vueye-table/src/*"]
         }
     },
     "include": [
@@ -37,9 +28,5 @@
         "./packages/vueye-table/src/auto-imports.d.ts",
         "./scripts/**/*.ts"
     ],
-    "exclude": [
-        "**/dist/**",
-        "**/node_modules/**",
-        "**/playground/**"
-    ]
+    "exclude": ["**/dist/**", "**/node_modules/**", "**/playground/**"]
 }
