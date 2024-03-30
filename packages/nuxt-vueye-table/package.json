@@ -30,7 +30,7 @@
   },
   "dependencies": {
     "@nuxt/kit": "^3.8.2",
-    "vueye-table": "workspace:*"
+    "vueye-table": "^2.0.0-alpha.14"
   },
   "devDependencies": {
     "@types/node": "^20.9.3",
