@@ -56,6 +56,8 @@ export default defineNuxtConfig({
 })
 ```
 
+[Live Demo](https://stackblitz.com/edit/vitejs-vite-4wvjfn?file=src%2FApp.vue)
+
 ### VueyeTableProps
 
 | Prop Name | Type | Default Value | Description |

@@ -261,84 +261,12 @@ const items = [
         },
     },
 ]
-
-const columns = [
-    {
-        label: 'ID',
-        key: 'id',
-        sortable: true,
-    },
-    {
-        label: 'Title',
-        key: 'title',
-        sortable: true,
-    },
-    {
-        label: 'Price',
-        key: 'price',
-        sortable: true,
-    },
-
-    {
-        label: 'Category',
-        key: 'category',
-        sortable: true,
-    },
-
-    {
-        label: 'Rating',
-        key: 'rating',
-        sortable: true,
-    },
-]
 </script>
 
 <template>
     <section class="demo py-20 sm:py-24 md:py-32">
         <div class="container mx-auto text-sm">
-            <VueyeTable class="max-w-3xl mx-auto" :column-headers="columns" :data="items" :per-page="10">
-                <template #itemCellContent.price="{ itemCellContent }">
-                    <div v-if="itemCellContent.discount" class="w-32">
-                        <span class="flex items-center old-price">
-                            <span>$</span>
-                            <span>{{ itemCellContent.price }}</span>
-                        </span>
-                        <span class="flex items-center text-green-400">
-                            <span>$</span>
-                            <span class=""
-                                >{{
-                                    Math.round(
-                                        itemCellContent.price - (itemCellContent.price * itemCellContent.discount) / 100
-                                    )
-                                }}
-                                (-{{ itemCellContent.discount }}%)
-                            </span>
-                        </span>
-                    </div>
-                    <div v-else>
-                        <span>$</span>
-                        <span>{{ itemCellContent.price }}</span>
-                    </div>
-                </template>
-                <template #itemCellContent.rating="{ itemCellContent }">
-                    <span class="flex items-center">
-                        <AppRating :rate="itemCellContent.rating.rate" />
-                        <span class="ms-1 text-xs">({{ itemCellContent.rating.count }})</span>
-                    </span>
-                </template>
-            </VueyeTable>
+            <VueyeTable :data="items" />
         </div>
     </section>
 </template>
-<style>
-.demo .table__cell {
-    @apply !p-2 border-0 border-b;
-}
-.demo .table__cell--head {
-    @apply bg-primary !p-2 border-primary text-vprimary-50 dark:bg-vprimary-800 dark:text-vprimary-200;
-}
-
-.old-price {
-    @apply line-through text-red-500 dark:text-red-400;
-}
-</style>

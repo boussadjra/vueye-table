@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { NuxtLink } from '#components'
 import { Badge } from '@/components/ui/badge'
 import { ref, onMounted, onUnmounted, computed } from 'vue'
 
@@ -38,11 +39,11 @@ onUnmounted(() => {
             </h1>
             <p class="text-lg font-light">A Vue/Nuxt table component with a simple API and powerful features</p>
             <div class="mt-8 gap-2 flex">
-                <Button to="/docs/getting-started">
+                <Button to="/guide/get-started" :as="NuxtLink">
                     <span>Get Started</span>
                     <span class="i-solar-rocket-linear ms-1"></span>
                 </Button>
-                <Button variant="secondary" to="/docs/installation">
+                <Button variant="secondary" to="/guide/get-started#installation" :as="NuxtLink">
                     <span>Installation</span>
                     <span class="i-solar-download-linear ms-1"></span>
                 </Button>

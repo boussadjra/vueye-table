@@ -3,7 +3,9 @@
     <header class="flex w-full justify-center bg-background sticky z-50 top-0">
         <Menubar class="w-full flex justify-center h-16 items-center px-4">
             <!-- Add logo to the left -->
-            <img src="/imgs/colored-logo.png" alt="Vueye Table Logo" class="mr-auto h-12" />
+            <NuxtLink to="/" class="mr-auto">
+                <img src="/imgs/colored-logo.png" alt="Vueye Table Logo" class="h-12" />
+            </NuxtLink>
             <MenubarMenu>
                 <MenubarTrigger class="cursor-pointer">
                     <span class="font-regular"> Guide </span>

@@ -10,12 +10,14 @@
         "postinstall": "nuxt prepare"
     },
     "dependencies": {
+        "@iconify-json/logos": "^1.1.42",
         "@nuxt/content": "^2.12.1",
+        "@nuxt/ui": "^2.14.2",
         "class-variance-authority": "^0.7.0",
         "clsx": "^2.1.0",
         "lucide-vue-next": "^0.352.0",
         "nuxt": "^3.10.3",
-        "nuxt-vueye-table": "^2.0.0-alpha.13",
+        "nuxt-vueye-table": "^2.0.0-alpha.14",
         "radix-vue": "^1.5.1",
         "tailwind-merge": "^2.2.1",
         "tailwindcss-animate": "^1.0.7",
@@ -27,7 +29,8 @@
         "@iconify-json/solar": "^1.1.6",
         "@iconify-json/tabler": "^1.1.96",
         "@nuxtjs/tailwindcss": "^6.11.4",
-        "@vueuse/core": "^10.6.1",
+        "@tailwindcss/typography": "^0.5.10",
+        "@vueuse/core": "^10.9.0",
         "@vueuse/nuxt": "^10.9.0",
         "shadcn-nuxt": "^0.10.0",
         "typescript": "~5.2.2"

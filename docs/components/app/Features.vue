@@ -45,7 +45,8 @@ const features = [
             </h2>
             <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
                 <div v-for="feature in features" :key="feature.title" class="card-container p-0.5 rounded-xl">
-                    <Card class="card flex z-20 flex-col items-center bg-muted">
+                    <Card class="card flex z-20 flex-col items-center bg-muted relative">
+                        <div class="glow -z-10">glow</div>
                         <CardHeader>
                             <CardTitle class="flex gap-2 items-center">
                                 <span class="text-secondary" :class="feature.icon"></span>
@@ -72,6 +73,25 @@ const features = [
 
 .card-container:hover {
     background: linear-gradient(60deg, #e1583a, #c9117f, #a02de6, #0c93df);
+}
+.card:hover .glow {
+    opacity: 0.6;
+}
+
+.glow {
+    position: absolute;
+    left: 0;
+    top: 0;
+    transform: translate(60%, 0%);
+    width: 160px;
+    height: 160px;
+    opacity: 0;
+    transition: all 1s ease;
+    pointer-events: none;
+
+    border-radius: 9999px;
+    background-image: linear-gradient(45deg, #e1583a, #c9117f, #a02de6, #0c93df);
+    filter: blur(60px);
 }
 
 @keyframes gradient {

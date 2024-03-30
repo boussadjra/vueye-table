@@ -75,4 +75,24 @@
     body {
         @apply bg-background text-foreground;
     }
+
+    code {
+        @apply bg-vprimary-300 dark:bg-vprimary-800 !text-vprimary-700 dark:!text-vprimary-300 rounded p-px px-2 border border-dashed  border-vprimary-600;
+    }
+
+    .prose {
+        min-width: 80ch;
+    }
+    .app .prose {
+        --tw-prose-pre-bg: #eef3f8;
+    }
+
+    .dark .app .prose {
+        --tw-prose-pre-bg: #1e2945;
+    }
+
+    .app .prose :where(code):not(:where([class~='not-prose'], [class~='not-prose'] *))::before,
+    .app .prose :where(code):not(:where([class~='not-prose'], [class~='not-prose'] *))::after {
+        content: none;
+    }
 }

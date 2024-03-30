@@ -1,12 +1,20 @@
 const animate = require('tailwindcss-animate')
 import { getIconCollections, iconsPlugin } from '@egoist/tailwindcss-icons'
-
+import typography from '@tailwindcss/typography'
 /** @type {import('tailwindcss').Config} */
 module.exports = {
     darkMode: ['class'],
     safelist: ['dark'],
     prefix: '',
-
+    content: [
+        './components/**/*.{js,vue,ts}',
+        './layouts/**/*.vue',
+        './pages/**/*.vue',
+        './content/**/*.md',
+        './plugins/**/*.{js,ts}',
+        './app.vue',
+        './error.vue',
+    ],
     theme: {
         container: {
             center: true,
@@ -113,8 +121,9 @@ module.exports = {
     plugins: [
         animate,
         iconsPlugin({
-            collections: getIconCollections(['solar', 'tabler']),
+            collections: getIconCollections(['solar', 'tabler', 'logos']),
             scale: 1,
         }),
+        typography,
     ],
 }
