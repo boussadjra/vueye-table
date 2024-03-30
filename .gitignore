@@ -30,4 +30,4 @@ format.vue
 # lock files
 package-lock.json
 yarn.lock
-.pnpm-lock.yaml
+pnpm-lock.yaml
