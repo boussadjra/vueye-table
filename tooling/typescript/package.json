@@ -1,0 +1,17 @@
+{
+  "name": "@vueye-table/typescript-config",
+  "version": "0.0.0",
+  "private": true,
+  "files": [
+    "*.json"
+  ],
+  "type": "module",
+  "exports": {
+    "./application": "./application.json",
+    "./component-library": "./component-library.json",
+    "./nuxt": "./nuxt.json",
+    "./tests": "./tests.json",
+    "./universal-library": "./universal-library.json",
+    "./vue-library": "./vue-library.json"
+  }
+}

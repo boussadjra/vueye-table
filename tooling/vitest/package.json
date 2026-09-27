@@ -1,0 +1,9 @@
+{
+  "name": "@vueye-table/vitest-config",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./config.ts"
+  }
+}

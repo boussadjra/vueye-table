@@ -1,0 +1,532 @@
+/*
+ * vueye-table styled theme.
+ *
+ * Every color, size, and radius is a custom property on .vt-surface, so a theme is a handful of
+ * overrides. Dark colors apply under prefers-color-scheme unless a surface is forced light, and
+ * always under data-vt-theme="dark". Any element with .vt-theme carries the tokens, so controls
+ * placed outside a table match it.
+ */
+
+.vt-surface,
+.vt-theme {
+  --vt-font: inherit;
+  --vt-font-size: 0.875rem;
+  --vt-bg: #ffffff;
+  --vt-fg: #1f2328;
+  --vt-muted: #656d76;
+  --vt-border: #d8dee4;
+  --vt-header-bg: #f6f8fa;
+  --vt-stripe: #f9fafb;
+  --vt-hover: #f0f3f6;
+  --vt-accent: #3b5bdb;
+  --vt-accent-fg: #ffffff;
+  --vt-selected: #edf2ff;
+  --vt-range: rgb(59 91 219 / 0.1);
+  --vt-focus: #3b5bdb;
+  --vt-danger: #cf222e;
+  --vt-radius: 8px;
+  --vt-control-radius: 6px;
+  --vt-cell-x: 0.75rem;
+  --vt-cell-y: 0.625rem;
+  --vt-shadow: 0 8px 24px rgb(31 35 40 / 0.12);
+
+  font-family: var(--vt-font);
+  font-size: var(--vt-font-size);
+  color: var(--vt-fg);
+}
+
+.vt-surface {
+  position: relative;
+  background: var(--vt-bg);
+  border: 1px solid var(--vt-border);
+  border-radius: var(--vt-radius);
+}
+
+/*
+ * The surface does not clip, so menus can open past its edge. The scroll area rounds its own
+ * corners wherever it touches the surface's border instead.
+ */
+.vt-surface > .vt-scroll,
+.vt-root > .vt-progress:first-child + .vt-scroll {
+  border-start-start-radius: calc(var(--vt-radius) - 1px);
+  border-start-end-radius: calc(var(--vt-radius) - 1px);
+}
+
+.vt-surface > .vt-scroll,
+.vt-root > .vt-scroll:last-child {
+  border-end-start-radius: calc(var(--vt-radius) - 1px);
+  border-end-end-radius: calc(var(--vt-radius) - 1px);
+}
+
+:is(.vt-surface, .vt-theme)[data-density="compact"] {
+  --vt-cell-x: 0.5rem;
+  --vt-cell-y: 0.3rem;
+}
+
+:is(.vt-surface, .vt-theme)[data-density="spacious"] {
+  --vt-cell-x: 1rem;
+  --vt-cell-y: 0.9rem;
+}
+
+@media (prefers-color-scheme: dark) {
+  :is(.vt-surface, .vt-theme):not([data-vt-theme="light"]) {
+    --vt-bg: #0d1117;
+    --vt-fg: #e6edf3;
+    --vt-muted: #8d96a0;
+    --vt-border: #30363d;
+    --vt-header-bg: #161b22;
+    --vt-stripe: #11161d;
+    --vt-hover: #1c2129;
+    --vt-accent: #7b93ff;
+    --vt-accent-fg: #0d1117;
+    --vt-selected: #1b2440;
+    --vt-range: rgb(123 147 255 / 0.16);
+    --vt-focus: #7b93ff;
+    --vt-danger: #ff7b72;
+    --vt-shadow: 0 8px 24px rgb(0 0 0 / 0.5);
+  }
+}
+
+:is(.vt-surface, .vt-theme)[data-vt-theme="dark"] {
+  --vt-bg: #0d1117;
+  --vt-fg: #e6edf3;
+  --vt-muted: #8d96a0;
+  --vt-border: #30363d;
+  --vt-header-bg: #161b22;
+  --vt-stripe: #11161d;
+  --vt-hover: #1c2129;
+  --vt-accent: #7b93ff;
+  --vt-accent-fg: #0d1117;
+  --vt-selected: #1b2440;
+  --vt-range: rgb(123 147 255 / 0.16);
+  --vt-focus: #7b93ff;
+  --vt-danger: #ff7b72;
+  --vt-shadow: 0 8px 24px rgb(0 0 0 / 0.5);
+}
+
+.vt-scroll {
+  overflow: auto;
+  max-height: var(--vt-max-height, none);
+}
+
+.vt-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.vt-table caption {
+  padding: var(--vt-cell-y) var(--vt-cell-x);
+  text-align: start;
+  color: var(--vt-muted);
+}
+
+.vt-table th,
+.vt-table td {
+  padding: var(--vt-cell-y) var(--vt-cell-x);
+  text-align: start;
+  vertical-align: middle;
+  border-bottom: 1px solid var(--vt-border);
+}
+
+.vt-table [data-align="center"] {
+  text-align: center;
+}
+
+.vt-table [data-align="end"] {
+  text-align: end;
+}
+
+.vt-table thead th {
+  background: var(--vt-header-bg);
+  color: var(--vt-muted);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.vt-surface[data-sticky-header] thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.vt-surface[data-bordered] .vt-table th + th,
+.vt-surface[data-bordered] .vt-table td + td {
+  border-inline-start: 1px solid var(--vt-border);
+}
+
+.vt-table tbody tr:last-child > * {
+  border-bottom: 0;
+}
+
+.vt-surface[data-striped] .vt-table tbody tr:nth-child(even) > * {
+  background: var(--vt-stripe);
+}
+
+.vt-surface[data-hover] .vt-table tbody tr:hover > * {
+  background: var(--vt-hover);
+}
+
+.vt-table tbody tr[data-selected] > * {
+  background: var(--vt-selected);
+}
+
+.vt-table input[type="checkbox"] {
+  accent-color: var(--vt-accent);
+  width: 1rem;
+  height: 1rem;
+  margin: 0;
+  cursor: pointer;
+}
+
+.vt-selection-cell {
+  width: 1%;
+}
+
+.vt-sort-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+
+.vt-sort-button:hover,
+.vt-table th[data-sort] {
+  color: var(--vt-fg);
+}
+
+.vt-sort-indicator {
+  display: inline-flex;
+  align-items: center;
+  opacity: 0.35;
+}
+
+.vt-sort-indicator[data-active] {
+  opacity: 1;
+  color: var(--vt-accent);
+}
+
+.vt-sort-priority {
+  font-size: 0.7em;
+  font-weight: 700;
+}
+
+.vt-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 2.5rem 1rem;
+  color: var(--vt-muted);
+  text-align: center;
+}
+
+.vt-empty-icon {
+  width: 1.75rem;
+  height: 1.75rem;
+  opacity: 0.6;
+}
+
+.vt-progress {
+  position: absolute;
+  inset: 0 0 auto;
+  border-radius: var(--vt-radius) var(--vt-radius) 0 0;
+  height: 2px;
+  overflow: hidden;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.vt-surface[data-loading] .vt-progress::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  width: 40%;
+  background: var(--vt-accent);
+  animation: vt-progress 1.1s ease-in-out infinite;
+}
+
+.vt-surface[data-loading] .vt-body {
+  opacity: 0.55;
+  transition: opacity 0.15s;
+}
+
+@keyframes vt-progress {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(250%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vt-surface[data-loading] .vt-progress::after {
+    animation: none;
+    width: 100%;
+    opacity: 0.5;
+  }
+}
+
+/* Controls */
+
+.vt-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem var(--vt-cell-x);
+}
+
+.vt-surface .vt-toolbar {
+  border-bottom: 1px solid var(--vt-border);
+}
+
+.vt-toolbar.vt-footer {
+  justify-content: space-between;
+}
+
+.vt-surface .vt-toolbar.vt-footer {
+  border-top: 1px solid var(--vt-border);
+  border-bottom: 0;
+}
+
+.vt-toolbar-spacer {
+  flex: 1;
+}
+
+.vt-search {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  min-width: 12rem;
+  padding: 0.3rem 0.6rem;
+  color: var(--vt-muted);
+  border: 1px solid var(--vt-border);
+  border-radius: var(--vt-control-radius);
+  background: var(--vt-bg);
+}
+
+.vt-search:focus-within {
+  border-color: var(--vt-focus);
+  box-shadow: 0 0 0 3px var(--vt-range);
+}
+
+.vt-search input {
+  flex: 1;
+  min-width: 0;
+  font: inherit;
+  color: var(--vt-fg);
+  background: none;
+  border: 0;
+  outline: none;
+}
+
+.vt-button,
+.vt-pagination button,
+.vt-page-size select {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  min-height: 2rem;
+  padding: 0.25rem 0.625rem;
+  font: inherit;
+  color: var(--vt-fg);
+  background: var(--vt-bg);
+  border: 1px solid var(--vt-border);
+  border-radius: var(--vt-control-radius);
+  cursor: pointer;
+}
+
+.vt-button:hover,
+.vt-pagination button:hover:not(:disabled) {
+  background: var(--vt-hover);
+}
+
+.vt-button:focus-visible,
+.vt-pagination button:focus-visible,
+.vt-page-size select:focus-visible,
+.vt-sort-button:focus-visible,
+.vt-table input[type="checkbox"]:focus-visible {
+  outline: 2px solid var(--vt-focus);
+  outline-offset: 2px;
+}
+
+.vt-pagination {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.vt-pagination button {
+  min-width: 2rem;
+  justify-content: center;
+  padding-inline: 0.5rem;
+}
+
+.vt-pagination button[data-current] {
+  color: var(--vt-accent-fg);
+  background: var(--vt-accent);
+  border-color: var(--vt-accent);
+}
+
+.vt-pagination button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.vt-pagination [data-gap] {
+  padding-inline: 0.25rem;
+  color: var(--vt-muted);
+}
+
+.vt-page-size {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--vt-muted);
+}
+
+.vt-status {
+  margin: 0;
+  color: var(--vt-muted);
+}
+
+.vt-menu {
+  position: relative;
+}
+
+.vt-menu > summary {
+  list-style: none;
+}
+
+.vt-menu > summary::-webkit-details-marker {
+  display: none;
+}
+
+.vt-menu-panel {
+  position: absolute;
+  inset-inline-end: 0;
+  top: calc(100% + 0.25rem);
+  z-index: 3;
+  display: grid;
+  gap: 0.25rem;
+  min-width: 11rem;
+  padding: 0.5rem;
+  background: var(--vt-bg);
+  border: 1px solid var(--vt-border);
+  border-radius: var(--vt-control-radius);
+  box-shadow: var(--vt-shadow);
+}
+
+.vt-menu-panel label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.25rem 0.375rem;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.vt-menu-panel label:hover {
+  background: var(--vt-hover);
+}
+
+.vt-menu-panel input {
+  accent-color: var(--vt-accent);
+}
+
+.vt-icon {
+  flex: none;
+}
+
+/* Spreadsheet grid */
+
+.vt-grid {
+  outline: none;
+  user-select: none;
+}
+
+.vt-grid td,
+.vt-grid th {
+  border-inline-end: 1px solid var(--vt-border);
+}
+
+.vt-grid td {
+  position: relative;
+  cursor: cell;
+  white-space: nowrap;
+}
+
+.vt-grid td[data-selected] {
+  background: var(--vt-range);
+}
+
+.vt-grid td[data-focused] {
+  box-shadow: inset 0 0 0 2px var(--vt-focus);
+}
+
+.vt-grid:not(:focus-within) td[data-focused] {
+  box-shadow: inset 0 0 0 2px var(--vt-border);
+}
+
+.vt-grid td[data-readonly] {
+  color: var(--vt-muted);
+}
+
+.vt-grid td[data-editing] {
+  padding: 0;
+  box-shadow: inset 0 0 0 2px var(--vt-focus);
+}
+
+.vt-grid td [data-editor] {
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  padding: var(--vt-cell-y) var(--vt-cell-x);
+  font: inherit;
+  color: inherit;
+  text-align: inherit;
+  background: var(--vt-bg);
+  border: 0;
+  outline: none;
+}
+
+.vt-grid .vt-row-number {
+  width: 1%;
+  padding-inline: 0.5rem;
+  color: var(--vt-muted);
+  font-weight: 400;
+  text-align: center;
+  background: var(--vt-header-bg);
+}
+
+.vt-column-letter {
+  display: block;
+  font-size: 0.7em;
+  font-weight: 400;
+  opacity: 0.7;
+}
+
+.vt-footer-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.vueye-grid {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.vueye-grid > .vt-toolbar {
+  padding-inline: 0;
+  border: 0;
+}

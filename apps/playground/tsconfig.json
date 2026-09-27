@@ -1,0 +1,8 @@
+{
+  "extends": "@vueye-table/typescript-config/application",
+  "compilerOptions": {
+    "paths": {},
+    "types": ["vite/client"]
+  },
+  "include": ["src/**/*.ts", "src/**/*.vue", "vite.config.ts"]
+}

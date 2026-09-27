@@ -1,33 +1,19 @@
-# Logs
-logs
+node_modules/
+.pnpm-store/
+.turbo/
+dist/
+.astro/
+.nuxt/
+.output/
+.data/
+coverage/
+playwright-report/
+test-results/
 *.log
-pnpm-debug.log*
-
-# misc
-node_modules
+*.tgz
 .DS_Store
-dist
-dist-ssr
-coverage
-*.local
-
-# Editor directories and files
-.idea
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
-
-# Nested dist folders
-**/cache 
-**/build
-**/node_modules
-
-
-format.vue
-
-# lock files
-package-lock.json
-yarn.lock
-pnpm-lock.yaml
+Thumbs.db
+.env
+.env.*
+!.env.example
+.claude/settings.local.json

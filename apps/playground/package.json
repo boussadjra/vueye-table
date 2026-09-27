@@ -1,0 +1,23 @@
+{
+  "name": "@vueye-table/playground",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "vue-tsc --noEmit && vite build",
+    "dev": "vite",
+    "preview": "vite preview",
+    "typecheck": "vue-tsc --noEmit"
+  },
+  "dependencies": {
+    "vue": "catalog:vue",
+    "vueye-table": "workspace:*"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "catalog:vue",
+    "@vueye-table/typescript-config": "workspace:*",
+    "typescript": "catalog:tooling",
+    "vite": "catalog:vue",
+    "vue-tsc": "catalog:vue"
+  }
+}

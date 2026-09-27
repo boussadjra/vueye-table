@@ -1,96 +1,67 @@
 {
-    "name": "vueye-table",
-    "version": "2.0.0-alpha.14",
-    "private": false,
-    "description": "Vue data table",
-    "author": "Brahim Boussadjra",
-    "repository": "https://github.com/boussadjra/vueye-table",
-    "license": "MIT",
-    "files": [
-        "dist"
-    ],
-    "keywords": [
-        "vue",
-        "vue3",
-        "vue3 component",
-        "vue3 table",
-        "vue3 data table",
-        "vue3 datatable",
-        "vueye-table"
-    ],
-    "type": "module",
-    "main": "./dist/vueye-table.umd.cjs",
-    "module": "./dist/vueye-table.js",
-    "types": "./dist/index.d.ts",
-    "exports": {
-        ".": {
-            "import": "./dist/vueye-table.js",
-            "require": "./dist/vueye-table.umd.cjs",
-            "types": "./dist/index.d.ts"
-        },
-        "./*": "./dist/vueye-table.js",
-        "./dist/default.css": "./dist/default.css"
+  "name": "vueye-table",
+  "version": "3.0.0-alpha.0",
+  "description": "A Vue framework for data tables and spreadsheets: a complete, themeable data table and grid, plus every layer beneath them.",
+  "keywords": [
+    "data-grid",
+    "data-table",
+    "spreadsheet",
+    "table",
+    "vue",
+    "vue3"
+  ],
+  "homepage": "https://github.com/boussadjra/vueye-table#readme",
+  "bugs": {
+    "url": "https://github.com/boussadjra/vueye-table/issues"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/boussadjra/vueye-table.git",
+    "directory": "packages/vueye-table"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "type": "module",
+  "sideEffects": [
+    "**/*.css"
+  ],
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
     },
-    "scripts": {
-        "dev": "vite",
-        "build": " vite build",
-        "preview": "vite preview",
-        "story:dev": "histoire dev",
-        "story:build": "histoire build",
-        "story:preview": "histoire preview",
-        "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts --fix --ignore-path .gitignore",
-        "format": "prettier .  --write --ignore-path .gitignore",
-        "test:unit": "vitest",
-        "test:coverage": "vitest --coverage",
-        "pub:release": "pnpm publish --access public",
-        "generate-md": "tsdoc --src=api.ts",
-        "analyse": "vite-bundle-visualizer dist --port 3000"
-    },
-    "devDependencies": {
-        "@antfu/eslint-config": "^0.43.1",
-        "@egoist/tailwindcss-icons": "^1.4.0",
-        "@faker-js/faker": "^8.3.1",
-        "@histoire/plugin-vue": "^0.17.5",
-        "@iconify-json/solar": "^1.1.6",
-        "@iconify-json/tabler": "^1.1.96",
-        "@rushstack/eslint-patch": "^1.5.1",
-        "@testing-library/vue": "^7.0.0",
-        "@types/node": "^20.9.2",
-        "@vitejs/plugin-vue": "^4.5.0",
-        "@vitest/coverage-v8": "^0.34.6",
-        "@vitest/ui": "^0.34.6",
-        "@vue/eslint-config-prettier": "^8.0.0",
-        "@vue/eslint-config-typescript": "^12.0.0",
-        "@vue/test-utils": "^2.4.2",
-        "@vue/tsconfig": "^0.4.0",
-        "@vueuse/core": "^10.6.1",
-        "autoprefixer": "^10.4.16",
-        "eslint": "^8.54.0",
-        "eslint-plugin-import": "^2.29.0",
-        "eslint-plugin-vue": "^9.18.1",
-        "histoire": "^0.17.5",
-        "jsdom": "^22.1.0",
-        "pathe": "^1.1.1",
-        "pnpm": "^8.10.5",
-        "postcss": "^8.4.31",
-        "prettier": "^3.1.0",
-        "tailwindcss": "^3.3.5",
-        "tsdoc-markdown": "^0.1.0",
-        "typescript": "~5.2.2",
-        "unplugin-auto-import": "^0.16.7",
-        "unplugin-icons": "^0.17.4",
-        "vite": "^4.4.12",
-        "vite-bundle-visualizer": "^0.10.1",
-        "vite-plugin-dts": "^3.6.3",
-        "vitest": "^0.34.6",
-        "vue-router": "^4.2.5",
-        "vue-tsc": "^1.8.22"
-    },
-    "peerDependencies": {
-        "vue": "^3.3.4"
-    },
-    "lint-staged": {
-        "*.{js,ts,vue}": "eslint --fix",
-        "*.{js,ts,vue,css,scss,json,md}": "prettier --write"
-    }
+    "./style.css": "./dist/style.css"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "scripts": {
+    "build": "tsdown",
+    "dev": "tsdown --watch",
+    "typecheck": "tsc -p tsconfig.json",
+    "package:check": "publint --strict && attw --pack . --profile esm-only --exclude-entrypoints ./style.css",
+    "clean": "node ../../scripts/clean-package.mjs"
+  },
+  "dependencies": {
+    "@vueye-table/core": "workspace:*",
+    "@vueye-table/headless": "workspace:*",
+    "@vueye-table/styled": "workspace:*",
+    "@vueye-table/vue": "workspace:*"
+  },
+  "devDependencies": {
+    "@vueye-table/typescript-config": "workspace:*",
+    "vue": "catalog:vue"
+  },
+  "peerDependencies": {
+    "vue": ">=3.5.0 <4"
+  },
+  "engines": {
+    "node": ">=22.12.0"
+  }
 }
