@@ -9,6 +9,7 @@
     "**/dist/**",
 
     "**/.nuxt/**",
+    "**/.vitepress/cache/**",
     "**/.output/**",
     "**/coverage/**",
     "**/playwright-report/**",

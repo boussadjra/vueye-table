@@ -1,0 +1,7 @@
+{
+  "extends": "@vueye-table/typescript-config/application",
+  "compilerOptions": {
+    "skipLibCheck": true
+  },
+  "include": [".vitepress/**/*.ts", "examples/**/*.ts", "env.d.ts"]
+}

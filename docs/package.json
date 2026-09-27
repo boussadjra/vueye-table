@@ -1,0 +1,24 @@
+{
+  "name": "@vueye-table/docs",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "vitepress build",
+    "dev": "vitepress dev",
+    "preview": "vitepress preview",
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "vue": "catalog:vue",
+    "vueye-table": "workspace:*"
+  },
+  "devDependencies": {
+    "@vueye-table/typescript-config": "workspace:*",
+    "typescript": "catalog:tooling",
+    "vitepress": "catalog:docs"
+  },
+  "engines": {
+    "node": "22.x"
+  }
+}

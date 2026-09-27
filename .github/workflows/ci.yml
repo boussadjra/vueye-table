@@ -54,7 +54,7 @@ jobs:
       - name: Test with coverage
         run: pnpm test:coverage
 
-      - name: Build packages and the playground
+      - name: Build packages, the playground, and the docs
         run: pnpm build
 
       - name: Check layer boundaries

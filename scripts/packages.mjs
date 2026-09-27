@@ -122,8 +122,13 @@ export async function readManifests() {
   return Object.fromEntries(entries);
 }
 
-/** Every private workspace directory, grouped by workspace root. */
+/** Every private workspace directory, grouped by workspace root, plus the docs site. */
 export async function readPrivateWorkspaces() {
+  const docs = {
+    group: ".",
+    directory: "docs",
+    manifest: JSON.parse(await readFile(join(repositoryRoot, "docs", "package.json"), "utf8")),
+  };
   const groups = await Promise.all(
     ["apps", "tooling"].map(async (group) => {
       const entries = await readdir(join(repositoryRoot, group), { withFileTypes: true });
@@ -140,7 +145,7 @@ export async function readPrivateWorkspaces() {
       );
     }),
   );
-  return groups.flat();
+  return [...groups.flat(), docs];
 }
 
 /** Collect every bare and relative specifier a JavaScript or TypeScript source imports. */

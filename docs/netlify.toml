@@ -1,0 +1,8 @@
+# Netlify reads this file when the site's base directory is docs/.
+[build]
+command = "npx --yes pnpm@11.17.0 --filter @vueye-table/docs... run build"
+publish = ".vitepress/dist"
+
+[build.environment]
+NODE_VERSION = "22"
+PNPM_VERSION = "11.17.0"

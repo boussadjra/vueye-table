@@ -1,0 +1,15 @@
+/* VitePress styles every table inside a page; demos keep the vueye-table look. */
+.vp-doc .demo table {
+  display: table;
+  margin: 0;
+  border-collapse: separate;
+}
+
+.vp-doc .demo :is(tr, th, td) {
+  border: 0;
+  background-color: transparent;
+}
+
+.vp-doc .demo {
+  margin: 16px 0;
+}

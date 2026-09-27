@@ -7,6 +7,7 @@
   "scripts": {
     "build": "turbo run build",
     "dev": "turbo run dev --parallel",
+    "docs": "pnpm --filter @vueye-table/docs dev",
     "playground": "pnpm --filter @vueye-table/playground dev",
     "lint": "oxlint .",
     "lint:fix": "oxlint . --fix",

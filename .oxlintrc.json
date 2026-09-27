@@ -16,7 +16,7 @@
   },
   "overrides": [
     {
-      "files": ["apps/**/main.ts"],
+      "files": ["apps/**/main.ts", "docs/.vitepress/theme/index.ts"],
       "rules": {
         "import/no-unassigned-import": "off"
       }
@@ -33,6 +33,7 @@
     "**/dist/**",
     "**/coverage/**",
     "**/.nuxt/**",
+    "**/.vitepress/cache/**",
     "**/.output/**",
     "**/.claude/settings.local.json"
   ]
