@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "compilerOptions": {
+    "allowJs": false,
+    "allowSyntheticDefaultImports": true,
+    "exactOptionalPropertyTypes": true,
+    "forceConsistentCasingInFileNames": true,
+    "isolatedModules": true,
+    "module": "ESNext",
+    "moduleDetection": "force",
+    "moduleResolution": "Bundler",
+    "noFallthroughCasesInSwitch": true,
+    "noImplicitOverride": true,
+    "noPropertyAccessFromIndexSignature": true,
+    "noUncheckedIndexedAccess": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "paths": {
+      "@vueye-table/core": ["../../packages/core/src/index.ts"],
+      "@vueye-table/headless": ["../../packages/headless/src/index.ts"],
+      "@vueye-table/nuxt": ["../../packages/nuxt/src/index.ts"],
+      "@vueye-table/styled": ["../../packages/styled/src/index.ts"],
+      "@vueye-table/vue": ["../../packages/vue/src/index.ts"],
+      "vueye-table": ["../../packages/vueye-table/src/index.ts"]
+    },
+    "resolveJsonModule": true,
+    "skipLibCheck": false,
+    "strict": true,
+    "target": "ES2023",
+    "useDefineForClassFields": true,
+    "useUnknownInCatchVariables": true,
+    "verbatimModuleSyntax": true
+  }
+}

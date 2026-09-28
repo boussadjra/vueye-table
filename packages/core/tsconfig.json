@@ -1,0 +1,4 @@
+{
+  "extends": "@vueye-table/typescript-config/universal-library",
+  "include": ["src/**/*.ts"]
+}

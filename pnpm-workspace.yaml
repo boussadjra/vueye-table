@@ -1,3 +1,62 @@
 packages:
-    - 'packages/**'
-    - 'docs'
+  - apps/*
+  - docs
+  - packages/*
+  - tooling/*
+
+catalogs:
+  tooling:
+    "@arethetypeswrong/cli": 0.18.5
+    "@changesets/cli": 2.31.1
+    oxfmt: 0.60.0
+    oxlint: 1.75.0
+    oxlint-tsgolint: 7.0.2001
+    pnpm: 11.17.0
+    publint: 0.3.22
+    tsdown: 0.22.14
+    turbo: 2.10.7
+    typescript: 6.0.3
+  testing:
+    "@vitest/coverage-v8": 4.1.10
+    "@vue/test-utils": 2.5.1
+    happy-dom: 20.14.5
+    vitest: 4.1.10
+  node:
+    "@types/node": 26.1.1
+  vue:
+    "@vitejs/plugin-vue": 6.0.8
+    vite: 8.3.1
+    vue: 3.5.43
+    vue-tsc: 3.3.8
+  docs:
+    "@fontsource-variable/geist": 5.3.0
+    "@fontsource-variable/geist-mono": 5.3.0
+    "@fontsource/instrument-serif": 5.3.0
+    vitepress: 2.0.0-alpha.20
+  nuxt:
+    # Published as a range covering every supported Nuxt 4.x.
+    "@nuxt/kit": ^4.0.0
+    "@nuxt/schema": ^4.0.0
+
+autoInstallPeers: false
+catalogMode: strict
+dedupePeerDependents: true
+engineStrict: true
+hoist: false
+linkWorkspacePackages: false
+minimumReleaseAge: 1440
+preferWorkspacePackages: true
+publicHoistPattern: []
+resolvePeersFromWorkspaceRoot: false
+saveWorkspaceProtocol: true
+sharedWorkspaceLockfile: true
+strictPeerDependencies: true
+allowBuilds:
+  esbuild: true
+packageExtensions:
+  "@vue/compiler-core@3.5.43":
+    dependencies:
+      "@babel/types": 7.29.7
+  "@vue/compiler-sfc@3.5.43":
+    dependencies:
+      "@babel/types": 7.29.7

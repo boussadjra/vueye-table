@@ -1,0 +1,60 @@
+{
+  "name": "@vueye-table/vue",
+  "version": "3.0.0-alpha.0",
+  "description": "Vue composables that bind the vueye-table engine to reactive state.",
+  "keywords": [
+    "composables",
+    "data-table",
+    "datagrid",
+    "spreadsheet",
+    "vue"
+  ],
+  "homepage": "https://github.com/boussadjra/vueye-table#readme",
+  "bugs": {
+    "url": "https://github.com/boussadjra/vueye-table/issues"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/boussadjra/vueye-table.git",
+    "directory": "packages/vue"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "type": "module",
+  "sideEffects": false,
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "scripts": {
+    "build": "tsdown",
+    "dev": "tsdown --watch",
+    "typecheck": "tsc -p tsconfig.json",
+    "package:check": "publint --strict && attw --pack . --profile esm-only",
+    "clean": "node ../../scripts/clean-package.mjs"
+  },
+  "dependencies": {
+    "@vueye-table/core": "workspace:*"
+  },
+  "devDependencies": {
+    "@vueye-table/typescript-config": "workspace:*",
+    "vue": "catalog:vue"
+  },
+  "peerDependencies": {
+    "vue": ">=3.5.0 <4"
+  },
+  "engines": {
+    "node": ">=22.12.0"
+  }
+}

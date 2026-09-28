@@ -1,0 +1,62 @@
+{
+  "name": "@vueye-table/nuxt",
+  "version": "3.0.0-alpha.0",
+  "description": "Nuxt module for vueye-table: auto-imported components, composables, and styles.",
+  "keywords": [
+    "data-table",
+    "module",
+    "nuxt",
+    "spreadsheet",
+    "vue"
+  ],
+  "homepage": "https://github.com/boussadjra/vueye-table#readme",
+  "bugs": {
+    "url": "https://github.com/boussadjra/vueye-table/issues"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/boussadjra/vueye-table.git",
+    "directory": "packages/nuxt"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "type": "module",
+  "sideEffects": false,
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "scripts": {
+    "build": "tsdown",
+    "dev": "tsdown --watch",
+    "typecheck": "tsc -p tsconfig.json",
+    "package:check": "publint --strict && attw --pack . --profile esm-only",
+    "clean": "node ../../scripts/clean-package.mjs"
+  },
+  "dependencies": {
+    "@nuxt/kit": "catalog:nuxt",
+    "vueye-table": "workspace:*"
+  },
+  "devDependencies": {
+    "@nuxt/schema": "catalog:nuxt",
+    "@vueye-table/typescript-config": "workspace:*",
+    "vue": "catalog:vue"
+  },
+  "peerDependencies": {
+    "vue": ">=3.5.0 <4"
+  },
+  "engines": {
+    "node": ">=22.12.0"
+  }
+}

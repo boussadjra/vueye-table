@@ -1,4 +1,16 @@
 {
-    // https://nuxt.com/docs/guide/concepts/typescript
-    "extends": "./.nuxt/tsconfig.json"
+  "extends": "@vueye-table/typescript-config/application",
+  "compilerOptions": {
+    "skipLibCheck": true
+  },
+  "vueCompilerOptions": {
+    "vitePressExtensions": [".md"]
+  },
+  "include": [
+    ".vitepress/**/*.ts",
+    ".vitepress/**/*.vue",
+    "index.md",
+    "examples/**/*.md",
+    "env.d.ts"
+  ]
 }

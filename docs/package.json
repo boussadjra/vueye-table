@@ -1,39 +1,28 @@
 {
-    "name": "docs",
-    "private": true,
-    "type": "module",
-    "scripts": {
-        "build": "nuxt build",
-        "dev": "nuxt dev",
-        "generate": "nuxt generate",
-        "preview": "nuxt preview",
-        "postinstall": "nuxt prepare"
-    },
-    "dependencies": {
-        "@iconify-json/logos": "^1.1.42",
-        "@nuxt/content": "^2.12.1",
-        "@nuxt/ui": "^2.14.2",
-        "class-variance-authority": "^0.7.0",
-        "clsx": "^2.1.0",
-        "lucide-vue-next": "^0.352.0",
-        "nuxt": "^3.10.3",
-        "nuxt-vueye-table": "^2.0.0-alpha.14",
-        "radix-vue": "^1.5.1",
-        "tailwind-merge": "^2.2.1",
-        "tailwindcss-animate": "^1.0.7",
-        "vue": "^3.4.21",
-        "vue-router": "^4.3.0"
-    },
-    "devDependencies": {
-        "@egoist/tailwindcss-icons": "^1.4.0",
-        "@iconify-json/solar": "^1.1.6",
-        "@iconify-json/tabler": "^1.1.96",
-        "@nuxtjs/tailwindcss": "^6.11.4",
-        "@tailwindcss/typography": "^0.5.10",
-        "@vueuse/core": "^10.9.0",
-        "@vueuse/nuxt": "^10.9.0",
-        "shadcn-nuxt": "^0.10.0",
-        "typescript": "~5.2.2"
-    },
-    "version": "2.0.0-alpha.14"
+  "name": "@vueye-table/docs",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "vitepress build",
+    "dev": "vitepress dev",
+    "preview": "vitepress preview",
+    "typecheck": "vue-tsc --noEmit -p tsconfig.json"
+  },
+  "dependencies": {
+    "@fontsource-variable/geist": "catalog:docs",
+    "@fontsource-variable/geist-mono": "catalog:docs",
+    "@fontsource/instrument-serif": "catalog:docs",
+    "vue": "catalog:vue",
+    "vueye-table": "workspace:*"
+  },
+  "devDependencies": {
+    "@vueye-table/typescript-config": "workspace:*",
+    "typescript": "catalog:tooling",
+    "vitepress": "catalog:docs",
+    "vue-tsc": "catalog:vue"
+  },
+  "engines": {
+    "node": ">=22.13.0 <25"
+  }
 }

@@ -1,0 +1,127 @@
+/*
+ * Design tokens. The four brand colors come from the vueye-table logo, a diamond of spreadsheet
+ * cells. Everything else is derived from them or from the VitePress variables below.
+ */
+
+:root {
+  --vy-violet: #a02de6;
+  --vy-magenta: #c9117f;
+  --vy-orange: #e1583a;
+  --vy-blue: #0c93df;
+  --vy-gradient: linear-gradient(100deg, #b04cf0 0%, #d7208f 42%, #ef6a45 78%, #f59b4e 100%);
+  /* Dark enough everywhere for white text at 4.5:1 or better. */
+  --vy-gradient-strong: linear-gradient(100deg, #8a24c9 0%, #b0127a 58%, #c2410c 100%);
+
+  --vy-font-serif: "Instrument Serif", ui-serif, Georgia, serif;
+  --vy-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --vy-radius-lg: 20px;
+  --vy-radius-md: 14px;
+  --vy-radius-sm: 10px;
+
+  /* Faint lines of the spreadsheet motif. */
+  --vy-grid-line: rgb(19 18 26 / 0.06);
+  --vy-glass: rgb(255 255 255 / 0.72);
+  --vy-glass-border: rgb(19 18 26 / 0.08);
+  --vy-card: #ffffff;
+  --vy-card-border: #e9e6f1;
+  --vy-elevation:
+    0 1px 1px rgb(19 18 26 / 0.04), 0 12px 32px -8px rgb(60 20 90 / 0.14),
+    0 40px 80px -24px rgb(60 20 90 / 0.18);
+
+  --vp-font-family-base:
+    "Geist Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --vp-font-family-mono:
+    "Geist Mono Variable", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
+  --vp-c-bg: #ffffff;
+  --vp-c-bg-alt: #f8f7fc;
+  --vp-c-bg-elv: #ffffff;
+  --vp-c-bg-soft: #f3f1f9;
+
+  --vp-c-text-1: #14121c;
+  --vp-c-text-2: #55526a;
+  /* Every text color passes 4.5:1 on every background of its theme. */
+  --vp-c-text-3: #6e6b82;
+
+  --vp-c-border: #d9d5e5;
+  --vp-c-divider: #ebe8f2;
+  --vp-c-gutter: #ebe8f2;
+
+  --vp-c-brand-1: #8a24c9;
+  --vp-c-brand-2: #9a2ade;
+  --vp-c-brand-3: #a02de6;
+  --vp-c-brand-soft: rgb(160 45 230 / 0.1);
+
+  --vp-c-warning-1: #b8401f;
+  --vp-c-warning-2: #cf4c2a;
+  --vp-c-warning-3: #e1583a;
+  --vp-c-warning-soft: rgb(225 88 58 / 0.12);
+
+  --vp-c-important-1: #a80f6b;
+  --vp-c-important-2: #b81075;
+  --vp-c-important-3: #c9117f;
+  --vp-c-important-soft: rgb(201 17 127 / 0.1);
+
+  --vp-button-brand-bg: #8a24c9;
+  --vp-button-brand-hover-bg: #9a2ade;
+  --vp-button-brand-active-bg: #7a1fb3;
+
+  --vp-nav-bg-color: rgb(255 255 255 / 0.72);
+  --vp-nav-backdrop-filter: saturate(180%) blur(18px);
+  --vp-sidebar-bg-color: transparent;
+
+  --vp-code-block-bg: #f8f7fc;
+  --vp-code-bg: rgb(160 45 230 / 0.08);
+  --vp-code-color: #7a1fb3;
+
+  --vp-local-search-highlight-bg: #a02de6;
+  --vp-local-search-highlight-text: #ffffff;
+}
+
+.dark {
+  --vy-grid-line: rgb(255 255 255 / 0.055);
+  --vy-glass: rgb(16 15 25 / 0.62);
+  --vy-glass-border: rgb(255 255 255 / 0.08);
+  --vy-card: #100f19;
+  --vy-card-border: #1f1d2c;
+  --vy-elevation:
+    0 1px 0 rgb(255 255 255 / 0.04) inset, 0 24px 60px -16px rgb(0 0 0 / 0.7),
+    0 60px 120px -40px rgb(120 30 180 / 0.35);
+
+  --vp-c-bg: #09080f;
+  --vp-c-bg-alt: #0c0b14;
+  --vp-c-bg-elv: #13121d;
+  --vp-c-bg-soft: #14131f;
+
+  --vp-c-text-1: #edecf6;
+  --vp-c-text-2: #a4a1b8;
+  --vp-c-text-3: #817e97;
+
+  --vp-c-border: #2b2939;
+  --vp-c-divider: #1c1a28;
+  --vp-c-gutter: #050409;
+
+  --vp-c-brand-1: #cf8bff;
+  --vp-c-brand-2: #bb66f7;
+  --vp-c-brand-3: #a02de6;
+  --vp-c-brand-soft: rgb(160 45 230 / 0.2);
+
+  --vp-c-warning-1: #ff9a7a;
+  --vp-c-warning-2: #f47c5a;
+  --vp-c-warning-3: #e1583a;
+  --vp-c-warning-soft: rgb(225 88 58 / 0.16);
+
+  --vp-c-important-1: #ff7ac3;
+  --vp-c-important-2: #ec4ba4;
+  --vp-c-important-3: #c9117f;
+  --vp-c-important-soft: rgb(201 17 127 / 0.18);
+
+  --vp-button-brand-bg: #9333ea;
+  --vp-button-brand-hover-bg: #a24af0;
+  --vp-button-brand-active-bg: #8424d6;
+
+  --vp-nav-bg-color: rgb(9 8 15 / 0.66);
+  --vp-code-block-bg: #0e0d17;
+  --vp-code-bg: rgb(207 139 255 / 0.1);
+  --vp-code-color: #dcaaff;
+}

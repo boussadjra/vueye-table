@@ -1,108 +1,171 @@
-# Vueye Table
+# vueye-table
 
-Vueye Table is a Vue 3 component for displaying data in a table.
+A Vue framework for data, data tables, and spreadsheets.
 
-## Installation
+vueye-table began as a single table component. Version 3 is a rewrite around one idea: a table is
+data plus state plus operations, and rendering is a separate concern. A framework-independent
+engine owns searching, filtering, sorting, pagination, selection, column visibility, editing,
+undo, clipboard, and export. Vue layers sit on top of it, and you pick the one that fits:
 
-Vue 3:
+| Layer               | Package                 | Use it when                                                |
+| ------------------- | ----------------------- | ---------------------------------------------------------- |
+| Full UI             | `vueye-table`           | You want a complete table or spreadsheet in one tag.       |
+| Styled components   | `@vueye-table/styled`   | You want the look, arranged your own way.                  |
+| Headless components | `@vueye-table/headless` | You want accessible behavior with your own markup and CSS. |
+| Vue composables     | `@vueye-table/vue`      | You want reactive state and nothing rendered.              |
+| Engine              | `@vueye-table/core`     | You are outside Vue, on a server, or writing a binding.    |
+| Nuxt module         | `@vueye-table/nuxt`     | You use Nuxt 4.                                            |
+
+Each layer depends only on the layers beneath it, and `vueye-table` re-exports all of them, so
+one install covers every level.
+
+> **Status:** `3.0.0-alpha`. The API is provisional and may change between alpha releases. The
+> 2.x component lives on the [`legacy`](https://github.com/boussadjra/vueye-table/tree/legacy)
+> branch; see [Upgrading from 2.x](./docs/guide/upgrading-from-2.md).
+
+## Install
 
 ```bash
-npm install vueye-table
+pnpm add vueye-table
 ```
 
-Nuxt :
+Vue 3.5 or newer is a peer dependency.
 
-```bash
-npm install nuxt-vueye-table
-```
+## Full table
 
-## Usage
-
-Vue :
-
-```html
+```vue
 <script setup lang="ts">
-    import { VueyeTable } from 'vueye-table'
+import "vueye-table/style.css";
+import { ref } from "vue";
+import { VueyeTable, defineColumns, type RowKey } from "vueye-table";
 
-    const items = [
-        {
-            id: 60,
-            name: {
-                first_name: 'Brahim',
-                last_name: 'Boussadjra',
-            },
-            age: 30,
-            address: {
-                country: 'Algeria',
-                city: 'Algiers',
-            },
-        },
-        //...
-    ]
+interface User {
+  id: number;
+  name: { first: string; last: string };
+  age: number;
+  city: string;
+}
+
+const users: User[] = [
+  { id: 1, name: { first: "Ada", last: "Lovelace" }, age: 36, city: "London" },
+  { id: 2, name: { first: "Alan", last: "Turing" }, age: 41, city: "Wilmslow" },
+];
+
+const columns = defineColumns<User>([
+  { id: "name.first", header: "First name" },
+  { id: "name.last", header: "Last name" },
+  { id: "age", align: "end", format: (age) => `${age} years` },
+  { id: "city" },
+]);
+
+const selected = ref<readonly RowKey[]>([]);
 </script>
 
 <template>
-    <VueyeTable :data="items" />
+  <VueyeTable v-model:selected="selected" :data="users" :columns="columns" selectable striped>
+    <template #cell.city="{ value }">
+      <strong>{{ value }}</strong>
+    </template>
+  </VueyeTable>
 </template>
 ```
 
-Nuxt :
+Column ids are typed paths into your rows, so `format` above receives a `number`. Without
+`columns`, columns are inferred from the data.
 
-```js
-// nuxt.config.js
-export default defineNuxtConfig({
-    modules: ['nuxt-vueye-table'],
-    // ...
-})
+Every piece of state has a `v-model`: `page`, `pageSize`, `sorting`, `search`, `filters`,
+`hiddenColumns`, and `selected`. Add `manual` and `row-count` to let a server search, sort, and
+page, with the table presenting whatever page it returns.
+
+## Spreadsheet
+
+```vue
+<VueyeGrid v-model:data="lines" :columns="columns" column-letters />
 ```
 
-### VueyeTableProps
+Cells edit in place. Arrows, Tab, Home, and End move; Shift extends the range; Enter or typing
+starts an edit; Delete clears; and copy, cut, paste, undo, and redo behave like a spreadsheet
+application. Each edit emits a new array; the one you passed in is never mutated. Text is parsed
+by the column's type, and a value that cannot be read is refused and reported through
+`edit-error`.
 
-| Prop Name | Type | Default Value | Description |
-| --- | --- | --- | --- |
-| data | TData[] | [] | An array of data for the table. |
-| columnHeaders | TColumn[] or a function returning an array | [] | An array of column headers for the table. |
-| itemValue | string | 'id' | The property name used as a unique identifier for each item. |
-| perPage | number | 10 | The number of items displayed per page. |
-| currentPage | number | 1 | The current page number. |
-| perPageOptions | number[] or a function returning an array | [5, 10, 20, 30] | An array of options for the number of items per page. |
-| loading | boolean | false | Indicates whether the table is in a loading state. |
-| selected | TData[], Row[], or null | null | An array of selected items or rows. |
-| selectMode | 'page' or 'all' | 'all' | The mode for selecting items: 'page' or 'all'. |
-| caption | string | '' | The table's caption. |
-| summary | string | '' | The table's summary. |
+## Headless
 
-### VueyeTableEmits
+```vue
+<script setup lang="ts">
+import { DataTableRoot, DataTablePagination, DataTableSearch, useDataTable } from "vueye-table";
 
-| Emit Name       | Parameters     | Description                           |
-| --------------- | -------------- | ------------------------------------- |
-| update:loading  | value: boolean | Emits when the loading state changes. |
-| update:selected | value: T[]     | Emits when the selected items change. |
+const table = useDataTable({ data: users, columns });
+</script>
 
-### PaginationEmits
+<template>
+  <DataTableRoot :table="table" as="div">
+    <DataTableSearch />
+    <article v-for="row in table.rows" :key="row.key">{{ row.getDisplay("name.first") }}</article>
+    <DataTablePagination />
+  </DataTableRoot>
+</template>
+```
 
-| Emit Name          | Parameters    | Description                                      |
-| ------------------ | ------------- | ------------------------------------------------ |
-| update:currentPage | value: number | Emits when the current page changes.             |
-| update:perPage     | value: number | Emits when the number of items per page changes. |
+Headless components render semantic, accessible markup (`aria-sort`, `aria-selected`,
+`aria-rowindex`, a polite live status, grid keyboard navigation) with `data-*` state attributes
+and no styles. Every one accepts `as` and exposes its state through slot props.
 
-### SlotHeader
+## Engine
 
-The SlotHeader component defines various slots for customizing the table header.
+```ts
+import { createTable } from "@vueye-table/core";
 
--   `headerCell.<ColumnKey>`: Slot for customizing the content of a specific column header.
--   `headerCellContent.<ColumnKey>`: Slot for customizing the content within a specific column header cell.
--   `headers`: Slot for customizing the entire table header, containing all column headers.
--   `checkbox`: Slot for customizing the checkbox used for selecting all items.
+const table = createTable({ data: users, columns: [{ id: "age" }, { id: "city" }] });
+table.search("lon");
+table.toggleSort("age");
+table.getSnapshot().rows; // the current page
+table.exportRows(); // CSV of every filtered row
+```
 
-### SlotRow
+The state is plain serializable data, so it can be saved, restored, sent to a server, or kept in
+the URL.
 
-The SlotRow component defines various slots for customizing the table rows.
+## Nuxt
 
--   `itemCell.<ItemKey>`: Slot for customizing the content of a specific item cell within a row.
--   `itemCellContent.<ItemKey>`: Slot for customizing the content within a specific item cell.
--   `rows`: Slot for customizing the entire table rows, containing all rows.
--   `row`: Slot for customizing a specific row.
--   `checkbox`: Slot for customizing the checkbox used for selecting a specific row.
+```ts
+export default defineNuxtConfig({
+  modules: ["@vueye-table/nuxt"],
+});
+```
 
-You can use these Markdown tables to document the props, emits, and slot definitions for the data table and pagination components in your Vue 3 project.
+The module auto-imports `<VueyeTable>`, `<VueyeGrid>`, `useDataTable`, `useDataGrid`, and
+`defineColumns`, and adds the stylesheet. Set `vueyeTable: { layers: true }` to also register the
+headless and styled components.
+
+## Theming
+
+The styled layer is driven by CSS custom properties on `.vt-surface`:
+
+```css
+.vt-surface {
+  --vt-accent: #0f766e;
+  --vt-radius: 4px;
+  --vt-font-size: 0.8125rem;
+}
+```
+
+Dark colors follow `prefers-color-scheme`; `theme="dark"` or `theme="light"` forces one.
+Density is `compact`, `comfortable`, or `spacious`.
+
+## Development
+
+```bash
+pnpm install
+pnpm playground      # every layer, side by side
+pnpm docs:dev        # the documentation site
+pnpm test            # every Vitest project
+pnpm check           # format, lint, types, tests with coverage, build, boundaries, packages
+```
+
+Architecture lives in [ARCHITECTURE.md](./ARCHITECTURE.md) and decisions in
+[docs/adr](./docs/adr).
+
+## License
+
+[MIT](./LICENSE)

@@ -1,0 +1,22 @@
+{
+  "$schema": "./node_modules/oxfmt/configuration_schema.json",
+  "printWidth": 100,
+  "semi": true,
+  "singleQuote": false,
+  "trailingComma": "all",
+  "ignorePatterns": [
+    "**/node_modules/**",
+    "**/dist/**",
+
+    "**/.nuxt/**",
+    "**/.vitepress/cache/**",
+    "**/.output/**",
+    "**/coverage/**",
+    "**/playwright-report/**",
+    "**/test-results/**",
+    "**/.claude/settings.local.json",
+    "pnpm-lock.yaml"
+  ],
+  "sortImports": {},
+  "sortPackageJson": true
+}
