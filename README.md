@@ -158,7 +158,7 @@ Density is `compact`, `comfortable`, or `spacious`.
 ```bash
 pnpm install
 pnpm playground      # every layer, side by side
-pnpm docs            # the documentation site
+pnpm docs:dev        # the documentation site
 pnpm test            # every Vitest project
 pnpm check           # format, lint, types, tests with coverage, build, boundaries, packages
 ```

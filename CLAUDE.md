@@ -16,7 +16,7 @@ packages/styled        Vt* components and style.css
 packages/vueye-table   VueyeTable, VueyeGrid, VueyeTablePlugin, re-exports every layer
 packages/nuxt          the Nuxt module
 apps/playground        every layer side by side (pnpm playground)
-docs/                  the VitePress site (pnpm docs), ADRs, and guides; Vercel and Netlify deploy it
+docs/                  the VitePress site (pnpm docs:dev), ADRs, and guides; Vercel and Netlify deploy it
 tests/<project>/       one directory per Vitest project
 tooling/               shared tsconfig and Vitest configuration
 scripts/packages.mjs   the single description of the package graph
