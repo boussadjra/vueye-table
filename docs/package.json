@@ -7,16 +7,20 @@
     "build": "vitepress build",
     "dev": "vitepress dev",
     "preview": "vitepress preview",
-    "typecheck": "tsc -p tsconfig.json"
+    "typecheck": "vue-tsc --noEmit -p tsconfig.json"
   },
   "dependencies": {
+    "@fontsource-variable/geist": "catalog:docs",
+    "@fontsource-variable/geist-mono": "catalog:docs",
+    "@fontsource/instrument-serif": "catalog:docs",
     "vue": "catalog:vue",
     "vueye-table": "workspace:*"
   },
   "devDependencies": {
     "@vueye-table/typescript-config": "workspace:*",
     "typescript": "catalog:tooling",
-    "vitepress": "catalog:docs"
+    "vitepress": "catalog:docs",
+    "vue-tsc": "catalog:vue"
   },
   "engines": {
     "node": ">=22.13.0 <25"

@@ -1,0 +1,319 @@
+/* Site-wide refinements on top of the VitePress default theme. */
+
+html {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+body {
+  font-feature-settings: "ss01", "ss02";
+  background:
+    radial-gradient(1100px 520px at 78% -8%, rgb(160 45 230 / 0.07), transparent 62%),
+    radial-gradient(900px 460px at 8% -6%, rgb(12 147 223 / 0.05), transparent 60%), var(--vp-c-bg);
+  background-repeat: no-repeat;
+}
+
+.dark body {
+  background:
+    radial-gradient(1100px 560px at 78% -10%, rgb(160 45 230 / 0.16), transparent 62%),
+    radial-gradient(900px 480px at 6% -8%, rgb(12 147 223 / 0.1), transparent 60%), var(--vp-c-bg);
+  background-repeat: no-repeat;
+}
+
+::selection {
+  background: rgb(160 45 230 / 0.28);
+}
+
+:focus-visible {
+  outline: 2px solid var(--vp-c-brand-1);
+  outline-offset: 2px;
+}
+
+/* Navigation */
+
+:root {
+  --vp-nav-logo-height: 1.75rem;
+}
+
+.VPNavBar .title {
+  font-weight: 650;
+  letter-spacing: -0.02em;
+}
+
+.VPNavBar .title .logo {
+  margin-right: 10px;
+  filter: drop-shadow(0 4px 12px rgb(160 45 230 / 0.35));
+}
+
+.VPNavBarMenuLink {
+  font-weight: 500;
+}
+
+/* Sidebar */
+
+.VPSidebar .VPSidebarItem.level-0 > .item .text {
+  font-family: var(--vp-font-family-mono);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--vp-c-text-3);
+}
+
+.VPSidebar .VPSidebarItem.level-1 > .item .text {
+  font-weight: 450;
+}
+
+.VPSidebar .VPSidebarItem.level-1.is-active > .item > .indicator {
+  width: 2px;
+  background: var(--vy-gradient);
+}
+
+@media (min-width: 60rem) {
+  .VPSidebar {
+    border-right: 1px solid var(--vp-c-divider);
+  }
+}
+
+/* Documents */
+
+.vp-doc h1 {
+  font-size: clamp(2rem, 3.4vw, 2.75rem);
+  font-weight: 700;
+  line-height: 1.08;
+  letter-spacing: -0.04em;
+}
+
+.vp-doc h2 {
+  font-weight: 650;
+  letter-spacing: -0.03em;
+  border-top-color: var(--vp-c-divider);
+}
+
+.vp-doc h3 {
+  font-weight: 600;
+  letter-spacing: -0.015em;
+}
+
+.vp-doc a {
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+
+.vp-doc :not(pre) > code {
+  padding: 0.15em 0.4em;
+  border-radius: 6px;
+}
+
+.vp-doc div[class*="language-"] {
+  border: 1px solid var(--vp-c-divider);
+  border-radius: var(--vy-radius-md);
+}
+
+@media (max-width: 639px) {
+  .vp-doc div[class*="language-"] {
+    border-inline: 0;
+    border-radius: 0;
+  }
+}
+
+/* Markdown tables only: demos inside .vp-raw keep their own table styles. */
+.vp-doc table:not(:where(.vp-raw *)) {
+  display: table;
+  width: 100%;
+  overflow: hidden;
+  border: 1px solid var(--vp-c-divider);
+  border-collapse: separate;
+  border-spacing: 0;
+  border-radius: var(--vy-radius-sm);
+}
+
+@media (max-width: 767px) {
+  .vp-doc table:not(:where(.vp-raw *)) {
+    display: block;
+    overflow-x: auto;
+  }
+}
+
+.vp-doc :is(th, td):not(:where(.vp-raw *)) {
+  border: 0;
+  border-bottom: 1px solid var(--vp-c-divider);
+}
+
+.vp-doc tr:last-child td:not(:where(.vp-raw *)) {
+  border-bottom: 0;
+}
+
+.vp-doc td:not(:where(.vp-raw *)) > code {
+  white-space: nowrap;
+}
+
+.vp-doc th:not(:where(.vp-raw *)) {
+  font-family: var(--vp-font-family-mono);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--vp-c-text-3);
+  background-color: var(--vp-c-bg-alt);
+}
+
+.custom-block {
+  border: 1px solid color-mix(in srgb, currentcolor 12%, transparent);
+  border-radius: var(--vy-radius-md);
+}
+
+.custom-block.warning {
+  border-color: rgb(225 88 58 / 0.3);
+}
+
+.custom-block.tip {
+  border-color: rgb(160 45 230 / 0.28);
+}
+
+/* Home: VitePress leaves room under its own sections, which this home does not use. */
+
+.VPContent.is-home .VPHome {
+  margin-bottom: 0;
+}
+
+.vy-section {
+  position: relative;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: clamp(96px, 13vw, 168px) 24px 0;
+}
+
+.vy-section-head {
+  max-width: 46rem;
+  margin: 0 auto clamp(40px, 6vw, 72px);
+  text-align: center;
+}
+
+.vy-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--vp-font-family-mono);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--vp-c-brand-1);
+}
+
+.vy-kicker::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  background: var(--vy-gradient);
+  border-radius: 1.5px;
+  transform: rotate(45deg);
+}
+
+.vy-h2 {
+  margin-top: 18px;
+  font-size: clamp(2.25rem, 5.2vw, 4rem);
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.048em;
+  color: var(--vp-c-text-1);
+  text-wrap: balance;
+}
+
+.vy-h2 em {
+  padding-right: 0.08em;
+  font-family: var(--vy-font-serif);
+  font-size: 1.12em;
+  font-style: italic;
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  color: transparent;
+  background: var(--vy-gradient);
+  background-clip: text;
+}
+
+.vy-section-lede {
+  margin-top: 20px;
+  font-size: clamp(1.0625rem, 1.4vw, 1.1875rem);
+  line-height: 1.65;
+  color: var(--vp-c-text-2);
+  text-wrap: pretty;
+}
+
+.vy-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 46px;
+  padding: 0 22px;
+  font-size: 15px;
+  font-weight: 600;
+  white-space: nowrap;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  transition:
+    transform 0.25s var(--vy-ease),
+    box-shadow 0.25s var(--vy-ease),
+    border-color 0.2s;
+}
+
+.vy-button svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentcolor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: transform 0.25s var(--vy-ease);
+}
+
+.vy-button.primary {
+  color: #fff;
+  background: var(--vy-gradient-strong);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.22),
+    0 10px 30px -10px rgb(160 45 230 / 0.75);
+}
+
+.vy-button.primary:hover {
+  transform: translateY(-1px);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.22),
+    0 16px 40px -10px rgb(201 17 127 / 0.7);
+}
+
+.vy-button.primary:hover svg {
+  transform: translateX(3px);
+}
+
+.vy-button.ghost {
+  color: var(--vp-c-text-1);
+  background: var(--vy-glass);
+  border-color: var(--vy-glass-border);
+  backdrop-filter: blur(14px);
+}
+
+.vy-button.ghost:hover {
+  border-color: var(--vp-c-border);
+  transform: translateY(-1px);
+}
+
+/* The footer sits on the same canvas as the page. */
+.VPFooter {
+  border-top-color: var(--vp-c-divider) !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

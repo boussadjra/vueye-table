@@ -1,31 +1,102 @@
 ---
 layout: home
-
-hero:
-  name: vueye-table
-  text: Data tables and spreadsheets for Vue
-  tagline: One framework-independent engine, with composables, headless components, styled components, and a full table on top. Pick the layer that fits.
-  actions:
-    - theme: brand
-      text: Get started
-      link: /guide/getting-started
-    - theme: alt
-      text: See it working
-      link: /examples/table
-
-features:
-  - title: Engine
-    details: "@vueye-table/core searches, filters, sorts, pages, selects, edits with undo, copies, pastes, and exports. It knows nothing about Vue and runs on a server."
-  - title: Headless
-    details: "@vueye-table/headless renders accessible markup with aria and data attributes and no styles, so the table looks like the rest of your app."
-  - title: Styled
-    details: "@vueye-table/styled is a theme of CSS custom properties with dark mode and three densities, applied to composable pieces."
-  - title: Full UI
-    details: "<VueyeTable> and <VueyeGrid> give you a complete table or spreadsheet in one tag, with a v-model for every piece of state."
+markdownStyles: false
+title: vueye-table
+titleTemplate: The data framework for Vue
 ---
 
-::: warning Alpha
-Version 3 is a rewrite and is published as `3.0.0-alpha`. The API is provisional and may change
-between alpha releases. The 2.x component lives on the
-[`legacy`](https://github.com/boussadjra/vueye-table/tree/legacy) branch.
-:::
+<HomePage>
+<template v-slot:full>
+
+```vue
+<script setup lang="ts">
+import { VueyeTable, defineColumns } from "vueye-table";
+
+const columns = defineColumns<User>([
+  { id: "name.first", header: "First name" },
+  { id: "age", align: "end", format: (age) => `${age} years` },
+  { id: "city" },
+]);
+</script>
+
+<template>
+  <VueyeTable :data="users" :columns="columns" selectable striped />
+</template>
+```
+
+</template>
+<template v-slot:styled>
+
+```vue
+<script setup lang="ts">
+import { VtSearch, VtStatus, VtTable, VtToolbar } from "vueye-table";
+import { provideDataTable, useDataTable } from "vueye-table";
+
+const table = useDataTable({ data: users, columns });
+provideDataTable(table);
+</script>
+
+<template>
+  <VtToolbar>
+    <VtSearch placeholder="Filter people" />
+    <VtStatus />
+  </VtToolbar>
+  <VtTable :table="table" density="compact" bordered />
+</template>
+```
+
+</template>
+<template v-slot:headless>
+
+```vue
+<script setup lang="ts">
+import { DataTableRoot, DataTableSearch } from "vueye-table";
+import { useDataTable } from "vueye-table";
+
+const table = useDataTable({ data: users, columns });
+</script>
+
+<template>
+  <DataTableRoot :table="table" as="div">
+    <DataTableSearch />
+    <article v-for="row in table.rows" :key="row.key">
+      {{ row.getDisplay("name.first") }}
+    </article>
+  </DataTableRoot>
+</template>
+```
+
+</template>
+<template v-slot:composables>
+
+```ts
+import { useDataTable } from "@vueye-table/vue";
+
+const table = useDataTable({ data: users, columns });
+
+table.search("lon");
+table.toggleSort("age");
+
+// Plain reactive properties: templates read them directly.
+table.rows; // the current page
+table.pageCount;
+table.selectedCount;
+```
+
+</template>
+<template v-slot:engine>
+
+```ts
+import { createTable } from "@vueye-table/core";
+
+const table = createTable({ data: users, columns });
+
+table.search("lon");
+table.toggleSort("age");
+table.getSnapshot().rows; // the current page
+table.getState(); // plain data: save it, restore it, send it
+table.exportRows(); // CSV of every filtered row
+```
+
+</template>
+</HomePage>

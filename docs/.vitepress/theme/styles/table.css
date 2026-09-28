@@ -1,0 +1,53 @@
+/*
+ * The vueye-table styled theme, re-skinned for this site through its public custom properties.
+ * The site's light and dark switch decides, so the color rules out-rank the theme's own
+ * prefers-color-scheme and data-vt-theme rules. A demo can recolor its tables by setting
+ * --vy-accent-light, --vy-accent-dark, --vy-focus-light, and --vy-focus-dark on any ancestor, which
+ * keeps the choice of theme in CSS, where the server-rendered page already knows it.
+ */
+
+html :is(.vt-surface, .vt-theme) {
+  --vt-font: var(--vp-font-family-base);
+  --vt-radius: 14px;
+  --vt-control-radius: 9px;
+}
+
+/* :not(.dark) keeps a light site light when the operating system prefers dark. */
+html:not(.dark) :is(.vt-surface, .vt-theme) {
+  --vt-bg: #ffffff;
+  --vt-fg: #14121c;
+  --vt-muted: #6a6780;
+  --vt-border: #e7e3ef;
+  --vt-header-bg: #faf9fd;
+  --vt-stripe: #fbfaff;
+  --vt-hover: #f7f2fe;
+  --vt-accent: var(--vy-accent-light, #8a24c9);
+  --vt-accent-fg: #ffffff;
+  --vt-focus: var(--vy-focus-light, #a02de6);
+  --vt-selected: color-mix(in srgb, var(--vt-accent) 9%, #ffffff);
+  --vt-range: color-mix(in srgb, var(--vt-accent) 12%, transparent);
+  --vt-danger: #c42b1c;
+  --vt-shadow: 0 18px 40px -12px rgb(60 20 90 / 0.22);
+}
+
+html.dark :is(.vt-surface, .vt-theme) {
+  --vt-bg: #0f0e18;
+  --vt-fg: #edecf6;
+  --vt-muted: #9a97ae;
+  --vt-border: #232132;
+  --vt-header-bg: #13121e;
+  --vt-stripe: #11101b;
+  --vt-hover: #181627;
+  --vt-accent: var(--vy-accent-dark, #9333ea);
+  --vt-accent-fg: #ffffff;
+  --vt-focus: var(--vy-focus-dark, #c084fc);
+  --vt-selected: color-mix(in srgb, var(--vt-accent) 20%, #0f0e18);
+  --vt-range: color-mix(in srgb, var(--vt-accent) 24%, transparent);
+  --vt-danger: #ff8a7a;
+  --vt-shadow: 0 24px 48px -12px rgb(0 0 0 / 0.7);
+}
+
+/* Native checkboxes follow the accent too. */
+html :is(.vt-surface, .vt-theme) input[type="checkbox"] {
+  accent-color: var(--vt-accent);
+}

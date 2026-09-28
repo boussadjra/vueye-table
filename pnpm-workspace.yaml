@@ -29,6 +29,9 @@ catalogs:
     vue: 3.5.43
     vue-tsc: 3.3.8
   docs:
+    "@fontsource-variable/geist": 5.3.0
+    "@fontsource-variable/geist-mono": 5.3.0
+    "@fontsource/instrument-serif": 5.3.0
     vitepress: 2.0.0-alpha.20
   nuxt:
     # Published as a range covering every supported Nuxt 4.x.

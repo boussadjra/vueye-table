@@ -3,5 +3,14 @@
   "compilerOptions": {
     "skipLibCheck": true
   },
-  "include": [".vitepress/**/*.ts", "examples/**/*.ts", "env.d.ts"]
+  "vueCompilerOptions": {
+    "vitePressExtensions": [".md"]
+  },
+  "include": [
+    ".vitepress/**/*.ts",
+    ".vitepress/**/*.vue",
+    "index.md",
+    "examples/**/*.md",
+    "env.d.ts"
+  ]
 }

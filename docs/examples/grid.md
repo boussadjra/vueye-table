@@ -1,7 +1,12 @@
+---
+aside: false
+---
+
 <script setup lang="ts">
-import { ref, shallowRef } from "vue";
-import { useData } from "vitepress";
+import { ref } from "vue";
 import { defineColumns, type TableIssue } from "vueye-table";
+
+import { useEditLog } from "../.vitepress/theme/edit-log";
 
 interface Line {
   readonly id: number;
@@ -11,13 +16,6 @@ interface Line {
   readonly taxable: boolean;
 }
 
-const { isDark } = useData();
-const lines = shallowRef<readonly Line[]>([
-  { id: 1, item: "Keyboard", quantity: 2, price: 49.5, taxable: true },
-  { id: 2, item: "Monitor", quantity: 1, price: 219, taxable: true },
-  { id: 3, item: "Support plan", quantity: 12, price: 15, taxable: false },
-  { id: 4, item: "Cables", quantity: 6, price: 4.25, taxable: true },
-]);
 const columns = defineColumns<Line>([
   { id: "item" },
   { id: "quantity", align: "end" },
@@ -30,6 +28,15 @@ const columns = defineColumns<Line>([
     align: "end",
   },
 ]);
+const { rows: lines, edits, arrays, csv, onData, onEdit, onExport } = useEditLog<Line>(
+  Object.freeze([
+    { id: 1, item: "Keyboard", quantity: 2, price: 49.5, taxable: true },
+    { id: 2, item: "Monitor", quantity: 1, price: 219, taxable: true },
+    { id: 3, item: "Support plan", quantity: 12, price: 15, taxable: false },
+    { id: 4, item: "Cables", quantity: 6, price: 4.25, taxable: true },
+  ]),
+  columns.map((column) => column.id),
+);
 const issues = ref<readonly TableIssue[]>([]);
 </script>
 
@@ -38,17 +45,22 @@ const issues = ref<readonly TableIssue[]>([]);
 Click a cell and type, or press Enter to edit. Arrows move, Shift extends the range, and copy, cut,
 paste, Delete, undo, and redo work like a spreadsheet. The total column is computed and read-only.
 
-<div class="demo">
+<DemoFrame title="OrderLines.vue">
   <VueyeGrid
-    v-model:data="lines"
+    :data="lines"
     :columns="columns"
-    :theme="isDark ? 'dark' : 'light'"
+    label="Order lines"
     column-letters
+    @update:data="onData"
+    @edit="onEdit($event); issues = []"
     @edit-error="issues = $event"
-    @edit="issues = []"
+    @export="onExport"
   />
-  <p v-for="issue in issues" :key="issue.message" role="alert">{{ issue.message }}</p>
-</div>
+  <p v-for="issue in issues" :key="issue.message" class="issue" role="alert">{{ issue.message }}</p>
+  <template v-slot:side>
+    <EditLog :edits="edits" :arrays="arrays" :csv="csv" />
+  </template>
+</DemoFrame>
 
 ```vue
 <VueyeGrid
@@ -59,3 +71,11 @@ paste, Delete, undo, and redo work like a spreadsheet. The total column is compu
   @edit="issues = []"
 />
 ```
+
+<style scoped>
+.issue {
+  margin: 12px 0 0;
+  font-size: 14px;
+  color: var(--vp-c-danger-1);
+}
+</style>
