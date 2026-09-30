@@ -16,7 +16,7 @@ import {
   type TableColumn,
   type TableRow,
 } from "@vueye-table/core";
-import { computed, shallowRef, type ComputedRef } from "vue";
+import { computed, shallowRef, watch, type ComputedRef } from "vue";
 
 import type { DataTableBinding } from "./use-data-table";
 
@@ -71,6 +71,25 @@ export function useDataGrid<TRow>(table: DataTableBinding<TRow>): DataGridBindin
 
   const same = (left: CellPosition | undefined, right: CellPosition): boolean =>
     left !== undefined && left.row === right.row && left.column === right.column;
+
+  // Searching, filtering, paging, or hiding a column can shrink the grid under the selection.
+  // Keep the selection on cells that exist, and drop an edit whose cell is gone.
+  watch(bounds, (next) => {
+    const current = selection.value;
+    if (current && (next.rows === 0 || next.columns === 0)) {
+      selection.value = undefined;
+    } else if (current) {
+      const anchor = clampPosition(current.anchor, next);
+      const focus = clampPosition(current.focus, next);
+      if (!same(current.anchor, anchor) || !same(current.focus, focus)) {
+        selection.value = { anchor, focus };
+      }
+    }
+    const position = editor.value?.position;
+    if (position && (position.row >= next.rows || position.column >= next.columns)) {
+      editor.value = undefined;
+    }
+  });
 
   const cellAt: DataGridBinding<TRow>["cellAt"] = (position) => {
     const row = table.rows[position.row];

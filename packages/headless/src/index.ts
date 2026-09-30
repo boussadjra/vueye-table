@@ -7,7 +7,7 @@ export {
   DataTableSelectRow,
   DataTableStatus,
 } from "./controls";
-export { cellId, DataGridBody, DataGridCell, DataGridRoot } from "./grid";
+export { cellId, DataGridBody, DataGridCell, DataGridRoot, type GridCellSlotProps } from "./grid";
 export {
   columnStyle,
   DataTableBody,

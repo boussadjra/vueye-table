@@ -143,6 +143,25 @@ describe("matchesFilter", () => {
     expect(matchesFilter(true, true, "true")).toBe(true);
     expect(matchesFilter(true, false, "true")).toBe(false);
   });
+
+  it("reads text range bounds as numbers and dates", () => {
+    // Bounds typed into a text box arrive as strings.
+    expect(matchesFilter(40, { min: "30", max: "50" }, "40")).toBe(true);
+    expect(matchesFilter(40, { min: "41" }, "40")).toBe(false);
+    expect(matchesFilter(9, { min: "10" }, "9")).toBe(false);
+    const joined = new Date("2020-01-10T00:00:00Z");
+    expect(matchesFilter(joined, { min: "2020-01-01", max: "2020-12-31" }, "")).toBe(true);
+    expect(matchesFilter(joined, { min: "2021-01-01" }, "")).toBe(false);
+    expect(matchesFilter("2024-03-05", { min: new Date("2024-03-05T00:00:00Z") }, "")).toBe(true);
+    expect(matchesFilter("2024-03-04", { min: new Date("2024-03-05T00:00:00Z") }, "")).toBe(false);
+  });
+
+  it("leaves a range open at an empty or unreadable bound", () => {
+    expect(matchesFilter(40, { min: "", max: "50" }, "40")).toBe(true);
+    expect(matchesFilter(40, { min: "abc" }, "40")).toBe(true);
+    expect(matchesFilter(null, { min: "", max: "" }, "")).toBe(true);
+    expect(matchesFilter(null, { min: undefined }, "")).toBe(true);
+  });
 });
 
 describe("inferColumns", () => {

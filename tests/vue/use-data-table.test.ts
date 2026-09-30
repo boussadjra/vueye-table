@@ -173,6 +173,22 @@ describe("useDataGrid", () => {
     expect(grid.lastResult?.status).toBe("unchanged");
   });
 
+  it("keeps the selection on cells that exist when the grid shrinks", async () => {
+    const { grid, table } = setup();
+    grid.focusCell({ row: 1, column: 1 });
+    grid.focusCell({ row: 2, column: 2 }, { extend: true });
+    grid.startEdit("50");
+    table.search("ada");
+    await nextTick();
+    expect(table.rows).toHaveLength(1);
+    expect(grid.selection).toEqual({ anchor: { row: 0, column: 1 }, focus: { row: 0, column: 2 } });
+    expect(grid.editor).toBeUndefined();
+    table.search("nobody");
+    await nextTick();
+    expect(grid.selection).toBeUndefined();
+    expect(grid.range).toBeUndefined();
+  });
+
   it("does nothing on an empty grid", () => {
     const scope = effectScope();
     const table = scope.run(() => useDataTable<Person>({ data: [], columns: [{ id: "city" }] }))!;

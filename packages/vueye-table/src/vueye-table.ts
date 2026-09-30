@@ -20,7 +20,13 @@ import {
 import { provideDataTable, useDataTable, type DataTableBinding } from "@vueye-table/vue";
 import { computed, defineComponent, h, type PropType, type SlotsType, type VNodeChild } from "vue";
 
-import { commonProps, controlledState, resolveColumns, stateEmits } from "./shared";
+import {
+  commonProps,
+  controlledState,
+  createColumnResolver,
+  emitStateChanges,
+  stateEmits,
+} from "./shared";
 
 /** Slot props of `cell.<column id>` and `cell`. */
 export interface CellSlotProps {
@@ -50,6 +56,8 @@ export const VueyeTable = defineComponent({
     /** The data is one page from a server; `rowCount` is the total. */
     manual: { type: Boolean, default: false },
     rowCount: { type: Number, default: undefined },
+    /** Shown instead of the empty state while `loading` and there are no rows yet. */
+    loadingText: { type: String, default: "Loading…" },
   },
   emits: {
     ...Object.fromEntries(stateEmits.map((name) => [name, null])),
@@ -68,6 +76,7 @@ export const VueyeTable = defineComponent({
     } & {
       toolbar: { table: unknown };
       empty: Record<string, never>;
+      loading: Record<string, never>;
       footer: { table: unknown };
     }
   >,
@@ -79,6 +88,7 @@ export const VueyeTable = defineComponent({
       page: props.page ?? 1,
       pageSize: props.pageSize ?? props.pageSizeOptions[0] ?? 10,
     };
+    const resolveColumns = createColumnResolver();
     let binding: DataTableBinding<unknown> | undefined;
     const table = useDataTable<unknown>({
       data: () => props.data,
@@ -92,27 +102,7 @@ export const VueyeTable = defineComponent({
       state: () =>
         controlledState(props, binding?.table.getState().pagination ?? initialPagination),
       onStateChange(state, previous) {
-        if (state.pagination.page !== previous.pagination.page) {
-          emit("update:page", state.pagination.page);
-        }
-        if (state.pagination.pageSize !== previous.pagination.pageSize) {
-          emit("update:pageSize", state.pagination.pageSize);
-        }
-        if (state.sorting !== previous.sorting) {
-          emit("update:sorting", state.sorting);
-        }
-        if (state.search !== previous.search) {
-          emit("update:search", state.search);
-        }
-        if (state.filters !== previous.filters) {
-          emit("update:filters", state.filters);
-        }
-        if (state.hiddenColumns !== previous.hiddenColumns) {
-          emit("update:hiddenColumns", state.hiddenColumns);
-        }
-        if (state.selection !== previous.selection) {
-          emit("update:selected", state.selection);
-        }
+        emitStateChanges(emit as never, state, previous);
         emit("state-change", state);
       },
     });
@@ -139,9 +129,11 @@ export const VueyeTable = defineComponent({
     const body = (): VNodeChild => {
       const width = table.columns.length + (selectable() ? 1 : 0);
       if (table.rows.length === 0) {
-        return h("tr", { "data-empty": "" }, [
-          h("td", { colspan: Math.max(1, width) }, slots.empty?.({}) ?? h(VtEmpty)),
-        ]);
+        // While the first page is loading there is nothing to match yet, so say that instead.
+        const content = props.loading
+          ? (slots.loading?.({}) ?? h(VtEmpty, { text: props.loadingText }))
+          : (slots.empty?.({}) ?? h(VtEmpty));
+        return h("tr", { "data-empty": "" }, [h("td", { colspan: Math.max(1, width) }, content)]);
       }
       return table.rows.map((row) =>
         h(

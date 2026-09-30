@@ -1,4 +1,5 @@
-import type { CellChange, ColumnDef, TableIssue } from "@vueye-table/core";
+import type { CellChange, ColumnDef, TableIssue, TableState } from "@vueye-table/core";
+import type { GridCellSlotProps } from "@vueye-table/headless";
 import {
   VtGrid,
   VtPageSize,
@@ -7,10 +8,16 @@ import {
   VtStatus,
   VtToolbar,
 } from "@vueye-table/styled";
-import { provideDataTable, useDataTable } from "@vueye-table/vue";
+import { provideDataTable, useDataTable, type DataTableBinding } from "@vueye-table/vue";
 import { computed, defineComponent, h, type PropType, type SlotsType, type VNode } from "vue";
 
-import { commonProps, controlledState, resolveColumns, stateEmits } from "./shared";
+import {
+  commonProps,
+  controlledState,
+  createColumnResolver,
+  emitStateChanges,
+  stateEmits,
+} from "./shared";
 
 /**
  * An editable spreadsheet over an array. Cells are edited in place with the keyboard or a double
@@ -20,7 +27,11 @@ import { commonProps, controlledState, resolveColumns, stateEmits } from "./shar
  */
 export const VueyeGrid = defineComponent({
   name: "VueyeGrid",
-  slots: Object as SlotsType<{ default?: (props: Record<string, unknown>) => VNode[] }>,
+  slots: Object as SlotsType<
+    { [key: `cell.${string}`]: GridCellSlotProps & { readonly item: unknown } } & {
+      default?: (props: Record<string, unknown>) => VNode[];
+    }
+  >,
   props: {
     data: { type: Array as PropType<readonly unknown[]>, required: true },
     ...commonProps,
@@ -38,17 +49,20 @@ export const VueyeGrid = defineComponent({
   },
   emits: {
     ...Object.fromEntries(stateEmits.map((name) => [name, null])),
+    "state-change": (_state: TableState) => true,
     "update:data": (_data: readonly unknown[]) => true,
     edit: (_changes: readonly CellChange<unknown>[]) => true,
     "edit-error": (_issues: readonly TableIssue[]) => true,
     export: (_csv: string) => true,
   } as { [K in (typeof stateEmits)[number]]: null } & {
+    "state-change": (state: TableState) => boolean;
     "update:data": (data: readonly unknown[]) => boolean;
     edit: (changes: readonly CellChange<unknown>[]) => boolean;
     "edit-error": (issues: readonly TableIssue[]) => boolean;
     export: (csv: string) => boolean;
   },
   setup(props, { emit, slots, expose }) {
+    const resolveColumns = createColumnResolver();
     const columns = computed(() =>
       resolveColumns(props.columns, props.data).map(
         (column) =>
@@ -63,16 +77,24 @@ export const VueyeGrid = defineComponent({
       page: props.page ?? 1,
       pageSize: props.pagination ? (props.pageSize ?? props.pageSizeOptions[0] ?? 10) : everyRow(),
     };
+    let binding: DataTableBinding<unknown> | undefined;
     const table = useDataTable<unknown>({
       data: () => props.data,
       columns,
       rowKey: props.rowKey as never,
       selectionMode: "none",
       initialState: { pagination: initialPagination },
-      state: () => ({
-        ...controlledState(props, initialPagination),
-        pagination: props.pagination ? undefined : { page: 1, pageSize: everyRow() },
-      }),
+      state: () => {
+        const controlled = controlledState(
+          props,
+          binding?.table.getState().pagination ?? initialPagination,
+        );
+        return {
+          ...controlled,
+          selection: undefined,
+          pagination: props.pagination ? controlled.pagination : { page: 1, pageSize: everyRow() },
+        };
+      },
       onEditIssues(issues) {
         emit("edit-error", issues);
       },
@@ -81,19 +103,27 @@ export const VueyeGrid = defineComponent({
         emit("edit", changes);
       },
       onStateChange(state, previous) {
-        if (state.pagination.page !== previous.pagination.page) {
-          emit("update:page", state.pagination.page);
-        }
-        if (state.sorting !== previous.sorting) {
-          emit("update:sorting", state.sorting);
-        }
-        if (state.search !== previous.search) {
-          emit("update:search", state.search);
-        }
+        emitStateChanges(emit as never, state, previous);
+        emit("state-change", state);
       },
     });
+    binding = table;
     provideDataTable(table);
     expose({ table });
+
+    // `cell.<id>` slots also receive the row's data as `item`, as they do on `<VueyeTable>`.
+    const gridSlots = (): Record<string, unknown> => {
+      const forwarded: Record<string, unknown> = {};
+      for (const [name, slot] of Object.entries(slots)) {
+        if (name === "default" && slot) {
+          forwarded[name] = slot;
+        } else if (name.startsWith("cell.") && slot) {
+          forwarded[name] = (cellProps: GridCellSlotProps) =>
+            slot({ ...cellProps, item: cellProps.row.original } as never);
+        }
+      }
+      return forwarded;
+    };
 
     const button = (label: string, disabled: boolean, onClick: () => void) =>
       h("button", { type: "button", class: "vt-button", disabled, onClick }, label);
@@ -129,7 +159,7 @@ export const VueyeGrid = defineComponent({
             theme: props.theme,
             ...(props.maxHeight ? { style: { "--vt-max-height": props.maxHeight } } : {}),
           },
-          slots.default ? { default: slots.default } : undefined,
+          gridSlots(),
         ),
         props.pagination
           ? h(VtToolbar, { class: "vt-footer" }, () => [

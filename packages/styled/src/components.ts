@@ -13,6 +13,7 @@ import {
   DataTableSearch,
   DataTableSortButton,
   DataTableStatus,
+  type GridCellSlotProps,
 } from "@vueye-table/headless";
 import { injectDataTable, type AnyDataTableBinding, type DataTableBinding } from "@vueye-table/vue";
 import {
@@ -219,16 +220,49 @@ export const VtPageSize = defineComponent({
   },
 });
 
-/** A menu of column checkboxes behind a "Columns" button. */
+/**
+ * A menu of column checkboxes behind a "Columns" button. Escape closes it and returns focus to
+ * the button, and so does moving focus out of it.
+ */
 export const VtColumnVisibility = defineComponent({
   name: "VtColumnVisibility",
   props: { label: { type: String, default: "Columns" } },
   setup(props) {
+    const close = (menu: HTMLDetailsElement, refocus: boolean): void => {
+      if (!menu.open) {
+        return;
+      }
+      menu.open = false;
+      if (refocus) {
+        menu.querySelector("summary")?.focus();
+      }
+    };
     return () =>
-      h("details", { class: "vt-menu" }, [
-        h("summary", { class: "vt-button" }, [icon("columns"), props.label]),
-        h(DataTableColumnVisibility, { as: "div", class: "vt-menu-panel" }),
-      ]);
+      h(
+        "details",
+        {
+          class: "vt-menu",
+          onKeydown: (event: KeyboardEvent) => {
+            if (event.key === "Escape") {
+              event.preventDefault();
+              close(event.currentTarget as HTMLDetailsElement, true);
+            }
+          },
+          onFocusout: (event: FocusEvent) => {
+            const menu = event.currentTarget as HTMLDetailsElement;
+            const next = event.relatedTarget as Node | null;
+            // Some browsers move no focus when a checkbox label is clicked; only a known
+            // destination outside the menu closes it.
+            if (next !== null && !menu.contains(next)) {
+              close(menu, false);
+            }
+          },
+        },
+        [
+          h("summary", { class: "vt-button" }, [icon("columns"), props.label]),
+          h(DataTableColumnVisibility, { as: "div", class: "vt-menu-panel" }),
+        ],
+      );
   },
 });
 
@@ -244,33 +278,56 @@ export const VtToolbar = defineComponent({
   },
 });
 
+type CellSlot = (props: GridCellSlotProps) => VNodeChild;
+
 const GridBody = defineComponent({
   name: "VtGridBody",
-  props: { rowNumbers: { type: Boolean, default: true } },
+  props: {
+    rowNumbers: { type: Boolean, default: true },
+    /** Content slots per column id, as `cell.<id>` on `<VtGrid>`. */
+    cells: {
+      type: Object as PropType<Readonly<Record<string, CellSlot | undefined>>>,
+      default: () => ({}),
+    },
+  },
   setup(props) {
     const table = injectDataTable("<VtGrid>");
-    return () =>
-      h(
+    return () => {
+      const cellSlots = props.cells;
+      const hasCellSlots = Object.keys(cellSlots).length > 0;
+      return h(
         DataGridBody,
         { class: "vt-body" },
         {
-          rowHeader: ({ row }: { row: TableRow<unknown> }) =>
+          rowHeader: ({ index }: { index: number }) =>
             props.rowNumbers
-              ? h(
-                  "th",
-                  { class: "vt-row-number", scope: "row" },
-                  String(table.pageStart + table.rows.indexOf(row)),
-                )
+              ? h("th", { class: "vt-row-number", scope: "row" }, String(table.pageStart + index))
               : null,
+          ...(hasCellSlots
+            ? {
+                cell: (cellProps: GridCellSlotProps) => {
+                  const slot = cellSlots[cellProps.column.id];
+                  return slot ? slot(cellProps) : cellProps.display;
+                },
+              }
+            : {}),
         },
       );
+    };
   },
 });
 
-/** The styled spreadsheet grid, with optional row numbers and A, B, C column letters. */
+/**
+ * The styled spreadsheet grid, with optional row numbers and A, B, C column letters. A
+ * `cell.<column id>` slot draws that column's cells while they are not being edited.
+ */
 export const VtGrid = defineComponent({
   name: "VtGrid",
-  slots: Object as SlotsType<{ default?: (props: Record<string, unknown>) => VNode[] }>,
+  slots: Object as SlotsType<
+    { [key: `cell.${string}`]: GridCellSlotProps } & {
+      default?: (props: Record<string, unknown>) => VNode[];
+    }
+  >,
   props: {
     table: { type: Object as PropType<AnyDataTableBinding>, required: true },
     label: { type: String as PropType<string | undefined>, default: undefined },
@@ -279,6 +336,15 @@ export const VtGrid = defineComponent({
     ...surfaceProps,
   },
   setup(props, { slots }) {
+    const cellSlots = (): Record<string, CellSlot> => {
+      const found: Record<string, CellSlot> = {};
+      for (const [name, slot] of Object.entries(slots)) {
+        if (name.startsWith("cell.") && slot) {
+          found[name.slice("cell.".length)] = slot as CellSlot;
+        }
+      }
+      return found;
+    };
     const header = () =>
       h(VtHeader, null, {
         before: () =>
@@ -306,7 +372,7 @@ export const VtGrid = defineComponent({
               default: (slotProps: Record<string, unknown>) =>
                 slots.default?.(slotProps) ?? [
                   header(),
-                  h(GridBody, { rowNumbers: props.rowNumbers }),
+                  h(GridBody, { rowNumbers: props.rowNumbers, cells: cellSlots() }),
                 ],
             },
           ),

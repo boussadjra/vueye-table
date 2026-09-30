@@ -73,6 +73,20 @@ describe("editing", () => {
     expect(table.edit({ rowKey: 2, column: "city", input: "x" }).status).toBe("rejected");
   });
 
+  it("reads every pasted cell of an empty column by the same sample", () => {
+    const table = createTable<{ id: number; score: number | null }>({
+      data: [
+        { id: 1, score: null },
+        { id: 2, score: null },
+        { id: 3, score: 7 },
+      ],
+      columns: [{ id: "score", editable: true }],
+    });
+    const result = table.paste({ row: 0, column: 0 }, "1\n2");
+    expect(result.status).toBe("applied");
+    expect(result.changes.map((change) => change.value)).toEqual([1, 2]);
+  });
+
   it("undoes and redoes batches", () => {
     const { table } = sheet();
     table.edit([
