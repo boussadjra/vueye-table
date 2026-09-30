@@ -183,12 +183,36 @@ export function formatValue(value: unknown): string {
 
 function toComparable(value: unknown): number | string | undefined {
   if (value instanceof Date) {
-    return value.getTime();
+    const time = value.getTime();
+    return Number.isNaN(time) ? undefined : time;
   }
-  if (typeof value === "number" || typeof value === "string") {
-    return value;
+  if (typeof value === "number") {
+    return Number.isNaN(value) ? undefined : value;
   }
-  return undefined;
+  return typeof value === "string" ? value : undefined;
+}
+
+/**
+ * Read a range bound in the kind of the value it is compared with, so a bound typed into a text
+ * box (`"10"`, `"2024-01-31"`) compares with numbers as a number and with dates as a time. An
+ * empty or unreadable bound leaves that end of the range open.
+ */
+function toBound(bound: unknown, value: unknown): number | string | undefined {
+  if (isEmpty(bound)) {
+    return undefined;
+  }
+  if (typeof bound === "string" && typeof value === "number") {
+    const number = Number(bound.trim());
+    return bound.trim() === "" || Number.isNaN(number) ? undefined : number;
+  }
+  if (typeof bound === "string" && value instanceof Date) {
+    return toComparable(new Date(bound));
+  }
+  if (bound instanceof Date && typeof value === "string") {
+    // Compare text dates at their own precision: "2024-01-31" against the bound's day.
+    return Number.isNaN(bound.getTime()) ? undefined : bound.toISOString().slice(0, value.length);
+  }
+  return toComparable(bound);
 }
 
 function isRangeFilter(value: unknown): value is RangeFilter {
@@ -206,7 +230,8 @@ function isRangeFilter(value: unknown): value is RangeFilter {
  *
  * - an empty filter value (`undefined`, `null`, `""`, `[]`) lets every row through;
  * - an array keeps rows whose value is one of its items;
- * - `{ min, max }` keeps values inside the inclusive range;
+ * - `{ min, max }` keeps values inside the inclusive range; a bound given as text is read as a
+ *   number or a date when the value is one, and an empty bound leaves that end open;
  * - text keeps rows whose shown text contains it, ignoring case;
  * - anything else keeps rows whose value is identical.
  */
@@ -218,12 +243,15 @@ export function matchesFilter(value: unknown, filterValue: unknown, display: str
     return filterValue.some((item) => Object.is(item, value) || compareValues(item, value) === 0);
   }
   if (isRangeFilter(filterValue)) {
+    const min = toBound(filterValue.min, value);
+    const max = toBound(filterValue.max, value);
+    if (min === undefined && max === undefined) {
+      return true;
+    }
     const comparable = toComparable(value);
     if (comparable === undefined) {
       return false;
     }
-    const min = toComparable(filterValue.min);
-    const max = toComparable(filterValue.max);
     return (min === undefined || comparable >= min) && (max === undefined || comparable <= max);
   }
   if (typeof filterValue === "string") {

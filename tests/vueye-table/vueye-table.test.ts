@@ -224,6 +224,66 @@ describe("VueyeGrid", () => {
   });
 });
 
+describe("VueyeGrid state and slots", () => {
+  it("keeps a page size the user picked while the parent controls the page", async () => {
+    const wrapper = mount(VueyeGrid, {
+      props: { data: people, columns, pagination: true, page: 1, pageSizeOptions: [2, 5] },
+    });
+    await wrapper.get(".vt-page-size select").setValue("5");
+    expect(wrapper.emitted("update:pageSize")?.at(-1)).toEqual([5]);
+    await wrapper.get(".vt-pagination [aria-label='Next page']").trigger("click");
+    expect(wrapper.emitted("update:page")?.at(-1)).toEqual([2]);
+    await wrapper.setProps({ page: 2 });
+    expect(wrapper.findAll("tbody tr")).toHaveLength(2);
+    expect(wrapper.get(".vt-status").text()).toBe("6–7 of 7 rows");
+    expect(wrapper.emitted("state-change")?.length).toBeGreaterThan(1);
+  });
+
+  it("draws cell slots with the row's item and keeps the editor", async () => {
+    const wrapper = mount(VueyeGrid, {
+      props: { data: people.slice(0, 2), columns },
+      slots: {
+        "cell.age": `<template #cell.age="{ value, item, editable }"><b class="age">{{ value }}/{{ item.city }}/{{ editable }}</b></template>`,
+      },
+      attachTo: document.body,
+    });
+    expect(wrapper.findAll("b.age").map((cell) => cell.text())).toEqual([
+      "36/London/true",
+      "41/Wilmslow/true",
+    ]);
+    expect(wrapper.findAll("[role=gridcell]")[0]?.text()).toBe("Ada");
+    await wrapper.findAll("[role=gridcell]")[1]?.trigger("dblclick");
+    expect(wrapper.find("input[data-editor]").exists()).toBe(true);
+    expect(wrapper.findAll("b.age")).toHaveLength(1);
+    wrapper.unmount();
+  });
+});
+
+describe("VueyeTable loading", () => {
+  it("says it is loading instead of showing the empty state", async () => {
+    const wrapper = mount(VueyeTable, {
+      props: { data: [], columns, loading: true, loadingText: "Fetching people…" },
+      slots: { empty: "Nothing here" },
+    });
+    expect(wrapper.get("tbody").text()).toBe("Fetching people…");
+    expect(wrapper.get(".vueye-table").attributes("aria-busy")).toBe("true");
+    expect(wrapper.get(".vt-status").text()).toBe("Fetching people…");
+    await wrapper.setProps({ loading: false });
+    expect(wrapper.get("tbody").text()).toBe("Nothing here");
+    expect(wrapper.get(".vt-status").text()).toBe("No rows");
+  });
+
+  it("lets the status line be rewritten", () => {
+    const wrapper = mount(VueyeTable, {
+      props: { data: people, columns, manual: true, rowCount: 12_000 },
+      slots: {
+        status: `<template #status="{ start, end, rowCount }">{{ start }}-{{ end }} of {{ rowCount.toLocaleString("en-US") }}</template>`,
+      },
+    });
+    expect(wrapper.get(".vt-status").text()).toBe("1-7 of 12,000");
+  });
+});
+
 describe("VueyeTablePlugin", () => {
   it("registers both components", () => {
     const app = createApp({ render: () => null });

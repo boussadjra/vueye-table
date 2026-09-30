@@ -33,7 +33,7 @@ export default defineConfig({
     logo: "/logo.svg",
     nav: [
       { text: "Guide", link: "/guide/getting-started" },
-      { text: "Examples", link: "/examples/table" },
+      { text: "Examples", link: "/examples/" },
       { text: "Decisions", link: "/adr/0001-layered-packages" },
       {
         text: "3.0 alpha",
@@ -52,6 +52,12 @@ export default defineConfig({
         items: [
           { text: "Getting started", link: "/guide/getting-started" },
           { text: "Layers", link: "/guide/layers" },
+          { text: "Columns", link: "/guide/columns" },
+          { text: "State and v-model", link: "/guide/state" },
+          { text: "Server-side data", link: "/guide/server-data" },
+          { text: "Editing and spreadsheets", link: "/guide/editing" },
+          { text: "Theming", link: "/guide/theming" },
+          { text: "Component reference", link: "/guide/components" },
           { text: "Nuxt", link: "/guide/nuxt" },
           { text: "Upgrading from 2.x", link: "/guide/upgrading-from-2" },
         ],
@@ -59,8 +65,14 @@ export default defineConfig({
       {
         text: "Examples",
         items: [
+          { text: "Gallery", link: "/examples/" },
           { text: "Full table", link: "/examples/table" },
           { text: "Spreadsheet", link: "/examples/grid" },
+          { text: "Orders dashboard", link: "/examples/orders-dashboard" },
+          { text: "CRM contacts", link: "/examples/crm-contacts" },
+          { text: "Server-side API", link: "/examples/server-side" },
+          { text: "Inventory sheet", link: "/examples/inventory" },
+          { text: "Financial report", link: "/examples/financial-report" },
         ],
       },
       {

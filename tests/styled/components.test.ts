@@ -81,6 +81,28 @@ describe("VtTable", () => {
     expect(table().rowCount).toBe(7);
   });
 
+  it("closes the column menu on Escape and when focus leaves it", async () => {
+    const { wrapper } = mountWithTable(
+      options,
+      () => [h(VtColumnVisibility), h("button", { class: "outside" }, "Elsewhere")],
+      document.body,
+    );
+    const menu = wrapper.get("details.vt-menu");
+    const details = menu.element as HTMLDetailsElement;
+    details.open = true;
+    await menu.trigger("keydown", { key: "Escape" });
+    expect(details.open).toBe(false);
+    expect(document.activeElement).toBe(wrapper.get("summary").element);
+    details.open = true;
+    await wrapper.get(".vt-menu-panel input").trigger("focusout", { relatedTarget: null });
+    expect(details.open).toBe(true);
+    await wrapper
+      .get(".vt-menu-panel input")
+      .trigger("focusout", { relatedTarget: wrapper.get(".outside").element });
+    expect(details.open).toBe(false);
+    wrapper.unmount();
+  });
+
   it("renders an empty state with custom text", () => {
     expect(mount(VtEmpty, { props: { text: "Nothing" } }).text()).toBe("Nothing");
     expect(mount(VtEmpty, { slots: { default: () => "Custom" } }).text()).toBe("Custom");

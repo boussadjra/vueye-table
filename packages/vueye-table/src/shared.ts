@@ -5,6 +5,7 @@ import {
   type RowKey,
   type SelectScope,
   type SortRule,
+  type TableState,
   type TableStatePatch,
 } from "@vueye-table/core";
 import type { Density } from "@vueye-table/styled";
@@ -80,9 +81,58 @@ export function controlledState(props: ControlledProps, current: PaginationState
   };
 }
 
-export function resolveColumns(
+/**
+ * Emit a `v-model` update for each piece of state that changed. The state is frozen and replaced
+ * piece by piece, so identity tells what changed.
+ */
+export function emitStateChanges(
+  emit: (event: (typeof stateEmits)[number], value: unknown) => void,
+  state: TableState,
+  previous: TableState,
+): void {
+  if (state.pagination.page !== previous.pagination.page) {
+    emit("update:page", state.pagination.page);
+  }
+  if (state.pagination.pageSize !== previous.pagination.pageSize) {
+    emit("update:pageSize", state.pagination.pageSize);
+  }
+  if (state.sorting !== previous.sorting) {
+    emit("update:sorting", state.sorting);
+  }
+  if (state.search !== previous.search) {
+    emit("update:search", state.search);
+  }
+  if (state.filters !== previous.filters) {
+    emit("update:filters", state.filters);
+  }
+  if (state.hiddenColumns !== previous.hiddenColumns) {
+    emit("update:hiddenColumns", state.hiddenColumns);
+  }
+  if (state.selection !== previous.selection) {
+    emit("update:selected", state.selection);
+  }
+}
+
+/**
+ * The given columns, or columns inferred from the data. Inferred columns are reused while the
+ * data keeps the same fields, so an edit that replaces the array does not rebuild every row.
+ */
+export function createColumnResolver(): (
   columns: readonly AnyColumnDef[] | undefined,
   data: readonly unknown[],
-): readonly AnyColumnDef[] {
-  return columns ?? inferColumns(data);
+) => readonly AnyColumnDef[] {
+  let inferred:
+    | { readonly signature: string; readonly columns: readonly AnyColumnDef[] }
+    | undefined;
+  return (columns, data) => {
+    if (columns) {
+      return columns;
+    }
+    const next = inferColumns(data);
+    const signature = next.map((column) => column.id).join("\u0000");
+    if (inferred?.signature !== signature) {
+      inferred = { signature, columns: next };
+    }
+    return inferred.columns;
+  };
 }

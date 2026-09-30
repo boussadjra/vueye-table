@@ -23,6 +23,7 @@ import {
   type PropType,
   type SlotsType,
   type VNode,
+  type VNodeChild,
 } from "vue";
 
 import { asProp, columnProp, flag, rowProp } from "./shared";
@@ -134,12 +135,25 @@ export const DataGridRoot = defineComponent({
   },
 });
 
-/** The grid body: a row of cells per row on the page. */
+/** Slot props of a grid cell's content, while it is not being edited. */
+export interface GridCellSlotProps {
+  readonly row: TableRow<unknown>;
+  readonly column: TableColumn<unknown>;
+  readonly value: unknown;
+  readonly display: string;
+  readonly editable: boolean;
+}
+
+/**
+ * The grid body: a row of cells per row on the page. The `cell` slot draws the content of every
+ * cell that is not being edited; the `rowHeader` slot adds a leading cell to each row.
+ */
 export const DataGridBody = defineComponent({
   name: "DataGridBody",
   slots: Object as SlotsType<{
     default?: (props: { rows: readonly TableRow<unknown>[] }) => VNode[];
-    rowHeader?: (props: { row: TableRow<unknown> }) => VNode[];
+    rowHeader?: (props: { row: TableRow<unknown>; index: number }) => VNode[];
+    cell?: (props: GridCellSlotProps) => VNodeChild;
   }>,
   props: { as: asProp("tbody") },
   setup(props, { slots }) {
@@ -148,11 +162,28 @@ export const DataGridBody = defineComponent({
       h(
         props.as,
         slots.default?.({ rows: table.rows }) ??
-          table.rows.map((row) =>
-            h("tr", { key: row.key, role: "row", "data-key": String(row.key) }, [
-              slots.rowHeader?.({ row }),
-              ...table.columns.map((column) => h(DataGridCell, { key: column.id, row, column })),
-            ]),
+          table.rows.map((row, rowIndex) =>
+            h(
+              "tr",
+              {
+                key: row.key,
+                role: "row",
+                "aria-rowindex": rowIndex + 2,
+                "data-key": String(row.key),
+              },
+              [
+                slots.rowHeader?.({ row, index: rowIndex }),
+                ...table.columns.map((column, columnIndex) =>
+                  h(
+                    DataGridCell,
+                    { key: column.id, row, column, rowIndex, columnIndex },
+                    slots.cell
+                      ? { default: (cellProps: GridCellSlotProps) => slots.cell?.(cellProps) }
+                      : undefined,
+                  ),
+                ),
+              ],
+            ),
           ),
       );
   },
@@ -212,13 +243,7 @@ const DataGridEditor = defineComponent({
 export const DataGridCell = defineComponent({
   name: "DataGridCell",
   slots: Object as SlotsType<{
-    default?: (props: {
-      row: TableRow<unknown>;
-      column: TableColumn<unknown>;
-      value: unknown;
-      display: string;
-      editable: boolean;
-    }) => VNode[];
+    default?: (props: GridCellSlotProps) => VNodeChild;
     editor?: (props: {
       draft: string;
       update: (draft: string) => void;
@@ -226,14 +251,22 @@ export const DataGridCell = defineComponent({
       cancel: () => void;
     }) => VNode[];
   }>,
-  props: { row: rowProp, column: columnProp, as: asProp("td") },
+  props: {
+    row: rowProp,
+    column: columnProp,
+    as: asProp("td"),
+    /** The row's position on the page. Found by searching the rows when left out. */
+    rowIndex: { type: Number as PropType<number | undefined>, default: undefined },
+    /** The column's position among the visible columns. Found by searching when left out. */
+    columnIndex: { type: Number as PropType<number | undefined>, default: undefined },
+  },
   setup(props, { slots }) {
     const table = injectDataTable("<DataGridCell>");
     const { grid, context } = useGrid("<DataGridCell>");
     const element = ref<HTMLElement>();
     const position = () => ({
-      row: table.rows.indexOf(props.row),
-      column: table.columns.indexOf(props.column),
+      row: props.rowIndex ?? table.rows.indexOf(props.row),
+      column: props.columnIndex ?? table.columns.indexOf(props.column),
     });
 
     watch(

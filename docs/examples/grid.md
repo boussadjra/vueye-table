@@ -55,7 +55,11 @@ paste, Delete, undo, and redo work like a spreadsheet. The total column is compu
     @edit="onEdit($event); issues = []"
     @edit-error="issues = $event"
     @export="onExport"
-  />
+  >
+    <template #cell.taxable="{ value }">
+      <span class="flag" :data-on="value ? '' : undefined">{{ value ? "Taxable" : "Exempt" }}</span>
+    </template>
+  </VueyeGrid>
   <p v-for="issue in issues" :key="issue.message" class="issue" role="alert">{{ issue.message }}</p>
   <template v-slot:side>
     <EditLog :edits="edits" :arrays="arrays" :csv="csv" />
@@ -69,10 +73,38 @@ paste, Delete, undo, and redo work like a spreadsheet. The total column is compu
   column-letters
   @edit-error="issues = $event"
   @edit="issues = []"
-/>
+>
+  <template #cell.taxable="{ value }">
+    <span class="flag" :data-on="value ? '' : undefined">{{ value ? "Taxable" : "Exempt" }}</span>
+  </template>
+</VueyeGrid>
 ```
 
+The `cell.taxable` slot draws the cell while it is not being edited. Type `yes`, `no`, `true`, or
+`0` into it and the column's boolean type reads the text.
+
 <style scoped>
+.flag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12.5px;
+  color: var(--vp-c-text-3);
+}
+
+.flag::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentcolor;
+  opacity: 0.6;
+}
+
+.flag[data-on] {
+  color: var(--vp-c-brand-1);
+}
+
 .issue {
   margin: 12px 0 0;
   font-size: 14px;

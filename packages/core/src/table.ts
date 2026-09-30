@@ -521,6 +521,19 @@ export function createTable<TRow>(options: TableOptions<TRow>): DataTable<TRow> 
     const working = [...data];
     const issues: TableIssue[] = [];
     const changes: CellChange<TRow>[] = [];
+    // A value from another row tells a column's type when the edited cell is empty. It is looked
+    // up once per column, not once per edit, so pasting a large range stays linear.
+    const samples = new Map<string, unknown>();
+    const sampleOf = (columnId: string): unknown => {
+      if (!samples.has(columnId)) {
+        const other = current.processedRows.find((candidate) => {
+          const value = candidate.getValue(columnId);
+          return value !== null && value !== undefined;
+        });
+        samples.set(columnId, other?.getValue(columnId));
+      }
+      return samples.get(columnId);
+    };
     for (const edit of edits) {
       const row = current.getRow(edit.rowKey);
       const column = current.getColumn(edit.column);
@@ -558,11 +571,7 @@ export function createTable<TRow>(options: TableOptions<TRow>): DataTable<TRow> 
       }
       let value: unknown;
       if (isInputEdit(edit)) {
-        const sample = current.processedRows.find((other) => {
-          const candidate = other.getValue(column.id);
-          return candidate !== null && candidate !== undefined;
-        });
-        const parsed = column.parse(edit.input, original, sample?.getValue(column.id));
+        const parsed = column.parse(edit.input, original, sampleOf(column.id));
         if (!parsed.ok) {
           issues.push(
             issue("invalid_value", parsed.message, { rowKey: row.key, column: column.id }),
