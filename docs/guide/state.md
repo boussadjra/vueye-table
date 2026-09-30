@@ -75,6 +75,11 @@ search.value = ""; // clear the search box
 sorting.value = []; // back to the data's order
 ```
 
+A value you set from outside is applied as it is. It does not return the table to page 1 the way a
+user's search or filter does, so when you control `page` too, set it in the same change:
+`filters.value = next; page.value = 1`. Without a bound `page`, call the operation instead,
+`tableRef.value.table.filter("status", ["refunded"])`, which does return to page 1.
+
 Filters are often drawn outside the table, as chips or a sidebar. They only need to write
 `filters`:
 

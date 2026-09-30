@@ -47,14 +47,15 @@ line, loading and empty states, and theming.
 
 ### Slots
 
-| Slot          | Props                                                      |
-| ------------- | ---------------------------------------------------------- |
-| `cell.<id>`   | `{ item, row, value, display, column }`                    |
-| `header.<id>` | `{ column }`                                               |
-| `toolbar`     | `{ table }`, placed between the search and the column menu |
-| `footer`      | `{ table }`, placed after the status line                  |
-| `empty`       | Shown when no row passes the search and filters.           |
-| `loading`     | Shown while `loading` with no rows yet.                    |
+| Slot          | Props                                                                                 |
+| ------------- | ------------------------------------------------------------------------------------- |
+| `cell.<id>`   | `{ item, row, value, display, column }`                                               |
+| `header.<id>` | `{ column }`                                                                          |
+| `toolbar`     | `{ table }`, placed between the search and the column menu                            |
+| `footer`      | `{ table }`, placed after the status line                                             |
+| `empty`       | Shown when no row passes the search and filters.                                      |
+| `loading`     | Shown while `loading` with no rows yet.                                               |
+| `status`      | `{ start, end, rowCount, totalRowCount, selectedCount }`, replacing "1–10 of 57 rows" |
 
 ### Exposed
 

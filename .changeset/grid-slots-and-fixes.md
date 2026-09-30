@@ -19,3 +19,6 @@ leaves it.
 
 New: `cell.<column id>` slots on `VueyeGrid` and `VtGrid`, a `cell` slot and `rowIndex` and
 `columnIndex` props on the headless grid, and `GridCellSlotProps`.
+
+`VueyeTable` gains a `status` slot to rewrite the "1–10 of 57 rows" line, shows `loading-text`
+there too while the first page loads, and types `row-count` as `number | undefined`.

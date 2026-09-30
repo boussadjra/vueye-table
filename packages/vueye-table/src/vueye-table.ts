@@ -37,6 +37,15 @@ export interface CellSlotProps {
   readonly column: { readonly id: string; readonly header: string };
 }
 
+/** Slot props of `status`, the "1–10 of 57 rows" line. */
+export interface StatusSlotProps {
+  readonly start: number;
+  readonly end: number;
+  readonly rowCount: number;
+  readonly totalRowCount: number;
+  readonly selectedCount: number;
+}
+
 /**
  * A complete data table: search, column visibility, sorting, selection, pagination, a live
  * status line, loading and empty states, and theming. Every piece of state is available as a
@@ -55,7 +64,7 @@ export const VueyeTable = defineComponent({
     selected: { type: Array as PropType<readonly RowKey[]>, default: undefined },
     /** The data is one page from a server; `rowCount` is the total. */
     manual: { type: Boolean, default: false },
-    rowCount: { type: Number, default: undefined },
+    rowCount: { type: Number as PropType<number | undefined>, default: undefined },
     /** Shown instead of the empty state while `loading` and there are no rows yet. */
     loadingText: { type: String, default: "Loading…" },
   },
@@ -78,6 +87,7 @@ export const VueyeTable = defineComponent({
       empty: Record<string, never>;
       loading: Record<string, never>;
       footer: { table: unknown };
+      status: StatusSlotProps;
     }
   >,
   setup(props, { emit, slots, expose }) {
@@ -220,7 +230,15 @@ export const VueyeTable = defineComponent({
             ]),
             props.pagination || slots.footer
               ? h(VtToolbar, { class: "vt-footer" }, () => [
-                  h(VtStatus),
+                  h(
+                    VtStatus,
+                    null,
+                    slots.status
+                      ? { default: (status: StatusSlotProps) => slots.status?.(status) }
+                      : props.loading && table.rows.length === 0
+                        ? { default: () => props.loadingText }
+                        : undefined,
+                  ),
                   slots.footer?.({ table }),
                   props.pagination
                     ? h("div", { class: "vt-footer-controls" }, [

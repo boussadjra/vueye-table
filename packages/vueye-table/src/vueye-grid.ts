@@ -119,7 +119,7 @@ export const VueyeGrid = defineComponent({
           forwarded[name] = slot;
         } else if (name.startsWith("cell.") && slot) {
           forwarded[name] = (cellProps: GridCellSlotProps) =>
-            slot({ ...cellProps, item: cellProps.row.original } as never);
+            slot({ ...cellProps, item: cellProps.row.original });
         }
       }
       return forwarded;

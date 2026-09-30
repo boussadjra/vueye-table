@@ -267,8 +267,20 @@ describe("VueyeTable loading", () => {
     });
     expect(wrapper.get("tbody").text()).toBe("Fetching people…");
     expect(wrapper.get(".vueye-table").attributes("aria-busy")).toBe("true");
+    expect(wrapper.get(".vt-status").text()).toBe("Fetching people…");
     await wrapper.setProps({ loading: false });
     expect(wrapper.get("tbody").text()).toBe("Nothing here");
+    expect(wrapper.get(".vt-status").text()).toBe("No rows");
+  });
+
+  it("lets the status line be rewritten", () => {
+    const wrapper = mount(VueyeTable, {
+      props: { data: people, columns, manual: true, rowCount: 12_000 },
+      slots: {
+        status: `<template #status="{ start, end, rowCount }">{{ start }}-{{ end }} of {{ rowCount.toLocaleString("en-US") }}</template>`,
+      },
+    });
+    expect(wrapper.get(".vt-status").text()).toBe("1-7 of 12,000");
   });
 });
 
