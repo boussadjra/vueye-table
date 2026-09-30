@@ -59,3 +59,6 @@ pnpm check                         # the full gate before finishing
 ## Status
 
 `3.0.0-alpha.0`, unreleased. The API is provisional. Do not claim production readiness.
+
+Releases go through changesets in `alpha` pre mode and `.github/workflows/release.yml`; see
+[RELEASING.md](./RELEASING.md). Publish with `pnpm publish:packages`, never `changeset publish`.
