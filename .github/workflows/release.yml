@@ -91,7 +91,7 @@ jobs:
         run: npm install --global npm@latest
 
       - name: Build packages
-        run: pnpm turbo run build --filter='./packages/*'
+        run: pnpm build --filter='./packages/*'
 
       - name: Validate packages
         run: pnpm package:check
@@ -151,7 +151,7 @@ jobs:
         run: npm install --global npm@latest
 
       - name: Build packages
-        run: pnpm turbo run build --filter='./packages/*'
+        run: pnpm build --filter='./packages/*'
 
       - name: Validate packages
         run: pnpm package:check
