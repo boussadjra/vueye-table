@@ -1,6 +1,6 @@
 {
   "name": "@vueye-table/core",
-  "version": "3.0.0-alpha.0",
+  "version": "3.0.0-alpha.1",
   "description": "Framework-independent data table and spreadsheet engine for vueye-table.",
   "keywords": [
     "data-table",
