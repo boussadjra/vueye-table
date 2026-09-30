@@ -89,3 +89,12 @@ The styled layer is driven by CSS custom properties on `.vt-surface`:
 
 Dark colors follow `prefers-color-scheme`; `theme="dark"` or `theme="light"` forces one. Density
 is `compact`, `comfortable`, or `spacious`.
+
+## Next steps
+
+- [Columns](/guide/columns): paths, computed values, formatting, sorting, and filters.
+- [State and v-model](/guide/state): control, save, and restore what users change.
+- [Server-side data](/guide/server-data): let a server search, sort, and page.
+- [Editing and spreadsheets](/guide/editing): parsing, validation, the clipboard, and undo.
+- [Theming](/guide/theming): custom properties, dark mode, and density.
+- [Examples](/examples/): real screens built with every layer.

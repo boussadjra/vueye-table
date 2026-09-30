@@ -458,6 +458,11 @@
   border-inline-end: 1px solid var(--vt-border);
 }
 
+/* The surface draws the outer edge; a last column line would double it. */
+.vt-grid tr > :last-child {
+  border-inline-end: 0;
+}
+
 .vt-grid td {
   position: relative;
   cursor: cell;
