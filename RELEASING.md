@@ -15,13 +15,18 @@ The Release workflow (`.github/workflows/release.yml`) only runs when `github.re
    changelogs.
 3. Merging that pull request runs the gate again and publishes with `pnpm publish:packages`, over
    npm trusted publishing (OIDC), with provenance. There is no npm token.
+4. The same run tags the merge commit `v<version>` and creates a GitHub release with
+   `pnpm release:tag`. The release notes are the `vueye-table` changelog entry for that version,
+   followed by links to every published package. A prerelease is marked as one and never becomes
+   the repository's "Latest" release.
 
 Publishing only happens once the `release` environment variable `NPM_TRUSTED_PUBLISHING` is
 `true`. Until then, step 3 does nothing, so a merge cannot fail before the packages exist.
 
 Do not use `changeset publish`. `pnpm publish:packages` publishes in dependency order, skips any
 package already on npm at that version (so a failed run can simply be re-run), and picks the
-dist-tag.
+dist-tag. `pnpm release:tag` is idempotent the same way: it skips a tag or release that already
+exists, and `pnpm release:tag --dry-run` prints the tag and notes without creating anything.
 
 ## Prerelease line
 
@@ -62,7 +67,8 @@ Trusted publishing cannot create a package that does not exist yet, so the first
 3. Create a short-lived granular npm token with publish rights to the `@vueye-table` scope and to
    `vueye-table`, and add it to the `release` environment as the secret `NPM_TOKEN`.
 4. Run the Release workflow by hand (Actions, Release, Run workflow) with **first_publish**
-   checked. It publishes the version currently on `main`.
+   checked. It publishes the version currently on `main`, then tags it and creates its GitHub
+   release.
 5. On each package's npm settings page, attach a GitHub Actions trusted publisher:
    - Organization or user: `boussadjra`
    - Repository: `vueye-table`

@@ -63,7 +63,8 @@ jobs:
     environment: release
 
     permissions:
-      contents: read
+      # Push the version tag and create the GitHub release.
+      contents: write
       id-token: write
 
     steps:
@@ -102,6 +103,11 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
           NPM_CONFIG_PROVENANCE: "true"
+
+      - name: Tag the version and create the GitHub release
+        run: pnpm release:tag
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   release:
     name: Version or publish
@@ -155,6 +161,7 @@ jobs:
       # Publish is skipped until NPM_TRUSTED_PUBLISHING is set, so a merge cannot fail OIDC
       # before the packages exist and trusted publishers are attached.
       - name: Create a release pull request or publish
+        id: changesets
         uses: changesets/action@a45c4d594aa4e2c509dc14a9f2b3b67ba3780d0d # v1.9.0
         with:
           version: pnpm run version
@@ -166,3 +173,12 @@ jobs:
           # No NODE_AUTH_TOKEN and no NPM_TOKEN: authentication is the OIDC exchange above.
           # Trusted publishing must be configured for every vueye-table package on npm.
           NPM_CONFIG_PROVENANCE: "true"
+
+      # With no pending changesets the step above published, so tag that version and release it.
+      # A version that already has its tag and release is skipped, so pushes without a release
+      # change nothing.
+      - name: Tag the version and create the GitHub release
+        if: ${{ steps.changesets.outputs.hasChangesets == 'false' && vars.NPM_TRUSTED_PUBLISHING == 'true' }}
+        run: pnpm release:tag
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -24,6 +24,7 @@
     "version": "changeset version && oxfmt .",
     "version:set": "node scripts/version.mjs",
     "publish:packages": "node scripts/publish.mjs",
+    "release:tag": "node scripts/tag-release.mjs",
     "clean": "turbo run clean"
   },
   "devDependencies": {
