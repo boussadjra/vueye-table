@@ -1,0 +1,168 @@
+name: Release
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      first_publish:
+        description: Create the vueye-table packages on npm with a short-lived NPM_TOKEN. Run once, then attach trusted publishers and set NPM_TRUSTED_PUBLISHING.
+        type: boolean
+        default: false
+
+# The default token is read-only. Each job asks for exactly what it needs.
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  TURBO_TELEMETRY_DISABLED: "1"
+  DO_NOT_TRACK: "1"
+
+jobs:
+  verify:
+    name: Verify
+    # Personal GitHub repo. Never from a fork, and never from a pull request.
+    if: ${{ github.repository == 'boussadjra/vueye-table' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
+        with:
+          version: 11.17.0
+          run_install: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: 24.18.0
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # The complete gate. Publishing may not skip it.
+      - name: Run the release gate
+        run: pnpm check:release
+
+  first-publish:
+    name: First publish
+    needs: verify
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.first_publish }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: release
+
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
+        with:
+          version: 11.17.0
+          run_install: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: 24.18.0
+          cache: pnpm
+          registry-url: https://registry.npmjs.org
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Use an npm release that supports provenance
+        run: npm install --global npm@latest
+
+      - name: Build packages
+        run: pnpm turbo run build --filter='./packages/*'
+
+      - name: Validate packages
+        run: pnpm package:check
+
+      # The @vueye-table/* packages do not exist on npm yet, so OIDC trusted publishing cannot
+      # create them. A short-lived granular token is the one-shot exception. Delete the secret after.
+      - name: Publish the current version
+        run: pnpm publish:packages
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NPM_CONFIG_PROVENANCE: "true"
+
+  release:
+    name: Version or publish
+    needs: verify
+    if: ${{ github.event_name == 'push' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: release
+
+    permissions:
+      # Open and update the release pull request.
+      contents: write
+      pull-requests: write
+      # npm trusted publishing. Requested only by this job, and only for OIDC.
+      id-token: write
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          fetch-depth: 0
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
+        with:
+          version: 11.17.0
+          run_install: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: 24.18.0
+          cache: pnpm
+          registry-url: https://registry.npmjs.org
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # npm's own CLI performs the OIDC exchange, so it must be recent enough to support it.
+      - name: Use an npm release that supports trusted publishing
+        run: npm install --global npm@latest
+
+      - name: Build packages
+        run: pnpm turbo run build --filter='./packages/*'
+
+      - name: Validate packages
+        run: pnpm package:check
+
+      # Pending changesets open a version pull request. After that PR merges, publish:packages
+      # writes to npm under "latest" until a stable 3.x exists, then under the prerelease id.
+      # Publish is skipped until NPM_TRUSTED_PUBLISHING is set, so a merge cannot fail OIDC
+      # before the packages exist and trusted publishers are attached.
+      - name: Create a release pull request or publish
+        uses: changesets/action@a45c4d594aa4e2c509dc14a9f2b3b67ba3780d0d # v1.9.0
+        with:
+          version: pnpm run version
+          publish: ${{ vars.NPM_TRUSTED_PUBLISHING == 'true' && 'pnpm publish:packages' || '' }}
+          commit: "chore: version packages"
+          title: "chore: version packages"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # No NODE_AUTH_TOKEN and no NPM_TOKEN: authentication is the OIDC exchange above.
+          # Trusted publishing must be configured for every vueye-table package on npm.
+          NPM_CONFIG_PROVENANCE: "true"

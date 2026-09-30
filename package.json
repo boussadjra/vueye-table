@@ -19,8 +19,11 @@
     "boundary:check": "node scripts/check-boundaries.mjs",
     "package:check": "turbo run package:check",
     "check": "oxfmt --check . && oxlint . && tsc -p tsconfig.json && turbo run typecheck && vitest run --coverage && turbo run build && node scripts/check-boundaries.mjs && turbo run package:check",
+    "check:release": "pnpm check",
     "changeset": "changeset",
     "version": "changeset version && oxfmt .",
+    "version:set": "node scripts/version.mjs",
+    "publish:packages": "node scripts/publish.mjs",
     "clean": "turbo run clean"
   },
   "devDependencies": {
