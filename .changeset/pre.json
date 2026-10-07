@@ -13,5 +13,12 @@
     "@vueye-table/typescript-config": "0.0.0",
     "@vueye-table/vitest-config": "0.0.0"
   },
-  "changesets": ["framework-rewrite", "grid-slots-and-fixes"]
+  "changesets": [
+    "content-boundaries",
+    "core-row-expansion",
+    "core-virtual-layout",
+    "framework-rewrite",
+    "grid-slots-and-fixes",
+    "vue-virtual-bindings"
+  ]
 }
