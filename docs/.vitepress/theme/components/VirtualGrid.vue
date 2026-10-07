@@ -188,4 +188,9 @@ p:last-child {
   outline: 2px solid var(--vp-c-brand-1);
   outline-offset: -2px;
 }
+@media (max-width: 639px) {
+  p {
+    max-inline-size: 40ch;
+  }
+}
 </style>
