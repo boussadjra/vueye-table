@@ -1,5 +1,6 @@
 export { injectDataGrid, injectDataTable, provideDataGrid, provideDataTable } from "./injection";
 export { useDataGrid, type DataGridBinding, type GridEditor } from "./use-data-grid";
+export type { RowDraft, RowDraftValues } from "./row-draft";
 export {
   useVirtualRows,
   useVirtualColumns,

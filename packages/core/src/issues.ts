@@ -13,6 +13,7 @@ export type TableIssueCode =
   | "read_only_cell"
   | "invalid_value"
   | "validation_failed"
+  | "stale_draft"
   | "invalid_row_operation"
   | "invalid_expanded"
   | "unsafe_path"

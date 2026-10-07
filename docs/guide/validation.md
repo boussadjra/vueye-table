@@ -18,7 +18,7 @@ const columns = defineColumns<Line>([
 
 ## Complete row drafts
 
-`validateRow(next, previous)` runs once per affected row after accepted cell validation. Submit all fields in one batch so cross-field rules see the full draft. Components own their draft buffers.
+`validateRow(next, previous)` runs once per affected row after accepted cell validation. Submit all fields in one batch so cross-field rules see the full draft. Vue supplies a typed `table.editRow(key)` buffer; see [Vue row drafts](/guide/row-drafts).
 
 ```ts
 const table = useDataTable({
@@ -40,6 +40,8 @@ Validation returns `true`, a message, or `{ message, code? }`. A failure becomes
 ## Async validation
 
 A validator may return a promise. `edit()` stays synchronous and returns `status: "pending"`. By default the whole async batch is held; `pendingCells` lists cells waiting for the batch, and applied values remain visible. Promises settle together, then one follow-up snapshot and `onEditIssues` call publish accepted changes/refusals. A successful batch calls `onEditIssues([])` and is one undo step.
+
+Pending results expose `completion`, a promise of the final `EditResult`. Superseded cells are reported as `stale_draft` in that completion without publishing old-cell issues into newer snapshots. Vue `draft.save()` waits for it automatically; `grid.lastResult` follows the latest operation's completion.
 
 `asyncValidation: "optimistic"` applies the draft immediately and rolls failed live cells back. A newer edit supersedes an older result for that cell. With `validateRow`, a newer edit supersedes the row's older validation because its cross-field draft is stale. Removing rows, replacing source/columns, undo/redo or destroying the table fences late results. Application-owned requests and side effects inside a validator still need application cancellation.
 

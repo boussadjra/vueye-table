@@ -5,6 +5,7 @@ import {
   rangeContains,
   selectCell,
   selectionRange,
+  typeOf,
   type CellPosition,
   type CellRange,
   type CopyOptions,
@@ -16,9 +17,12 @@ import {
   type MoveOptions,
   type TableColumn,
   type TableRow,
+  type EditorSpec,
+  type RowKey,
 } from "@vueye-table/core";
 import { computed, shallowRef, watch, type ComputedRef } from "vue";
 
+import { rejectedDraft } from "./row-draft";
 import type { DataTableBinding } from "./use-data-table";
 
 /** The cell being edited and the text typed so far. */
@@ -39,6 +43,8 @@ export interface DataGridBinding<TRow> {
   readonly bounds: ComputedRef<GridBounds>;
   /** The latest edit outcome, to show a rejected value. */
   readonly lastResult: EditResult<TRow> | undefined;
+  /** Serializable editor metadata for an editable cell; no component resolution. */
+  editorFor(position: CellPosition): EditorSpec | undefined;
   cellAt(position: CellPosition): { row: TableRow<TRow>; column: TableColumn<TRow> } | undefined;
   isFocused(position: CellPosition): boolean;
   isSelected(position: CellPosition): boolean;
@@ -65,6 +71,21 @@ export function useDataGrid<TRow>(table: DataTableBinding<TRow>): DataGridBindin
   const selection = shallowRef<GridSelection | undefined>();
   const editor = shallowRef<GridEditor | undefined>();
   const lastResult = shallowRef<EditResult<TRow> | undefined>();
+  let editing:
+    | { readonly key: RowKey; readonly column: TableColumn<TRow>; readonly original: TRow }
+    | undefined;
+  let resultToken: object | undefined;
+  const invalidEditors = new WeakSet<object>();
+  const record = (result: EditResult<TRow>): EditResult<TRow> => {
+    const token = {};
+    resultToken = token;
+    lastResult.value = result;
+    void result.completion?.then((final) => {
+      if (resultToken === token) lastResult.value = final;
+      return undefined;
+    });
+    return result;
+  };
   const bounds = computed<GridBounds>(() => ({
     rows: table.rows.length,
     columns: table.columns.length,
@@ -76,22 +97,46 @@ export function useDataGrid<TRow>(table: DataTableBinding<TRow>): DataGridBindin
 
   // Searching, filtering, paging, or hiding a column can shrink the grid under the selection.
   // Keep the selection on cells that exist, and drop an edit whose cell is gone.
-  watch(bounds, (next) => {
-    const current = selection.value;
-    if (current && (next.rows === 0 || next.columns === 0)) {
-      selection.value = undefined;
-    } else if (current) {
-      const anchor = clampPosition(current.anchor, next);
-      const focus = clampPosition(current.focus, next);
-      if (!same(current.anchor, anchor) || !same(current.focus, focus)) {
-        selection.value = { anchor, focus };
+  watch(
+    () => table.snapshot,
+    () => {
+      const next = bounds.value;
+      const current = selection.value;
+      if (current && (next.rows === 0 || next.columns === 0)) {
+        selection.value = undefined;
+      } else if (current) {
+        const anchor = clampPosition(current.anchor, next);
+        const focus = clampPosition(current.focus, next);
+        if (!same(current.anchor, anchor) || !same(current.focus, focus)) {
+          selection.value = { anchor, focus };
+        }
       }
-    }
-    const position = editor.value?.position;
-    if (position && (position.row >= next.rows || position.column >= next.columns)) {
-      editor.value = undefined;
-    }
-  });
+      const active = editing;
+      if (active && editor.value) {
+        const row = table.rows.findIndex((candidate) => candidate.key === active.key);
+        const column = table.columns.findIndex((candidate) => candidate.id === active.column.id);
+        if (
+          row < 0 ||
+          column < 0 ||
+          table.getRow(active.key)?.original !== active.original ||
+          table.getColumn(active.column.id)?.definition !== active.column.definition
+        ) {
+          editor.value = undefined;
+          editing = undefined;
+          record(
+            rejectedDraft(
+              active.key,
+              "The edited cell changed or left the visible grid. Start a new edit.",
+            ),
+          );
+        } else if (!same(editor.value.position, { row, column })) {
+          editor.value = { ...editor.value, position: { row, column } };
+          selection.value = selectCell({ row, column });
+        }
+      }
+    },
+    { flush: "sync" },
+  );
 
   const cellAt: DataGridBinding<TRow>["cellAt"] = (position) => {
     const row = table.rows[position.row];
@@ -123,6 +168,54 @@ export function useDataGrid<TRow>(table: DataTableBinding<TRow>): DataGridBindin
     },
     bounds,
     cellAt,
+    editorFor(position) {
+      const cell = cellAt(position);
+      if (!cell || !cell.column.isEditable(cell.row.original)) return undefined;
+      const spec = cell.column.definition.editor;
+      if (
+        spec &&
+        ["text", "number", "select", "checkbox", "date"].includes(spec.kind) &&
+        (spec.options === undefined ||
+          (Array.isArray(spec.options) &&
+            spec.options.every(
+              (value) => value === null || ["string", "number", "boolean"].includes(typeof value),
+            )))
+      ) {
+        return Object.freeze({
+          kind: spec.kind,
+          ...(spec.options ? { options: Object.freeze([...spec.options]) } : {}),
+          ...(spec.min !== undefined ? { min: spec.min } : {}),
+          ...(spec.max !== undefined ? { max: spec.max } : {}),
+          ...(spec.maxLength !== undefined ? { maxLength: spec.maxLength } : {}),
+          ...(spec.pattern !== undefined ? { pattern: spec.pattern } : {}),
+        });
+      }
+      if (spec) {
+        if (!invalidEditors.has(cell.column.definition)) {
+          invalidEditors.add(cell.column.definition);
+          record(
+            Object.freeze({
+              status: "rejected",
+              changes: Object.freeze([]),
+              rowChanges: Object.freeze([]),
+              pendingCells: Object.freeze([]),
+              issues: Object.freeze([
+                Object.freeze({
+                  code: "invalid_value",
+                  rowKey: cell.row.key,
+                  column: cell.column.id,
+                  message: "Invalid editor metadata; text metadata is used.",
+                }),
+              ]),
+            }),
+          );
+        }
+        return Object.freeze({ kind: "text" });
+      }
+      const type =
+        cell.column.definition.type ?? typeOf(cell.row.getValue(cell.column.id)) ?? "text";
+      return Object.freeze({ kind: type === "boolean" ? "checkbox" : type });
+    },
     isFocused: (position) => same(selection.value?.focus, position),
     isSelected: (position) => (range.value ? rangeContains(range.value, position) : false),
     isEditing: (position) => same(editor.value?.position, position),
@@ -157,6 +250,7 @@ export function useDataGrid<TRow>(table: DataTableBinding<TRow>): DataGridBindin
         return false;
       }
       editor.value = { position: focus, draft: initial ?? cell.row.getDisplay(cell.column.id) };
+      editing = { key: cell.row.key, column: cell.column, original: cell.row.original };
       return true;
     },
     updateDraft(draft) {
@@ -169,17 +263,22 @@ export function useDataGrid<TRow>(table: DataTableBinding<TRow>): DataGridBindin
       if (!current) {
         return undefined;
       }
-      const cell = cellAt(current.position);
+      const active = editing;
       editor.value = undefined;
-      if (!cell) {
+      editing = undefined;
+      if (!active) {
         return undefined;
       }
-      const result = table.edit({
-        rowKey: cell.row.key,
-        column: cell.column.id,
-        input: current.draft,
-      });
-      lastResult.value = result;
+      const result = record(
+        table.edit(
+          {
+            rowKey: active.key,
+            column: active.column.id,
+            input: current.draft,
+          },
+          { expectedRows: new Map([[active.key, active.original]]) },
+        ),
+      );
       if (then) {
         grid.move(then);
       }
@@ -187,6 +286,7 @@ export function useDataGrid<TRow>(table: DataTableBinding<TRow>): DataGridBindin
     },
     cancelEdit() {
       editor.value = undefined;
+      editing = undefined;
     },
     copy(options) {
       return range.value ? table.copy(range.value, options) : "";
@@ -195,16 +295,14 @@ export function useDataGrid<TRow>(table: DataTableBinding<TRow>): DataGridBindin
       if (!range.value) {
         return undefined;
       }
-      const result = table.paste({ row: range.value.top, column: range.value.left }, text);
-      lastResult.value = result;
+      const result = record(table.paste({ row: range.value.top, column: range.value.left }, text));
       return result;
     },
     clear() {
       if (!range.value) {
         return undefined;
       }
-      const result = table.clear(range.value);
-      lastResult.value = result;
+      const result = record(table.clear(range.value));
       return result;
     },
     handleKey(event) {

@@ -66,7 +66,7 @@ describe("Vue trees", () => {
     const wrapper = mount(
       defineComponent({
         setup() {
-          const table = useDataTable<Node, AbortSignal>({
+          const table = useDataTable<Node>({
             data: [{ id: 1, name: "Root" }],
             columns: [{ id: "name" }],
             hasChildren: () => true,

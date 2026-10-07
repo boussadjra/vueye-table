@@ -11,6 +11,7 @@ interface TableState {
   filters: Record<string, unknown>;
   pagination: { page: number; pageSize: number };
   selection: (string | number)[]; // row keys
+  expanded: (string | number)[] | true;
   hiddenColumns: string[];
   columnOrder: string[];
 }
@@ -224,6 +225,22 @@ table.filter("status", ["refunded"]);
 
 Snapshot fields are plain reactive properties, not refs, so templates read `table.rows` directly.
 Watching one needs a getter: `watch(() => table.page, …)`.
+
+`table.expanded` is a plain accessor too. A wrapper can forward `v-model:expanded` through the same controlled-state pair:
+
+```ts
+const props = defineProps<{ expanded: ExpandedState }>();
+const emit = defineEmits<{ "update:expanded": [value: ExpandedState] }>();
+const table = useDataTable({
+  data: () => orders.value,
+  columns,
+  getRowCanExpand: () => true,
+  state: () => ({ expanded: props.expanded }),
+  onStateChange: (state) => emit("update:expanded", state.expanded),
+});
+```
+
+Import `ExpandedState` from `vueye-table`. Outside changes to the prop reach `setState`; disclosure operations emit the new expansion state. Full-component disclosure props and controls are tracked in #85.
 
 ## Issues
 

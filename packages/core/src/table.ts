@@ -192,6 +192,11 @@ export interface CellInputEdit {
 
 export type CellEdit = CellValueEdit | CellInputEdit;
 
+/** Optional identity checks for a batch prepared from an earlier row snapshot. */
+export interface EditOptions<TRow> {
+  readonly expectedRows?: ReadonlyMap<RowKey, TRow> | undefined;
+}
+
 export interface CellChange<TRow> {
   readonly rowKey: RowKey;
   readonly column: string;
@@ -213,6 +218,8 @@ export interface EditResult<TRow> {
   readonly issues: readonly TableIssue[];
   readonly rowChanges: readonly RowChange<TRow>[];
   readonly pendingCells: readonly PendingCell[];
+  /** Present on pending batches; resolves to their final outcome, including superseded cells. */
+  readonly completion?: Promise<EditResult<TRow>> | undefined;
 }
 
 export interface CopyOptions {
@@ -303,7 +310,7 @@ export interface DataTable<TRow> {
   toggleColumn(columnId: string, visible?: boolean): void;
   moveColumn(columnId: string, toIndex: number): void;
 
-  edit(edits: CellEdit | readonly CellEdit[]): EditResult<TRow>;
+  edit(edits: CellEdit | readonly CellEdit[], options?: EditOptions<TRow>): EditResult<TRow>;
   undo(): boolean;
   redo(): boolean;
   /** The text of a range of shown cells, tab-separated like a spreadsheet clipboard. */
@@ -2697,8 +2704,8 @@ export function createTable<TRow, TSignal extends TreeLoadSignal = TreeLoadSigna
       commit({ columnOrder: order });
     },
 
-    edit(edits) {
-      return validation.edit(Array.isArray(edits) ? edits : [edits as CellEdit]);
+    edit(edits, editOptions) {
+      return validation.edit(Array.isArray(edits) ? edits : [edits as CellEdit], [], editOptions);
     },
     undo() {
       const entry = undoStack.undo();
