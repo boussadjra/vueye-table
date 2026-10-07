@@ -15,6 +15,7 @@
     "format:check": "oxfmt --check .",
     "typecheck": "tsc -p tsconfig.json && turbo run typecheck",
     "test": "vitest run",
+    "bench:tree": "vitest bench --config tooling/vitest/bench.ts --run",
     "test:coverage": "vitest run --coverage",
     "boundary:check": "node scripts/check-boundaries.mjs",
     "package:check": "turbo run package:check",

@@ -24,6 +24,17 @@ import {
   type TableState,
   type TableStatePatch,
 } from "./state";
+import {
+  buildTree,
+  processTree,
+  createTreeFlattener,
+  type TreeOptions,
+  type TreeLoadSignal,
+  type TreeLoadController,
+  type TreeModel,
+  type TreeNode,
+  type ChildStatus,
+} from "./tree";
 import { createUndoStack } from "./undo-stack";
 
 export type SelectionMode = "none" | "single" | "multiple";
@@ -39,7 +50,10 @@ export interface PasteLimit {
   readonly maxLength?: number | undefined;
 }
 
-export interface TableOptions<TRow> {
+export interface TableOptions<
+  TRow,
+  TSignal extends TreeLoadSignal = TreeLoadSignal,
+> extends TreeOptions<TRow, TSignal> {
   readonly data: readonly TRow[];
   readonly columns: readonly ColumnDef<TRow>[];
   /**
@@ -175,6 +189,10 @@ export interface CopyOptions {
 }
 
 export interface ExportOptions extends CopyOptions {
+  /** Prepend a numeric Depth column for hierarchical exports. */
+  readonly depth?: boolean | undefined;
+  /** Prefix the first data column with this text repeated per level. */
+  readonly indent?: string | undefined;
   /** Prefix formula-like text with an apostrophe. Defaults to true for exports. */
   readonly escapeFormulas?: boolean | undefined;
   /** Defaults to `"csv"`. */
@@ -319,12 +337,25 @@ function pasteLimit(
 }
 
 /** Create a data table. */
-export function createTable<TRow>(options: TableOptions<TRow>): DataTable<TRow> {
+export function createTable<TRow, TSignal extends TreeLoadSignal = TreeLoadSignal>(
+  options: TableOptions<TRow, TSignal>,
+): DataTable<TRow> {
   const paginate = options.paginate ?? true;
   const expandMode = options.expandMode ?? "multiple";
   const selectionMode = options.selectionMode ?? "multiple";
   const selectScope = options.selectScope ?? "all";
   const manual = options.manual ?? false;
+  const treeEnabled = Boolean(
+    options.getChildren || options.getParentKey || options.hasChildren || options.loadChildren,
+  );
+  const rootPagination = treeEnabled && (manual || (options.paginateBy ?? "root") === "root");
+  let lazyVersion = 0;
+  const lazyChildren = new Map<RowKey, readonly TRow[]>();
+  const childStatuses = new Map<RowKey, ChildStatus>();
+  const loadIssues = new Map<RowKey, TableIssue>();
+  const loadValidationIssues = new Map<RowKey, readonly TableIssue[]>();
+  const pendingLoads = new Map<RowKey, TreeLoadController<TSignal>>();
+  let destroyed = false;
   const undoStack = createUndoStack<readonly CellChange<TRow>[]>(options.historyLimit);
   const listeners = new Set<(snapshot: TableSnapshot<TRow>) => void>();
   const optionIssues: TableIssue[] = [];
@@ -415,6 +446,64 @@ export function createTable<TRow>(options: TableOptions<TRow>): DataTable<TRow> 
     },
   );
 
+  const treeStage = memo(
+    (rows: readonly TRow[], byId: ReadonlyMap<string, TableColumn<TRow>>, _version: number) =>
+      buildTree(rows, byId, readKey, options, lazyChildren),
+  );
+  const processedTreeStage = memo(
+    (
+      model: TreeModel<TRow>,
+      columns: readonly TableColumn<TRow>[],
+      search: string,
+      filters: TableState["filters"],
+      sorting: TableState["sorting"],
+    ) =>
+      processTree(
+        model,
+        columns,
+        { ...state, search, filters, sorting },
+        options.treeFilter ?? "ancestors",
+        manual,
+      ),
+  );
+  const flattenTree = createTreeFlattener<TRow>();
+  const emptyAncestors = new Set<RowKey>();
+  const singleTreePath = memo((model: TreeModel<TRow>, expanded: ExpandedState) => {
+    const ancestors = new Set<RowKey>();
+    if (expanded !== true) {
+      for (const key of expanded) {
+        let parent = model.byKey.get(key)?.parent;
+        while (parent && !ancestors.has(parent.row.key)) {
+          ancestors.add(parent.row.key);
+          parent = parent.parent;
+        }
+      }
+    }
+    return ancestors;
+  });
+  const treeSelection = memo((model: TreeModel<TRow>, selection: readonly RowKey[]) => {
+    const selected = new Set(selection);
+    const counts = new Map<TreeNode<TRow>, { selected: number; total: number }>();
+    const stack = model.roots.map((node) => ({ node, exit: false }));
+    while (stack.length) {
+      const { node, exit } = stack.pop()!;
+      if (!exit) {
+        stack.push({ node, exit: true });
+        for (const child of node.children) stack.push({ node: child, exit: false });
+      } else {
+        let count = selected.has(node.row.key) ? 1 : 0;
+        let total = 1;
+        for (const child of node.children) {
+          const value = counts.get(child)!;
+          count += value.selected;
+          total += value.total;
+        }
+        counts.set(node, { selected: count, total });
+      }
+    }
+    return counts;
+  });
+
   const orderColumns = memo(
     (
       columns: readonly TableColumn<TRow>[],
@@ -438,15 +527,27 @@ export function createTable<TRow>(options: TableOptions<TRow>): DataTable<TRow> 
   const filterStage = memo(filterRows<TRow>);
   const sortStage = memo(sortRows<TRow>);
   const selectedSet = memo((selection: readonly RowKey[]) => new Set(selection));
-  const expansionStage = memo((indexed: IndexedRows<TRow>, expanded: ExpandedState) => {
-    const keys = expanded === true ? undefined : new Set(expanded);
-    const rows = indexed.rows.map((row) =>
-      row.canExpand && (expanded === true || keys?.has(row.key))
-        ? Object.freeze({ ...row, isExpanded: true })
-        : row,
-    );
-    return { rows, byKey: new Map(rows.map((row) => [row.key, row])) };
-  });
+  const expansionStage = memo(
+    (
+      indexed: Pick<IndexedRows<TRow>, "rows">,
+      expanded: ExpandedState,
+      selection: readonly RowKey[],
+    ) => {
+      const keys = expanded === true ? undefined : new Set(expanded);
+      const selected = new Set(selection);
+      const rows = indexed.rows.map((row) => {
+        const isExpanded = row.canExpand && (expanded === true || (keys?.has(row.key) ?? false));
+        return isExpanded || selected.has(row.key)
+          ? Object.freeze({
+              ...row,
+              isExpanded,
+              selection: selected.has(row.key) ? ("all" as const) : ("none" as const),
+            })
+          : row;
+      });
+      return { rows, byKey: new Map(rows.map((row) => [row.key, row])) };
+    },
+  );
   const expandedOrder = memo(
     (rows: readonly TableRow<TRow>[], byKey: ReadonlyMap<RowKey, TableRow<TRow>>) =>
       rows.map((row) => byKey.get(row.key)!),
@@ -484,10 +585,18 @@ export function createTable<TRow>(options: TableOptions<TRow>): DataTable<TRow> 
 
   function computeSnapshot(): TableSnapshot<TRow> {
     const { columns, byId, issues: columnIssues } = resolveColumns(definitions);
-    const indexed = indexRows(data, byId);
-    const expanded = expansionStage(indexed, state.expanded);
+    const model = treeEnabled ? treeStage(data, byId, lazyVersion) : undefined;
+    const indexed = model ? { rows: model.rows, issues: model.issues } : indexRows(data, byId);
+    const expanded = model ? undefined : expansionStage(indexed, state.expanded, state.selection);
     const ordered = orderColumns(columns, state.columnOrder, state.hiddenColumns);
-    const issues = [...optionIssues, ...columnIssues, ...indexed.issues, ...stateIssues(byId)];
+    const issues = [
+      ...optionIssues,
+      ...columnIssues,
+      ...indexed.issues,
+      ...stateIssues(byId),
+      ...loadIssues.values(),
+      ...Array.from(loadValidationIssues.values()).flat(),
+    ];
     const requestedSize = state.pagination.pageSize;
     let pageSize =
       Number.isInteger(requestedSize) && requestedSize >= 1 ? requestedSize : DEFAULT_PAGE_SIZE;
@@ -497,15 +606,83 @@ export function createTable<TRow>(options: TableOptions<TRow>): DataTable<TRow> 
     let filteredCount: number;
     let page: number;
     let pageCount: number;
-    if (manual) {
-      processedRows = expanded.rows;
-      rows = expanded.rows;
+    let treeRow: ((key: RowKey) => TableRow<TRow> | undefined) | undefined;
+    let totalCount = indexed.rows.length;
+    if (model) {
+      const processed = processedTreeStage(
+        model,
+        columns,
+        state.search,
+        state.filters,
+        state.sorting,
+      );
+      const ancestors =
+        expandMode === "single" ? singleTreePath(model, state.expanded) : emptyAncestors;
+      const visible = flattenTree(processed, state.expanded, ancestors);
+      const expandedState = state.expanded;
+      const keys = state.expanded === true ? undefined : new Set(state.expanded);
+      const selected = treeSelection(model, state.selection);
+      const projected = new Map<RowKey, TableRow<TRow>>();
+      const statuses = new Map(childStatuses);
+      treeRow = (key) => {
+        const cached = projected.get(key);
+        if (cached) return cached;
+        const node = model.byKey.get(key);
+        if (!node) return undefined;
+        const status =
+          statuses.get(key) ?? (node.children.length || !node.unloaded ? "loaded" : "idle");
+        const count = selected.get(node)!;
+        const canExpand =
+          node.children.length > 0 ||
+          status !== "loaded" ||
+          (options.getRowCanExpand?.(node.row.original) ?? false);
+        const result = Object.freeze({
+          ...node.row,
+          depth: node.depth,
+          parentKey: node.parent?.row.key,
+          childCount: status === "loaded" ? node.children.length : undefined,
+          childStatus: status,
+          canExpand,
+          isExpanded:
+            canExpand &&
+            (expandedState === true ||
+              (keys?.has(key) ?? false) ||
+              ancestors.has(key) ||
+              processed.autoExpanded.has(key)),
+          selection: coverage(count.selected, count.total),
+        });
+        projected.set(key, result);
+        return result;
+      };
+      processedRows = visible.map((node) => treeRow!(node.row.key)!);
+      filteredCount = manual
+        ? (rowCount ?? model.roots.length)
+        : rootPagination
+          ? processed.roots.length
+          : visible.length;
+      totalCount = rootPagination ? model.roots.length : model.nodes.length;
+      pageCount = countPages(filteredCount, pageSize);
+      page = clampPage(state.pagination.page, pageCount);
+      if (manual) rows = processedRows;
+      else if (rootPagination) {
+        const roots = new Set(processed.roots.slice((page - 1) * pageSize, page * pageSize));
+        const allRoots = new Set(processed.roots);
+        let root: TreeNode<TRow> | undefined;
+        rows = processedRows.filter((_row, index) => {
+          const node = visible[index]!;
+          if (allRoots.has(node)) root = node;
+          return root !== undefined && roots.has(root);
+        });
+      } else rows = paginateRows(processedRows, { page, pageSize });
+    } else if (manual) {
+      processedRows = expanded!.rows;
+      rows = expanded!.rows;
       filteredCount = rowCount ?? indexed.rows.length;
       pageCount = countPages(filteredCount, pageSize);
       page = clampPage(state.pagination.page, pageCount);
     } else {
       const filtered = filterStage(indexed.rows, columns, state.search, state.filters);
-      processedRows = expandedOrder(sortStage(filtered, columns, state.sorting), expanded.byKey);
+      processedRows = expandedOrder(sortStage(filtered, columns, state.sorting), expanded!.byKey);
       filteredCount = processedRows.length;
       pageCount = countPages(filteredCount, pageSize);
       page = clampPage(state.pagination.page, pageCount);
@@ -542,7 +719,7 @@ export function createTable<TRow>(options: TableOptions<TRow>): DataTable<TRow> 
             row,
             rowIndex,
           });
-          return row.isExpanded
+          return row.isExpanded && (!model || (options.getRowCanExpand?.(row.original) ?? false))
             ? [
                 item,
                 Object.freeze({
@@ -561,14 +738,21 @@ export function createTable<TRow>(options: TableOptions<TRow>): DataTable<TRow> 
       pageSize,
       pageCount,
       rowCount: filteredCount,
-      totalRowCount: manual ? filteredCount : indexed.rows.length,
+      totalRowCount: manual ? filteredCount : totalCount,
       pageStart,
-      pageEnd: rows.length === 0 ? 0 : pageStart + rows.length - 1,
+      pageEnd:
+        rows.length === 0
+          ? 0
+          : rootPagination
+            ? Math.min(filteredCount, page * pageSize)
+            : pageStart + rows.length - 1,
       pageItems: paginationItems(page, pageCount),
       canPreviousPage: page > 1,
       canNextPage: page < pageCount,
       selectionMode,
-      selectedCount: state.selection.length,
+      selectedCount: model
+        ? state.selection.filter((key) => model.byKey.has(key)).length
+        : state.selection.length,
       pageSelection: coverage(pageSelected, rows.length),
       allSelection: coverage(scopeSelected, scopeRows.length),
       canUndo: undoStack.canUndo,
@@ -577,7 +761,8 @@ export function createTable<TRow>(options: TableOptions<TRow>): DataTable<TRow> 
       isSelected: (key: RowKey): boolean => selected.has(key),
       getSort: (columnId: string): SortInfo | undefined => sortIndex.get(columnId),
       getColumn: (columnId: string): TableColumn<TRow> | undefined => byId.get(columnId),
-      getRow: (key: RowKey): TableRow<TRow> | undefined => expanded.byKey.get(key),
+      getRow: (key: RowKey): TableRow<TRow> | undefined =>
+        treeRow ? treeRow(key) : expanded!.byKey.get(key),
     });
   }
 
@@ -597,6 +782,149 @@ export function createTable<TRow>(options: TableOptions<TRow>): DataTable<TRow> 
     }
   }
 
+  function abortLoads(all = false): void {
+    for (const [key, controller] of pendingLoads) {
+      const row = all ? undefined : getSnapshot().getRow(key);
+      // Closing an ancestor also makes an in-flight descendant unnecessary.
+      const visible =
+        !all && getSnapshot().processedRows.some((candidate) => candidate.key === key);
+      if (all || !row?.isExpanded || !visible) {
+        pendingLoads.delete(key);
+        childStatuses.delete(key);
+        controller.abort();
+        snapshot = undefined;
+      }
+    }
+  }
+
+  function requestChildren(row: TableRow<TRow>): void {
+    if (
+      !options.loadChildren ||
+      destroyed ||
+      pendingLoads.has(row.key) ||
+      lazyChildren.has(row.key) ||
+      row.childStatus === "loaded"
+    )
+      return;
+    const key = row.key;
+    if (!options.createChildLoadController) {
+      childStatuses.set(key, "error");
+      loadIssues.set(
+        key,
+        issue(
+          "invalid_tree_option",
+          "Lazy children require createChildLoadController from the caller's runtime.",
+          { rowKey: key },
+        ),
+      );
+      notify();
+      return;
+    }
+    let controller: TreeLoadController<TSignal>;
+    try {
+      controller = options.createChildLoadController();
+    } catch (error) {
+      loadIssues.set(key, issue("tree_load_error", String(error), { rowKey: key }));
+      childStatuses.set(key, "error");
+      notify();
+      return;
+    }
+    pendingLoads.set(key, controller);
+    childStatuses.set(key, "loading");
+    loadIssues.delete(key);
+    loadValidationIssues.delete(key);
+    notify();
+    // Promise scheduling catches synchronous loader failures as well as rejected loads.
+    void Promise.resolve()
+      .then(() => (controller.signal.aborted ? [] : options.loadChildren!(row, controller.signal)))
+      .then((children) => {
+        if (controller.signal.aborted || pendingLoads.get(key) !== controller || destroyed)
+          return undefined;
+        const { byId } = resolveColumns(definitions);
+        const existing = treeStage(data, byId, lazyVersion);
+        // Validate a loaded subtree against all existing keys, including collapsed rows.
+        const candidate = buildTree(
+          children,
+          byId,
+          readKey,
+          { ...options, getParentKey: undefined },
+          new Map(),
+        );
+        pendingLoads.delete(key);
+        loadValidationIssues.set(
+          key,
+          candidate.issues.filter(
+            (problem) => problem.code === "tree_cycle" || problem.code === "tree_depth_exceeded",
+          ),
+        );
+        const collisions = candidate.nodes.filter((node) => existing.byKey.has(node.row.key));
+        if (
+          collisions.length ||
+          candidate.issues.some((problem) => problem.code === "duplicate_row_key")
+        ) {
+          childStatuses.set(key, "error");
+          loadIssues.set(
+            key,
+            issue(
+              "tree_duplicate_key",
+              "Loaded children collide with existing keys; the batch is rejected.",
+              { rowKey: key },
+            ),
+          );
+        } else {
+          lazyChildren.set(key, children);
+          childStatuses.set(key, "loaded");
+          lazyVersion++;
+          // A selected parent covers children as they arrive.
+          if (state.selection.includes(key) && selectionMode === "multiple") {
+            const nextModel = treeStage(data, byId, lazyVersion);
+            applySelection([...state.selection, ...selectionKeys([key], nextModel)]);
+          }
+        }
+        notify();
+        startVisibleLoads();
+        return undefined;
+      })
+      .catch((error: unknown) => {
+        if (controller.signal.aborted || pendingLoads.get(key) !== controller || destroyed) return;
+        pendingLoads.delete(key);
+        childStatuses.set(key, "error");
+        loadIssues.set(
+          key,
+          issue("tree_load_error", `Children could not be loaded: ${String(error)}`, {
+            rowKey: key,
+          }),
+        );
+        notify();
+      });
+  }
+
+  function startVisibleLoads(): void {
+    if (!treeEnabled || !options.loadChildren || destroyed) return;
+    const current = getSnapshot();
+    for (const row of current.rows)
+      if (row.isExpanded && row.childStatus === "idle") requestChildren(row);
+  }
+
+  function selectionKeys(keys: readonly RowKey[], model?: TreeModel<TRow>): RowKey[] {
+    if (!treeEnabled || selectionMode !== "multiple") return [...keys];
+    model ??= treeStage(data, resolveColumns(definitions).byId, lazyVersion);
+    const result = new Set(keys);
+    const stack = keys.flatMap((key) => {
+      const node = model.byKey.get(key);
+      return node ? [node] : [];
+    });
+    const visited = new Set<RowKey>();
+    while (stack.length) {
+      const node = stack.pop()!;
+      if (visited.has(node.row.key)) continue;
+      visited.add(node.row.key);
+      result.add(node.row.key);
+      for (const child of node.children) stack.push(child);
+    }
+    return [...result];
+  }
+
   /** Apply a change made by a table operation. */
   function commit(patch: TableStatePatch): void {
     const previous = state;
@@ -606,8 +934,11 @@ export function createTable<TRow>(options: TableOptions<TRow>): DataTable<TRow> 
       return;
     }
     state = next;
+    snapshot = undefined;
+    abortLoads();
     if (next !== previous) options.onStateChange?.(state, previous);
     notify();
+    startVisibleLoads();
   }
 
   function canonicalExpanded(
@@ -617,6 +948,23 @@ export function createTable<TRow>(options: TableOptions<TRow>): DataTable<TRow> 
     if (expandMode === "multiple") return expanded;
     if (expanded !== true) return expanded.slice(-1);
     const { columns, byId } = resolveColumns(definitions);
+    if (treeEnabled) {
+      const model = treeStage(data, byId, lazyVersion);
+      const tree = processedTreeStage(
+        model,
+        columns,
+        candidate.search,
+        candidate.filters,
+        candidate.sorting,
+      );
+      const first = tree.roots.find(
+        (node) =>
+          node.children.length > 0 ||
+          (options.hasChildren?.(node.row.original) ?? false) ||
+          (options.getRowCanExpand?.(node.row.original) ?? false),
+      );
+      return first ? [first.row.key] : [];
+    }
     const indexed = indexRows(data, byId);
     const processed = manual
       ? indexed.rows
@@ -682,6 +1030,11 @@ export function createTable<TRow>(options: TableOptions<TRow>): DataTable<TRow> 
   ): EditResult<TRow> {
     const current = getSnapshot();
     const working = [...data];
+    const model = treeEnabled
+      ? treeStage(data, resolveColumns(definitions).byId, lazyVersion)
+      : undefined;
+    const replacements = new Map<TreeNode<TRow>, TRow>();
+    const originalOf = (node: TreeNode<TRow>): TRow => replacements.get(node) ?? node.row.original;
     const issues: TableIssue[] = [...recoveredIssues];
     const changes: CellChange<TRow>[] = [];
     // A value from another row tells a column's type when the edited cell is empty. It is looked
@@ -728,7 +1081,28 @@ export function createTable<TRow>(options: TableOptions<TRow>): DataTable<TRow> 
         );
         continue;
       }
-      const original = working[row.index] as TRow;
+      const node = model?.byKey.get(row.key);
+      const original = node ? originalOf(node) : (working[row.index] as TRow);
+      if (node && !node.writable) {
+        issues.push(
+          issue(
+            "read_only_cell",
+            "A recovered nested root has no unambiguous source path for editing.",
+            { rowKey: row.key, column: column.id },
+          ),
+        );
+        continue;
+      }
+      if (node?.parent && options.getChildren && !options.setChildren) {
+        issues.push(
+          issue(
+            "read_only_cell",
+            "Editing a nested child requires an immutable setChildren callback.",
+            { rowKey: row.key, column: column.id },
+          ),
+        );
+        continue;
+      }
       if (record && !column.isEditable(original)) {
         issues.push(
           issue(
@@ -769,7 +1143,23 @@ export function createTable<TRow>(options: TableOptions<TRow>): DataTable<TRow> 
         );
         continue;
       }
-      working[row.index] = updated;
+      if (!node) working[row.index] = updated;
+      else {
+        let cursor = node;
+        replacements.set(cursor, updated);
+        if (!options.getChildren && !cursor.lazy) working[cursor.sourceIndex] = updated;
+        while (cursor.parent) {
+          const parent = cursor.parent;
+          const children = parent.children.map(originalOf);
+          if (cursor.lazy) lazyChildren.set(parent.row.key, children);
+          if (options.setChildren)
+            replacements.set(parent, options.setChildren(originalOf(parent), children));
+          cursor = parent;
+        }
+        if (options.getChildren || options.setChildren)
+          working[cursor.sourceIndex] = originalOf(cursor);
+        lazyVersion++;
+      }
       changes.push({ rowKey: row.key, column: column.id, previous, value, row: updated });
     }
 
@@ -815,7 +1205,7 @@ export function createTable<TRow>(options: TableOptions<TRow>): DataTable<TRow> 
 
   function replay(changes: readonly CellChange<TRow>[], direction: "undo" | "redo"): void {
     applyChanges(
-      changes.map((change) => ({
+      (direction === "undo" ? changes.toReversed() : changes).map((change) => ({
         rowKey: change.rowKey,
         column: change.column,
         value: direction === "undo" ? change.previous : change.value,
@@ -845,16 +1235,26 @@ export function createTable<TRow>(options: TableOptions<TRow>): DataTable<TRow> 
       const next = mergePatch(patch);
       if (next !== state || previousIssue !== expandedIssue) {
         state = next;
+        snapshot = undefined;
+        abortLoads();
         notify();
+        startVisibleLoads();
       }
     },
     setData(next) {
       if (next === data) {
         return;
       }
+      abortLoads(true);
+      lazyChildren.clear();
+      childStatuses.clear();
+      loadIssues.clear();
+      loadValidationIssues.clear();
+      lazyVersion++;
       data = next;
       undoStack.clear();
       notify();
+      startVisibleLoads();
     },
     setColumns(next) {
       if (next === definitions) {
@@ -936,14 +1336,16 @@ export function createTable<TRow>(options: TableOptions<TRow>): DataTable<TRow> 
     },
 
     select(keys) {
-      applySelection([...state.selection, ...keys]);
+      applySelection([...state.selection, ...selectionKeys(keys)]);
     },
     deselect(keys) {
-      const removed = new Set(keys);
+      const removed = new Set(selectionKeys(keys));
       applySelection(state.selection.filter((key) => !removed.has(key)));
     },
     toggleRow(key, selected) {
-      const isSelected = state.selection.includes(key);
+      const isSelected = treeEnabled
+        ? getSnapshot().getRow(key)?.selection === "all"
+        : state.selection.includes(key);
       const next = selected ?? !isSelected;
       if (next === isSelected) {
         return;
@@ -983,14 +1385,22 @@ export function createTable<TRow>(options: TableOptions<TRow>): DataTable<TRow> 
       const row = getSnapshot().getRow(key);
       if (!row?.canExpand) return;
       const open = expanded ?? !row.isExpanded;
-      if (open === row.isExpanded) return;
+      if (open === row.isExpanded) {
+        if (open && row.childStatus === "error") requestChildren(row);
+        return;
+      }
       if (expandMode === "single") {
         commit({ expanded: open ? [key] : [] });
       } else if (state.expanded === true) {
         const { byId } = resolveColumns(definitions);
         commit({
-          expanded: indexRows(data, byId)
-            .rows.filter((candidate) => candidate.canExpand && candidate.key !== key)
+          expanded: (treeEnabled
+            ? treeStage(data, byId, lazyVersion).rows.map((candidate) =>
+                getSnapshot().getRow(candidate.key)!,
+              )
+            : indexRows(data, byId).rows
+          )
+            .filter((candidate) => candidate.canExpand && candidate.key !== key)
             .map((candidate) => candidate.key),
         });
       } else {
@@ -1000,6 +1410,7 @@ export function createTable<TRow>(options: TableOptions<TRow>): DataTable<TRow> 
             : state.expanded.filter((candidate) => candidate !== key),
         });
       }
+      if (open) requestChildren(getSnapshot().getRow(key)!);
     },
     expandAll() {
       commit({ expanded: true });
@@ -1124,6 +1535,8 @@ export function createTable<TRow>(options: TableOptions<TRow>): DataTable<TRow> 
       pageOnly = false,
       headers = true,
       escapeFormulas = true,
+      depth = false,
+      indent = "",
     } = {}) {
       const current = getSnapshot();
       const columns = ids
@@ -1134,15 +1547,17 @@ export function createTable<TRow>(options: TableOptions<TRow>): DataTable<TRow> 
         : current.columns;
       const rows = pageOnly ? current.rows : current.processedRows;
       const matrix = rows.map((row) =>
-        columns.map((column) => {
-          const display = row.getDisplay(column.id);
+        columns.map((column, index) => {
+          const display = (index === 0 ? indent.repeat(row.depth) : "") + row.getDisplay(column.id);
           return escapeFormulas ? escapeFormula(display, row.getValue(column.id)) : display;
         }),
       );
+      if (depth) matrix.forEach((line, index) => line.unshift(String(rows[index]!.depth)));
       if (headers) {
         matrix.unshift(
           columns.map((column) => (escapeFormulas ? escapeFormula(column.header) : column.header)),
         );
+        if (depth) matrix[0]!.unshift("Depth");
       }
       return toDelimited(matrix, format === "csv" ? "," : "\t");
     },
@@ -1151,8 +1566,11 @@ export function createTable<TRow>(options: TableOptions<TRow>): DataTable<TRow> 
       commit(initialState);
     },
     destroy() {
+      destroyed = true;
+      abortLoads(true);
       listeners.clear();
     },
   };
+  startVisibleLoads();
   return table;
 }

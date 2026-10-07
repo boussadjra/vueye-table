@@ -28,4 +28,4 @@ Details do not change `rows`, `rowCount`, pagination or grid positions. Sorting,
 
 Invalid runtime state falls back to `[]` and appears in `table.issues` as `invalid_expanded`; duplicates are removed. A full `TableState` literal now requires `expanded`. You can store expansion in your own URL adapter; no query parameter is written automatically.
 
-See [ADR 0007](/adr/0007-expansion-and-trees) for the shared render-item contract. Tree rows are planned in #81.
+See [ADR 0007](/adr/0007-expansion-and-trees) for the shared render-item contract and the [tree guide](/guide/trees) for hierarchical child rows.
