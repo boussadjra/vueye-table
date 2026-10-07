@@ -57,15 +57,20 @@ export function sortRows<TRow>(
   columns: readonly TableColumn<TRow>[],
   sorting: readonly SortRule[],
 ): readonly TableRow<TRow>[] {
+  if (!sorting.some((rule) => columns.some((column) => column.id === rule.column))) return rows;
+  return rows.toSorted(compareRows(columns, sorting));
+}
+
+export function compareRows<TRow>(
+  columns: readonly TableColumn<TRow>[],
+  sorting: readonly SortRule[],
+): (left: TableRow<TRow>, right: TableRow<TRow>) => number {
   const byId = new Map(columns.map((column) => [column.id, column]));
   const rules = sorting.flatMap((rule) => {
     const column = byId.get(rule.column);
     return column ? [{ column, sign: rule.direction === "desc" ? -1 : 1 }] : [];
   });
-  if (rules.length === 0) {
-    return rows;
-  }
-  return rows.toSorted((left, right) => {
+  return (left, right) => {
     for (const { column, sign } of rules) {
       const leftValue = left.getValue(column.id);
       const rightValue = right.getValue(column.id);
@@ -81,7 +86,27 @@ export function sortRows<TRow>(
       }
     }
     return 0;
-  });
+  };
+}
+
+/** Stable merge: an existing row wins a tie against an incoming row. */
+export function mergeRows<TRow>(
+  previous: readonly TableRow<TRow>[],
+  incoming: readonly TableRow<TRow>[],
+  columns: readonly TableColumn<TRow>[],
+  sorting: readonly SortRule[],
+): readonly TableRow<TRow>[] {
+  const compare = compareRows(columns, sorting);
+  const added = sortRows(incoming, columns, sorting);
+  const result: TableRow<TRow>[] = [];
+  let left = 0;
+  let right = 0;
+  while (left < previous.length && right < added.length) {
+    result.push(compare(previous[left]!, added[right]!) <= 0 ? previous[left++]! : added[right++]!);
+  }
+  while (left < previous.length) result.push(previous[left++]!);
+  while (right < added.length) result.push(added[right++]!);
+  return result;
 }
 
 /** The number of pages for a row count. An empty table still has one page. */

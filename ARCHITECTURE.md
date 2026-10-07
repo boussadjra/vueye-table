@@ -37,6 +37,8 @@ viewport + estimates + keyed measurements → core virtualizer → render slice 
 Each pipeline stage is memoized on its inputs, so changing the page does not re-sort and selecting
 a row does not re-filter. A `manual` table skips the pipeline and presents the page it was given.
 
+Flat source append indexes/filters only incoming rows and stably merges sorted matches. Readonly chunked array views and lazy row projection avoid full copying on unsorted append publication. Query changes, structural tree processing, upserts and removals may rebuild relevant stages. Source ingestion does not create user undo/pending records; retained user batches are reconciled over incoming source data. See ADR 0006 for cancellation and conflict contracts.
+
 ## Core
 
 `@vueye-table/core` compiles with `lib: ["ES2023"]` and `types: []`: no DOM, no Node.js, no
@@ -75,4 +77,5 @@ enforced, with a stricter floor for the engine.
 - Editing and the spreadsheet model — ADR 0003.
 - Component layers, rendering, and theming — ADR 0004.
 - Virtual layout and pagination disabling — ADR 0005.
+- Incremental ingestion and streaming — ADR 0006.
 - Export, path, and paste boundaries — ADR 0009.

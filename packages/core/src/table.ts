@@ -17,10 +17,12 @@ import {
   filterRows,
   paginateRows,
   sortRows,
+  mergeRows,
   type PageItem,
   paginationItems,
 } from "./pipeline";
 import { createRow, getRowItemKey, type TableRow, type TableRenderItem } from "./row";
+import { appendList, mapList } from "./row-list";
 import {
   DEFAULT_PAGE_SIZE,
   createInitialState,
@@ -31,6 +33,13 @@ import {
   type TableState,
   type TableStatePatch,
 } from "./state";
+import {
+  createStream,
+  type DataIngestionResult,
+  type LoadState,
+  type StreamOptions,
+  type StreamResult,
+} from "./stream";
 import {
   buildTree,
   processTree,
@@ -85,9 +94,11 @@ export interface TableOptions<
   readonly manual?: boolean | undefined;
   /** The total number of rows across all pages, for `manual` tables. */
   readonly rowCount?: number | undefined;
+  /** Caller-owned source hint, independent of filtering and pagination. */
+  readonly expectedRowCount?: number | undefined;
   /** Called after every state change a table operation makes, not after `setState`. */
   readonly onStateChange?: ((state: TableState, previous: TableState) => void) | undefined;
-  /** Called with the new data after an edit, a paste, an undo, or a redo. */
+  /** Called with new data after edits or ingestion; ingestion has an empty cell-change list. */
   readonly onDataChange?:
     | ((data: readonly TRow[], changes: readonly CellChange<TRow>[]) => void)
     | undefined;
@@ -119,6 +130,9 @@ export interface SortInfo {
  * frozen and replaced on each change, so comparing snapshots by identity detects a change.
  */
 export interface TableSnapshot<TRow> {
+  readonly loadState: LoadState;
+  readonly loadedRowCount: number;
+  readonly expectedRowCount: number | undefined;
   readonly state: TableState;
   /** Visible columns in display order. */
   readonly columns: readonly TableColumn<TRow>[];
@@ -228,6 +242,13 @@ export interface ExportOptions extends CopyOptions {
  * about rendering; a framework binding subscribes to it and draws each snapshot.
  */
 export interface DataTable<TRow> {
+  appendData(rows: readonly TRow[]): DataIngestionResult;
+  upsertData(rows: readonly TRow[]): DataIngestionResult;
+  removeData(keys: readonly RowKey[]): DataIngestionResult;
+  stream(
+    source: AsyncIterable<readonly TRow[] | TRow>,
+    options?: StreamOptions,
+  ): Promise<StreamResult>;
   insertRows(rows?: readonly TRow[], at?: InsertPosition): EditResult<TRow>;
   removeRows(keys: readonly RowKey[]): EditResult<TRow>;
   getPendingChanges(): PendingChanges<TRow>;
@@ -334,7 +355,7 @@ function coverage(selected: number, total: number): SelectionCoverage {
 
 interface IndexedRows<TRow> {
   readonly rows: readonly TableRow<TRow>[];
-  readonly byKey: ReadonlyMap<RowKey, TableRow<TRow>>;
+  readonly byKey: Map<RowKey, TableRow<TRow>>;
   readonly issues: readonly TableIssue[];
 }
 
@@ -403,6 +424,18 @@ export function createTable<TRow, TSignal extends TreeLoadSignal = TreeLoadSigna
     "maxLength",
     optionIssues,
   );
+  const sourceExpected =
+    options.expectedRowCount === undefined ||
+    (Number.isSafeInteger(options.expectedRowCount) && options.expectedRowCount >= 0)
+      ? options.expectedRowCount
+      : undefined;
+  if (sourceExpected !== options.expectedRowCount)
+    optionIssues.push(
+      issue(
+        "invalid_stream_option",
+        "expectedRowCount must be a non-negative safe integer; it is unknown instead.",
+      ),
+    );
 
   let data = options.data;
   let definitions = options.columns;
@@ -421,6 +454,19 @@ export function createTable<TRow, TSignal extends TreeLoadSignal = TreeLoadSigna
   );
   let state = initialState;
   let snapshot: TableSnapshot<TRow> | undefined;
+  let loadState: LoadState = "idle";
+  let expectedRowCount = sourceExpected;
+  let ingestionIssues: readonly TableIssue[] = [];
+  let streamIssues: readonly TableIssue[] = [];
+  const streaming = createStream<TRow>({
+    ingest: (rows, mode) => ingestData(rows, mode),
+    update(next, expected, problems, publish) {
+      loadState = next;
+      expectedRowCount = expected;
+      streamIssues = [...problems];
+      if (publish) notify();
+    },
+  });
   let transaction = false;
   let deferValidationNotify = false;
   let validationNotifyRequested = false;
@@ -491,8 +537,16 @@ export function createTable<TRow, TSignal extends TreeLoadSignal = TreeLoadSigna
     return { columns, byId: new Map(columns.map((column) => [column.id, column])), issues };
   });
 
+  let primedIndex:
+    | {
+        data: readonly TRow[];
+        columns: ReadonlyMap<string, TableColumn<TRow>>;
+        result: IndexedRows<TRow>;
+      }
+    | undefined;
   const indexRows = memo(
     (rows: readonly TRow[], byId: ReadonlyMap<string, TableColumn<TRow>>): IndexedRows<TRow> => {
+      if (primedIndex?.data === rows && primedIndex.columns === byId) return primedIndex.result;
       const byKey = new Map<RowKey, TableRow<TRow>>();
       const issues: TableIssue[] = [];
       const indexed = rows.map((original, index) => {
@@ -517,6 +571,7 @@ export function createTable<TRow, TSignal extends TreeLoadSignal = TreeLoadSigna
         byKey.set(key, row);
         return row;
       });
+      stableSource.set(rows, stableRows(rows));
       return { rows: indexed, byKey, issues };
     },
   );
@@ -620,18 +675,62 @@ export function createTable<TRow, TSignal extends TreeLoadSignal = TreeLoadSigna
     },
   );
 
-  const filterStage = memo(filterRows<TRow>);
-  const sortStage = memo(sortRows<TRow>);
+  let primedFilter:
+    | {
+        rows: readonly TableRow<TRow>[];
+        columns: readonly TableColumn<TRow>[];
+        search: string;
+        filters: TableState["filters"];
+        result: readonly TableRow<TRow>[];
+      }
+    | undefined;
+  let primedSort:
+    | {
+        rows: readonly TableRow<TRow>[];
+        columns: readonly TableColumn<TRow>[];
+        sorting: TableState["sorting"];
+        result: readonly TableRow<TRow>[];
+      }
+    | undefined;
+  const filterStage = memo(
+    (
+      rows: readonly TableRow<TRow>[],
+      columns: readonly TableColumn<TRow>[],
+      search: string,
+      filters: TableState["filters"],
+    ) =>
+      primedFilter?.rows === rows &&
+      primedFilter.columns === columns &&
+      primedFilter.search === search &&
+      primedFilter.filters === filters
+        ? primedFilter.result
+        : filterRows(rows, columns, search, filters),
+  );
+  const sortStage = memo(
+    (
+      rows: readonly TableRow<TRow>[],
+      columns: readonly TableColumn<TRow>[],
+      sorting: TableState["sorting"],
+    ) =>
+      primedSort?.rows === rows && primedSort.columns === columns && primedSort.sorting === sorting
+        ? primedSort.result
+        : sortRows(rows, columns, sorting),
+  );
+  const rowMembership = new WeakMap<readonly TableRow<TRow>[], Set<RowKey>>();
+  function membership(rows: readonly TableRow<TRow>[]): Set<RowKey> {
+    let keys = rowMembership.get(rows);
+    if (!keys) {
+      keys = new Set(rows.map((row) => row.key));
+      rowMembership.set(rows, keys);
+    }
+    return keys;
+  }
   const selectedSet = memo((selection: readonly RowKey[]) => new Set(selection));
   const expansionStage = memo(
-    (
-      indexed: Pick<IndexedRows<TRow>, "rows">,
-      expanded: ExpandedState,
-      selection: readonly RowKey[],
-    ) => {
+    (indexed: IndexedRows<TRow>, expanded: ExpandedState, selection: readonly RowKey[]) => {
       const keys = expanded === true ? undefined : new Set(expanded);
       const selected = new Set(selection);
-      const rows = indexed.rows.map((row) => {
+      const rows = mapList(indexed.rows, (row) => {
         const isExpanded = row.canExpand && (expanded === true || (keys?.has(row.key) ?? false));
         return isExpanded || selected.has(row.key)
           ? Object.freeze({
@@ -641,12 +740,18 @@ export function createTable<TRow, TSignal extends TreeLoadSignal = TreeLoadSigna
             })
           : row;
       });
-      return { rows, byKey: new Map(rows.map((row) => [row.key, row])) };
+      const byKey = {
+        get(key: RowKey): TableRow<TRow> | undefined {
+          const row = indexed.byKey.get(key);
+          return row && row.index < rows.length ? rows[row.index] : undefined;
+        },
+      };
+      return { rows, byKey };
     },
   );
   const expandedOrder = memo(
-    (rows: readonly TableRow<TRow>[], byKey: ReadonlyMap<RowKey, TableRow<TRow>>) =>
-      rows.map((row) => byKey.get(row.key)!),
+    (rows: readonly TableRow<TRow>[], byKey: { get(key: RowKey): TableRow<TRow> | undefined }) =>
+      mapList(rows, (row) => byKey.get(row.key)!),
   );
 
   function stateIssues(byId: ReadonlyMap<string, TableColumn<TRow>>): TableIssue[] {
@@ -693,10 +798,14 @@ export function createTable<TRow, TSignal extends TreeLoadSignal = TreeLoadSigna
     const { columns, byId, issues: columnIssues } = resolveColumns(definitions);
     const model = treeEnabled ? treeStage(data, byId, lazyVersion) : undefined;
     const indexed = model ? { rows: model.rows, issues: model.issues } : indexRows(data, byId);
-    const expanded = model ? undefined : expansionStage(indexed, state.expanded, state.selection);
+    const expanded = model
+      ? undefined
+      : expansionStage(indexed as IndexedRows<TRow>, state.expanded, state.selection);
     const ordered = orderColumns(columns, state.columnOrder, state.hiddenColumns);
     const issues = [
       ...optionIssues,
+      ...ingestionIssues,
+      ...streamIssues,
       ...columnIssues,
       ...indexed.issues,
       ...stateIssues(byId),
@@ -815,46 +924,71 @@ export function createTable<TRow, TSignal extends TreeLoadSignal = TreeLoadSigna
         return result;
       };
       const shared = rows === processedRows;
-      processedRows = processedRows.map(project);
+      processedRows = mapList(processedRows, project);
       rows = shared ? processedRows : rows.map(project);
     }
 
     const selected = selectedSet(state.selection);
-    const pageSelected = rows.filter((row) => selected.has(row.key)).length;
+    const allData = model ? model.byKey : (indexed as IndexedRows<TRow>).byKey;
+    const allProcessedKeys = model
+      ? undefined
+      : manual
+        ? undefined
+        : membership(filterStage(indexed.rows, columns, state.search, state.filters));
+    const selectedInProcessed = state.selection.filter(
+      (key) => allData.has(key) && (!allProcessedKeys || allProcessedKeys.has(key)),
+    ).length;
+    const pageSelected =
+      rows === processedRows
+        ? selectedInProcessed
+        : rows.filter((row) => selected.has(row.key)).length;
     const scopeRows = selectScope === "page" || manual ? rows : processedRows;
     const scopeSelected =
-      scopeRows === rows ? pageSelected : scopeRows.filter((row) => selected.has(row.key)).length;
+      scopeRows === rows
+        ? pageSelected
+        : model
+          ? scopeRows.filter((row) => selected.has(row.key)).length
+          : selectedInProcessed;
     const pageStart = rows.length === 0 ? 0 : (page - 1) * pageSize + 1;
     const sortIndex = new Map(
       state.sorting.map((rule, priority) => [rule.column, { direction: rule.direction, priority }]),
     );
 
     return Object.freeze({
+      loadState,
+      loadedRowCount: indexed.rows.length,
+      expectedRowCount,
       state,
       columns: ordered.visible,
       allColumns: ordered.all,
       rows,
-      renderItems: Object.freeze(
-        rows.flatMap((row, rowIndex): TableRenderItem<TRow>[] => {
-          const item = Object.freeze({
-            kind: "row" as const,
-            key: getRowItemKey(row.key),
-            row,
-            rowIndex,
-          });
-          return row.isExpanded && (!model || (options.getRowCanExpand?.(row.original) ?? false))
-            ? [
-                item,
-                Object.freeze({
-                  kind: "detail" as const,
-                  key: getRowItemKey(row.key, "detail"),
+      renderItems:
+        !model && state.expanded !== true && state.expanded.length === 0
+          ? mapList(rows, (row, rowIndex) =>
+              Object.freeze({ kind: "row" as const, key: getRowItemKey(row.key), row, rowIndex }),
+            )
+          : Object.freeze(
+              rows.flatMap((row, rowIndex): TableRenderItem<TRow>[] => {
+                const item = Object.freeze({
+                  kind: "row" as const,
+                  key: getRowItemKey(row.key),
                   row,
                   rowIndex,
-                }),
-              ]
-            : [item];
-        }),
-      ),
+                });
+                return row.isExpanded &&
+                  (!model || (options.getRowCanExpand?.(row.original) ?? false))
+                  ? [
+                      item,
+                      Object.freeze({
+                        kind: "detail" as const,
+                        key: getRowItemKey(row.key, "detail"),
+                        row,
+                        rowIndex,
+                      }),
+                    ]
+                  : [item];
+              }),
+            ),
       paginate,
       processedRows,
       page,
@@ -1859,6 +1993,442 @@ export function createTable<TRow, TSignal extends TreeLoadSignal = TreeLoadSigna
     );
   }
 
+  function ingestionResult(
+    appended: number,
+    replaced: number,
+    removed: number,
+    problems: readonly TableIssue[],
+  ): DataIngestionResult {
+    return Object.freeze({
+      status:
+        appended + replaced + removed
+          ? problems.length
+            ? "partial"
+            : "applied"
+          : problems.length
+            ? "rejected"
+            : "unchanged",
+      appended,
+      replaced,
+      removed,
+      issues: Object.freeze([...problems]),
+    });
+  }
+  const stableSource = new WeakMap<readonly TRow[], boolean>();
+  function ingestionKeys(rows: readonly TRow[]): boolean {
+    let valid = stableSource.get(rows);
+    if (valid === undefined) {
+      valid = stableRows(rows);
+      stableSource.set(rows, valid);
+    }
+    return valid;
+  }
+  function isProtectedSource(key: RowKey): boolean {
+    return pendingChanges.entries.has(key) || validation.hasPending(key);
+  }
+  function affectedBranch(model: TreeModel<TRow> | undefined, key: RowKey): RowKey[] {
+    const result = [key];
+    const node = model?.byKey.get(key);
+    if (!node) return result;
+    let parent = node.parent;
+    while (parent) {
+      result.push(parent.row.key);
+      parent = parent.parent;
+    }
+    const stack = [...node.children];
+    while (stack.length) {
+      const child = stack.pop()!;
+      result.push(child.row.key);
+      for (const descendant of child.children) stack.push(descendant);
+    }
+    return result;
+  }
+  function transformScene(
+    source: RowScene<TRow>,
+    updates: ReadonlyMap<RowKey, TRow>,
+    removed: ReadonlySet<RowKey>,
+  ): RowScene<TRow> {
+    const seen = new Set<RowKey>();
+    const replace = (rows: readonly TRow[]): readonly TRow[] =>
+      rows.flatMap((row, index) => {
+        const key = readKey(row, index);
+        seen.add(key);
+        return removed.has(key) ? [] : [updates.get(key) ?? row];
+      });
+    const cache = new Map<RowKey, readonly TRow[]>();
+    for (const [key, children] of source.lazy) {
+      if (!removed.has(key)) cache.set(key, replace(children));
+    }
+    let next: readonly TRow[];
+    if (!options.getChildren) next = replace(source.data);
+    else {
+      const model = buildTree(
+        source.data,
+        resolveColumns(definitions).byId,
+        readKey,
+        options,
+        source.lazy,
+      );
+      const replacements = new Map<TreeNode<TRow>, TRow>();
+      for (const node of model.nodes.toReversed()) {
+        const key = node.row.key;
+        seen.add(key);
+        if (removed.has(key)) continue;
+        let row = updates.get(key) ?? node.row.original;
+        const supplied = updates.has(key) ? options.getChildren(row) : undefined;
+        if (supplied !== undefined) cache.delete(key);
+        const children =
+          supplied ??
+          node.children
+            .filter((child) => !removed.has(child.row.key))
+            .map((child) => replacements.get(child) ?? child.row.original);
+        const old = options.getChildren(row) ?? node.children.map((child) => child.row.original);
+        if (
+          supplied === undefined &&
+          ((updates.has(key) && node.children.length > 0 && !cache.has(key)) ||
+            children.length !== old.length ||
+            children.some((child, index) => child !== old[index]))
+        ) {
+          if (!options.setChildren)
+            throw new Error("Updating nested source children requires setChildren.");
+          row = options.setChildren(row, children);
+          if (cache.has(key)) cache.set(key, children);
+        }
+        replacements.set(node, row);
+      }
+      const roots = new Map(
+        model.roots.filter((node) => node.writable).map((node) => [node.sourceIndex, node]),
+      );
+      next = source.data.flatMap((row, index) => {
+        const node = roots.get(index);
+        return node && removed.has(node.row.key)
+          ? []
+          : [node ? (replacements.get(node) ?? row) : row];
+      });
+    }
+    const additions = [...updates]
+      .filter(([key]) => !seen.has(key) && !removed.has(key))
+      .map(([, row]) => row);
+    return { data: appendList(next, additions), lazy: cache };
+  }
+  function rebaseBatches(
+    transform: (source: RowScene<TRow>) => RowScene<TRow>,
+    removed: ReadonlySet<RowKey>,
+  ): void {
+    undoStack.transform((entry) => {
+      if (entry.kind === "cells") {
+        if (!removed.size) return entry;
+        const changes = entry.changes.filter((change) => !removed.has(change.rowKey));
+        return changes.length ? { ...entry, changes } : undefined;
+      }
+      const keys = entry.keys.filter((key) => !removed.has(key));
+      return keys.length
+        ? { ...entry, keys, before: transform(entry.before), after: transform(entry.after) }
+        : undefined;
+    });
+  }
+  function newTreeIssues(
+    previous: readonly TableIssue[],
+    next: readonly TableIssue[],
+  ): TableIssue[] {
+    const counts = new Map<string, number>();
+    for (const problem of previous) {
+      const key = JSON.stringify([problem.code, problem.rowKey]);
+      counts.set(key, (counts.get(key) ?? 0) + 1);
+    }
+    return next.filter((problem) => {
+      const key = JSON.stringify([problem.code, problem.rowKey]);
+      const remaining = counts.get(key) ?? 0;
+      if (!remaining) return true;
+      counts.set(key, remaining - 1);
+      return false;
+    });
+  }
+  function ingestData(incoming: readonly TRow[], mode: "append" | "upsert"): DataIngestionResult {
+    const problems: TableIssue[] = [];
+    const reject = (problem: TableIssue): DataIngestionResult => {
+      ingestionIssues = [problem];
+      notify();
+      return ingestionResult(0, 0, 0, ingestionIssues);
+    };
+    if (destroyed)
+      return reject(issue("invalid_ingestion", "A disposed table cannot receive source data."));
+    if (!incoming.length) return ingestionResult(0, 0, 0, []);
+    try {
+      if (!ingestionKeys(data) || !stableRows(incoming))
+        return reject(
+          issue(
+            "invalid_ingestion",
+            "Source ingestion requires stable rowKey values or ids on every row.",
+          ),
+        );
+    } catch (error) {
+      return reject(
+        issue("invalid_ingestion", error instanceof Error ? error.message : String(error)),
+      );
+    }
+    const previous = sourceRows();
+    const { byId, columns } = resolveColumns(definitions);
+    const model = treeEnabled ? treeStage(data, byId, lazyVersion) : undefined;
+    const seenBatch = new Set<RowKey>();
+    const updates = new Map<RowKey, TRow>();
+    for (const row of incoming) {
+      try {
+        const key = readKey(row, previous.rows.length + updates.size);
+        if (typeof key !== "string" && (typeof key !== "number" || !Number.isFinite(key))) {
+          problems.push(
+            issue("invalid_ingestion", "An incoming row key must be a string or finite number."),
+          );
+          continue;
+        }
+        const existing = previous.byKey.get(key);
+        if (seenBatch.has(key) || (mode === "append" && existing)) {
+          problems.push(
+            issue(
+              "duplicate_row_key",
+              "An incoming source row repeats an existing key and is refused.",
+              { rowKey: key },
+            ),
+          );
+          continue;
+        }
+        seenBatch.add(key);
+        const parent = options.getParentKey?.(row);
+        const affected = affectedBranch(model, key);
+        if (parent !== undefined && parent !== null)
+          affected.push(...affectedBranch(model, parent));
+        if (affected.some(isProtectedSource)) {
+          problems.push(
+            issue(
+              "ingestion_conflict",
+              "Incoming source data would overwrite a local change or pending validation; retry after save or revert.",
+              { rowKey: key },
+            ),
+          );
+          continue;
+        }
+        const node = model?.byKey.get(key);
+        if (
+          node &&
+          (!node.writable ||
+            (node.lazy &&
+              options.getParentKey &&
+              options.getParentKey(row) !== node.parent?.row.key))
+        ) {
+          problems.push(
+            issue(
+              "invalid_ingestion",
+              "This recovered or lazy tree row has no writable source position.",
+              { rowKey: key },
+            ),
+          );
+          continue;
+        }
+        if (existing?.original !== row) updates.set(key, row);
+      } catch (error) {
+        problems.push(
+          issue("invalid_ingestion", error instanceof Error ? error.message : String(error)),
+        );
+      }
+    }
+    if (!updates.size) {
+      ingestionIssues = problems;
+      notify();
+      return ingestionResult(0, 0, 0, problems);
+    }
+    const replaced = [...updates.keys()].filter((key) => previous.byKey.has(key)).length;
+    const appended = updates.size - replaced;
+    const previousState = state;
+    try {
+      if (!model && !replaced) {
+        const added = Object.freeze([...updates.values()]);
+        const indexed = added.map((row, offset) =>
+          createRow(
+            row,
+            readKey(row, previous.rows.length + offset),
+            previous.rows.length + offset,
+            byId,
+            options.getRowCanExpand?.(row) ?? false,
+          ),
+        );
+        const filtered = manual
+          ? previous.rows
+          : filterStage(previous.rows, columns, state.search, state.filters);
+        const addedFiltered = manual
+          ? indexed
+          : filterRows(indexed, columns, state.search, state.filters);
+        const allRows = appendList(previous.rows, indexed);
+        const allFiltered = appendList(filtered, addedFiltered);
+        const keys = membership(filtered);
+        for (const row of addedFiltered) keys.add(row.key);
+        rowMembership.set(allFiltered, keys);
+        const sorted =
+          manual ||
+          !state.sorting.some((rule) => columns.some((column) => column.id === rule.column))
+            ? allFiltered
+            : mergeRows(
+                sortStage(filtered, columns, state.sorting),
+                addedFiltered,
+                columns,
+                state.sorting,
+              );
+        const next = appendList(data, added);
+        rebaseBatches((source) => ({ ...source, data: appendList(source.data, added) }), new Set());
+        for (const row of indexed) previous.byKey.set(row.key, row);
+        primedIndex = {
+          data: next,
+          columns: byId,
+          result: { rows: allRows, byKey: previous.byKey, issues: previous.issues },
+        };
+        primedFilter = {
+          rows: allRows,
+          columns,
+          search: state.search,
+          filters: state.filters,
+          result: allFiltered,
+        };
+        primedSort = { rows: allFiltered, columns, sorting: state.sorting, result: sorted };
+        stableSource.set(next, true);
+        data = next;
+      } else {
+        const next = transformScene(scene(), updates, new Set());
+        const candidate = treeEnabled
+          ? buildTree(next.data, byId, readKey, options, next.lazy)
+          : indexRows(next.data, byId);
+        const fresh = newTreeIssues(previous.issues, candidate.issues);
+        if (fresh.length || !stableRows(candidate.rows.map((row) => row.original))) {
+          problems.push(
+            ...fresh,
+            ...(!stableRows(candidate.rows.map((row) => row.original))
+              ? [issue("invalid_ingestion", "Every incoming descendant needs a stable key.")]
+              : []),
+          );
+          ingestionIssues = problems;
+          notify();
+          return ingestionResult(0, 0, 0, problems);
+        }
+        const nextKeys = new Set(candidate.rows.map((row) => row.key));
+        const removedKeys = new Set(
+          previous.rows.filter((row) => !nextKeys.has(row.key)).map((row) => row.key),
+        );
+        rebaseBatches((source) => transformScene(source, updates, removedKeys), removedKeys);
+        data = next.data;
+        lazyChildren.clear();
+        for (const [key, rows] of next.lazy) lazyChildren.set(key, rows);
+        lazyVersion++;
+        for (const key of [...updates.keys(), ...removedKeys]) {
+          pendingLoads.get(key)?.abort();
+          pendingLoads.delete(key);
+          childStatuses.delete(key);
+          loadIssues.delete(key);
+          loadValidationIssues.delete(key);
+        }
+        validation.cancel([...removedKeys]);
+        const selection = state.selection.filter((key) => !removedKeys.has(key));
+        state = mergeState(state, {
+          selection: selection.length === state.selection.length ? state.selection : selection,
+          expanded:
+            state.expanded === true ? true : state.expanded.filter((key) => !removedKeys.has(key)),
+        });
+      }
+      validation.cancel([...updates.keys()]);
+      ingestionIssues = problems;
+    } catch (error) {
+      return reject(
+        issue("invalid_ingestion", error instanceof Error ? error.message : String(error)),
+      );
+    }
+    if (state !== previousState) options.onStateChange?.(state, previousState);
+    options.onDataChange?.(data, []);
+    notify();
+    startVisibleLoads();
+    return ingestionResult(appended, replaced, 0, problems);
+  }
+  function removeData(keys: readonly RowKey[]): DataIngestionResult {
+    const previousState = state;
+    const problems: TableIssue[] = [];
+    const removed = new Set<RowKey>();
+    const previous = sourceRows();
+    const model = treeEnabled
+      ? treeStage(data, resolveColumns(definitions).byId, lazyVersion)
+      : undefined;
+    if (destroyed || !ingestionKeys(data))
+      problems.push(
+        issue("invalid_ingestion", "Source removal requires a live table and stable row keys."),
+      );
+    else
+      for (const key of new Set(keys)) {
+        if (!previous.byKey.has(key)) {
+          problems.push(
+            issue("unknown_row", "The source row to remove does not exist.", { rowKey: key }),
+          );
+          continue;
+        }
+        if (affectedBranch(model, key).some(isProtectedSource)) {
+          problems.push(
+            issue(
+              "ingestion_conflict",
+              "Source removal would discard local changes or pending validation.",
+              { rowKey: key },
+            ),
+          );
+          continue;
+        }
+        const node = model?.byKey.get(key);
+        if (node && !node.writable) {
+          problems.push(
+            issue("invalid_ingestion", "A recovered tree row has no writable source position.", {
+              rowKey: key,
+            }),
+          );
+          continue;
+        }
+        removed.add(key);
+        const stack = node ? [...node.children] : [];
+        while (stack.length) {
+          const child = stack.pop()!;
+          removed.add(child.row.key);
+          for (const descendant of child.children) stack.push(descendant);
+        }
+      }
+    try {
+      if (removed.size) {
+        const next = transformScene(scene(), new Map(), removed);
+        rebaseBatches((source) => transformScene(source, new Map(), removed), removed);
+        data = next.data;
+        lazyChildren.clear();
+        for (const [key, rows] of next.lazy) lazyChildren.set(key, rows);
+        lazyVersion++;
+        validation.cancel([...removed]);
+        for (const key of removed) {
+          pendingLoads.get(key)?.abort();
+          pendingLoads.delete(key);
+          childStatuses.delete(key);
+          loadIssues.delete(key);
+          loadValidationIssues.delete(key);
+        }
+        const selection = state.selection.filter((key) => !removed.has(key));
+        state = mergeState(state, {
+          selection: selection.length === state.selection.length ? state.selection : selection,
+          expanded:
+            state.expanded === true ? true : state.expanded.filter((key) => !removed.has(key)),
+        });
+      }
+      ingestionIssues = problems;
+    } catch (error) {
+      ingestionIssues = [
+        issue("invalid_ingestion", error instanceof Error ? error.message : String(error)),
+      ];
+      notify();
+      return ingestionResult(0, 0, 0, ingestionIssues);
+    }
+    if (state !== previousState) options.onStateChange?.(state, previousState);
+    if (removed.size) options.onDataChange?.(data, []);
+    notify();
+    startVisibleLoads();
+    return ingestionResult(0, 0, removed.size, problems);
+  }
+
   if (expandMode === "single") {
     initialState = mergeState(initialState, { expanded: canonicalExpanded(initialState.expanded) });
     state = initialState;
@@ -1866,6 +2436,22 @@ export function createTable<TRow, TSignal extends TreeLoadSignal = TreeLoadSigna
   }
 
   const table: DataTable<TRow> = {
+    appendData: (rows) => ingestData(rows, "append"),
+    upsertData: (rows) => ingestData(rows, "upsert"),
+    removeData,
+    stream(source, streamOptions) {
+      if (destroyed)
+        return Promise.resolve(
+          Object.freeze({
+            status: "aborted",
+            receivedRowCount: 0,
+            issues: Object.freeze([
+              issue("invalid_ingestion", "A disposed table cannot start a source."),
+            ]),
+          }),
+        );
+      return streaming.run(source, { expectedRowCount: sourceExpected, ...streamOptions });
+    },
     insertRows,
     removeRows,
     revert,
@@ -1900,6 +2486,11 @@ export function createTable<TRow, TSignal extends TreeLoadSignal = TreeLoadSigna
         return;
       }
       validation.cancel();
+      streaming.cancel();
+      loadState = "idle";
+      streamIssues = [];
+      ingestionIssues = [];
+      expectedRowCount = sourceExpected;
       pendingChanges.entries.clear();
       abortLoads(true);
       lazyChildren.clear();
@@ -2231,6 +2822,7 @@ export function createTable<TRow, TSignal extends TreeLoadSignal = TreeLoadSigna
     },
     destroy() {
       destroyed = true;
+      streaming.cancel();
       validation.cancel();
       abortLoads(true);
       listeners.clear();

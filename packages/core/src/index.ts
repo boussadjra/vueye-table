@@ -50,6 +50,13 @@ export { humanize } from "./humanize";
 export type { EditorSpec, ValidationResult, Validator, PendingCell } from "./validation";
 export type { InsertPosition, RowChange, UpdatedRow, PendingChanges } from "./pending-changes";
 export type {
+  DataIngestionResult,
+  LoadState,
+  StreamSignal,
+  StreamOptions,
+  StreamResult,
+} from "./stream";
+export type {
   TreeOptions,
   TreeFilter,
   TreePagination,
