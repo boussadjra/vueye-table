@@ -1,5 +1,19 @@
 # vueye-table
 
+## 3.0.0-alpha.5
+
+### Minor Changes
+
+- 5598ba8: Add incremental append, keyed upsert and source removal, cancellable async streaming, load metadata and readonly array views. Protect local edits and pending validation from source conflicts, retain incoming data through undo/redo, and forward ingestion operations through useDataTable.
+
+### Patch Changes
+
+- Updated dependencies [5598ba8]
+  - @vueye-table/core@3.0.0-alpha.5
+  - @vueye-table/vue@3.0.0-alpha.5
+  - @vueye-table/headless@3.0.0-alpha.5
+  - @vueye-table/styled@3.0.0-alpha.5
+
 ## 3.0.0-alpha.4
 
 ### Minor Changes
