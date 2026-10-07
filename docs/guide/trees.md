@@ -60,15 +60,14 @@ table.exportRows({ depth: true, indent: "  ", format: "csv" });
 
 ## Lazy children and cancellation
 
-Core reads no browser globals and has no DOM type dependency. Inject the controller from your runtime. The second type argument preserves the actual signal type, so a native signal can go directly into `fetch`.
+Vue supplies a native cancellation controller automatically, and the inferred `AbortSignal` can go directly into `fetch`. Core retains its injected controller contract and has no DOM type dependency.
 
 ```ts
-const table = useDataTable<Entry, AbortSignal>({
+const table = useDataTable<Entry>({
   data: roots,
   columns: [{ id: "name" }],
   getChildren: (row) => row.children,
   hasChildren: (row) => row.children === undefined,
-  createChildLoadController: () => new AbortController(),
   loadChildren: async (row, signal) => {
     const response = await fetch(`/api/entries/${encodeURIComponent(row.key)}`, { signal });
     if (!response.ok) throw new Error(`Children request failed (${response.status})`);
@@ -79,7 +78,7 @@ const table = useDataTable<Entry, AbortSignal>({
 
 Validate remote response data at your application boundary. `hasChildren` should identify only genuinely unloaded branches. An explicit empty child array is a loaded leaf.
 
-Opening an unloaded branch starts one request. Repeated opens share the in-flight request. Closing the branch or an ancestor, replacing data, or destroying the table aborts its controller; stale completions are ignored. Vue scope disposal calls `destroy`. A rejected load reports `tree_load_error`, keeps the branch usable and never throws from `toggleExpanded`. Close and reopen to retry. A missing controller factory reports `invalid_tree_option`.
+Opening an unloaded branch starts one request. Repeated opens share the in-flight request. Closing the branch or an ancestor, replacing data, or destroying the table aborts its controller; stale completions are ignored. Vue scope disposal calls `destroy`. A rejected load reports `tree_load_error`, keeps the branch usable and never throws from `toggleExpanded`. Close and reopen to retry. With core `createTable`, a missing controller factory reports `invalid_tree_option`. Custom Vue signal types use `useDataTable<Entry, CustomSignal>` with a matching `createChildLoadController` factory.
 
 Successful children are cached by parent key until a different array reaches `setData`. Loading alone does not call `onDataChange`: the cache belongs to the table. Editing a loaded nested child with `setChildren` materializes the copied hierarchy in the callback data. Lazy adjacency children live in the table cache; a child edit updates that cache and invokes the callback with a new source array. Persist adjacency child edits using the supplied `CellChange` records. Replacing data clears the cache and undo stack.
 

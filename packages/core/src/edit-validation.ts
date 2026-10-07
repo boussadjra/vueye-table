@@ -3,7 +3,14 @@ import { issue, type TableIssue } from "./issues";
 import { isSafePath } from "./path";
 import type { TableRow } from "./row";
 import type { RowKey } from "./state";
-import type { CellChange, CellEdit, CellValueEdit, EditResult, TableSnapshot } from "./table";
+import type {
+  CellChange,
+  CellEdit,
+  CellValueEdit,
+  EditOptions,
+  EditResult,
+  TableSnapshot,
+} from "./table";
 import {
   editorFailure,
   isPromise,
@@ -19,6 +26,7 @@ interface Candidate<TRow> {
   readonly column: TableColumn<TRow>;
   readonly validation: TableIssue | undefined | Promise<TableIssue | undefined>;
   readonly token: object;
+  readonly guard: { row: TRow } | undefined;
 }
 export interface ValidationHost<TRow> {
   snapshot(): TableSnapshot<TRow>;
@@ -59,7 +67,11 @@ export function readonlyMap<TKey, TValue>(
 
 /** All promises in one edit settle together. Tokens fence every cell against stale results. */
 export function createEditValidation<TRow>(host: ValidationHost<TRow>): {
-  edit(edits: readonly CellEdit[], recovered?: readonly TableIssue[]): EditResult<TRow>;
+  edit(
+    edits: readonly CellEdit[],
+    recovered?: readonly TableIssue[],
+    options?: EditOptions<TRow>,
+  ): EditResult<TRow>;
   cells(): readonly PendingCell[];
   hasPending(key: RowKey): boolean;
   problems(): ReadonlyMap<RowKey, ReadonlyMap<string, TableIssue>>;
@@ -70,6 +82,9 @@ export function createEditValidation<TRow>(host: ValidationHost<TRow>): {
   const problems = new Map<RowKey, Map<string, TableIssue>>();
   const current = (candidate: Candidate<TRow>): boolean =>
     tokens.get(candidate.edit.rowKey)?.get(candidate.edit.column) === candidate.token;
+  const fresh = (candidate: Candidate<TRow>): boolean =>
+    !candidate.guard ||
+    host.snapshot().getRow(candidate.edit.rowKey)?.original === candidate.guard.row;
   const tokenFor = (rowKey: RowKey, column: string): object => {
     const row = tokens.get(rowKey) ?? new Map<string, object>();
     const token = {};
@@ -138,7 +153,7 @@ export function createEditValidation<TRow>(host: ValidationHost<TRow>): {
     asynchronous: boolean,
   ): EditResult<TRow> {
     return host.batch(() => {
-      const live = accepted.filter(current);
+      const live = accepted.filter((candidate) => current(candidate) && fresh(candidate));
       const liveKeys = new Set(live);
       const active = all.filter(current);
       for (const candidate of active) {
@@ -210,7 +225,7 @@ export function createEditValidation<TRow>(host: ValidationHost<TRow>): {
           problems.delete(key);
         }
     },
-    edit(edits, recovered = []) {
+    edit(edits, recovered = [], options) {
       const metadataChanged = edits.some(
         (edit) =>
           pending.get(edit.rowKey)?.has(edit.column) ||
@@ -220,6 +235,9 @@ export function createEditValidation<TRow>(host: ValidationHost<TRow>): {
       const snapshot = host.snapshot();
       const failures = [...recovered];
       const candidates: Candidate<TRow>[] = [];
+      const guards = new Map(
+        [...(options?.expectedRows ?? [])].map(([key, row]) => [key, { row }]),
+      );
       const drafts = new Map<RowKey, TRow>();
       const samples = new Map<string, unknown>();
       if (host.validateRow)
@@ -240,6 +258,11 @@ export function createEditValidation<TRow>(host: ValidationHost<TRow>): {
         }
         if (!row) {
           fail("unknown_row", `No row has the key "${String(edit.rowKey)}".`);
+          continue;
+        }
+        const guard = guards.get(row.key);
+        if (guard && row.original !== guard.row) {
+          fail("stale_draft", "The row changed after this draft was opened.");
           continue;
         }
         if (!column) {
@@ -305,6 +328,7 @@ export function createEditValidation<TRow>(host: ValidationHost<TRow>): {
             column,
             validation,
             token,
+            guard,
           });
         } catch (error) {
           fail("invalid_value", error instanceof Error ? error.message : String(error));
@@ -314,7 +338,10 @@ export function createEditValidation<TRow>(host: ValidationHost<TRow>): {
       const validateRows = (
         accepted: Candidate<TRow>[],
       ): Candidate<TRow>[] | Promise<Candidate<TRow>[]> =>
-        rowValidation(accepted.filter(current), failures);
+        rowValidation(
+          accepted.filter((candidate) => current(candidate) && fresh(candidate)),
+          failures,
+        );
       const outcome = asynchronous
         ? Promise.all(
             candidates.map(async (candidate) => {
@@ -347,11 +374,59 @@ export function createEditValidation<TRow>(host: ValidationHost<TRow>): {
             failures,
           )
         : undefined;
+      if (optimistic)
+        for (const [key, guard] of guards) {
+          const row = host.snapshot().getRow(key);
+          if (row) guard.row = row.original;
+        }
       if (!optimistic?.changes.length) host.notify();
       if (!host.optimistic && failures.length) host.onIssues(failures);
-      void outcome.then((accepted) => {
-        if (candidates.some(current)) settle(accepted, candidates, failures, true);
-        return undefined;
+      const completion = outcome.then((accepted): EditResult<TRow> => {
+        const staleCandidates = candidates
+          .filter((candidate) => !current(candidate) || !fresh(candidate))
+          .map((candidate) => ({
+            candidate,
+            problem: issue(
+              "stale_draft",
+              "This edit was superseded or its row is no longer current.",
+              {
+                rowKey: candidate.edit.rowKey,
+                column: candidate.edit.column,
+              },
+            ),
+          }));
+        const stale = staleCandidates.map(({ problem }) => problem);
+        const issues = [...failures, ...stale];
+        if (candidates.some(current)) {
+          const superseded = staleCandidates
+            .filter(({ candidate }) => !current(candidate))
+            .map(({ problem }) => problem);
+          const result = settle(
+            accepted,
+            candidates,
+            [
+              ...failures,
+              ...staleCandidates
+                .filter(({ candidate }) => current(candidate))
+                .map(({ problem }) => problem),
+            ],
+            true,
+          );
+          if (!stale.length) return result;
+          return Object.freeze({
+            ...result,
+            issues: Object.freeze([...result.issues, ...superseded]),
+            status: result.changes.length ? "partial" : "rejected",
+          });
+        }
+        // Cancelled batches must not publish into a replaced or disposed table.
+        return Object.freeze({
+          status: "rejected",
+          changes: Object.freeze([]),
+          rowChanges: Object.freeze([]),
+          issues: Object.freeze(issues),
+          pendingCells: Object.freeze([]),
+        });
       });
       return Object.freeze({
         status: "pending",
@@ -361,6 +436,7 @@ export function createEditValidation<TRow>(host: ValidationHost<TRow>): {
         pendingCells: Object.freeze(
           candidates.map((candidate) => Object.freeze({ ...candidate.edit })),
         ),
+        completion,
       });
     },
   };

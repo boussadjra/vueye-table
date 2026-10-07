@@ -19,6 +19,7 @@
     "bench:validation": "vitest bench --config tooling/vitest/validation-bench.ts --run",
     "bench:streaming": "vitest bench --config tooling/vitest/streaming-bench.ts --run",
     "example:streaming": "node examples/streaming.ts",
+    "example:row-drafts": "node examples/row-drafts.ts",
     "test:coverage": "vitest run --coverage",
     "boundary:check": "node scripts/check-boundaries.mjs",
     "package:check": "turbo run package:check",

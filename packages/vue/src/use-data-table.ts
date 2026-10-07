@@ -6,6 +6,10 @@ import {
   type TableSnapshot,
   type TableStatePatch,
   type TreeLoadSignal,
+  type TreeLoadController,
+  type ExpandedState,
+  type PendingChanges,
+  type RowKey,
 } from "@vueye-table/core";
 import {
   getCurrentScope,
@@ -17,10 +21,12 @@ import {
   type MaybeRefOrGetter,
 } from "vue";
 
+import { createRowDraft, type RowDraft } from "./row-draft";
+
 /** Options accepted by {@link useDataTable}. Data, columns, and state may be refs or getters. */
 export interface UseDataTableOptions<
   TRow,
-  TSignal extends TreeLoadSignal = TreeLoadSignal,
+  TSignal extends TreeLoadSignal = AbortSignal,
 > extends Omit<TableOptions<TRow, TSignal>, "data" | "columns" | "rowCount"> {
   readonly data: MaybeRefOrGetter<readonly TRow[]>;
   readonly columns: MaybeRefOrGetter<readonly ColumnDef<TRow>[]>;
@@ -45,6 +51,9 @@ export type DataTableBinding<TRow> = TableSnapshot<TRow> &
     readonly table: DataTable<TRow>;
     /** The current snapshot, replaced on every change. */
     readonly snapshot: TableSnapshot<TRow>;
+    readonly expanded: ExpandedState;
+    readonly pendingChanges: PendingChanges<TRow>;
+    editRow(key: RowKey): RowDraft<TRow>;
   };
 
 /**
@@ -107,7 +116,14 @@ function definedEntries(patch: TableStatePatch | undefined): TableStatePatch {
  * Create a table bound to the current effect scope. The table follows its reactive data,
  * columns, row count, and state, and stops listening when the scope ends.
  */
-export function useDataTable<TRow, TSignal extends TreeLoadSignal = TreeLoadSignal>(
+export function useDataTable<TRow>(options: UseDataTableOptions<TRow>): DataTableBinding<TRow>;
+export function useDataTable<TRow, TSignal extends TreeLoadSignal = AbortSignal>(
+  options: UseDataTableOptions<TRow, TSignal> &
+    (AbortSignal extends TSignal
+      ? unknown
+      : { readonly createChildLoadController: () => TreeLoadController<TSignal> }),
+): DataTableBinding<TRow>;
+export function useDataTable<TRow, TSignal extends TreeLoadSignal = AbortSignal>(
   options: UseDataTableOptions<TRow, TSignal>,
 ): DataTableBinding<TRow> {
   const table = createTable<TRow, TSignal>({
@@ -116,7 +132,13 @@ export function useDataTable<TRow, TSignal extends TreeLoadSignal = TreeLoadSign
     columns: toValue(options.columns),
     rowCount: toValue(options.rowCount),
     initialState: { ...options.initialState, ...definedEntries(toValue(options.state)) },
+    // Public overloads require custom signals to provide their matching factory.
+    createChildLoadController:
+      options.createChildLoadController ??
+      ((() => new AbortController()) as unknown as () => TreeLoadController<TSignal>),
   });
+  const drafts = new Set<() => void>();
+  let disposed = false;
   const snapshot = shallowRef(table.getSnapshot());
   const unsubscribe = table.subscribe((next) => {
     snapshot.value = next;
@@ -151,18 +173,40 @@ export function useDataTable<TRow, TSignal extends TreeLoadSignal = TreeLoadSign
     ),
   ];
 
-  if (getCurrentScope()) {
-    onScopeDispose(() => {
-      for (const stop of stops) {
-        stop();
-      }
-      unsubscribe();
-      table.destroy();
-    });
-  }
+  const dispose = (): void => {
+    if (disposed) return;
+    disposed = true;
+    for (const disposeDraft of drafts) disposeDraft();
+    drafts.clear();
+    for (const stop of stops) {
+      stop();
+    }
+    unsubscribe();
+    table.destroy();
+  };
+  if (getCurrentScope()) onScopeDispose(dispose);
 
   const binding = { table } as Record<string, unknown>;
   Object.defineProperty(binding, "snapshot", { enumerable: true, get: () => snapshot.value });
+  Object.defineProperty(binding, "expanded", {
+    enumerable: true,
+    get: () => snapshot.value.state.expanded,
+  });
+  Object.defineProperty(binding, "pendingChanges", {
+    enumerable: true,
+    get: () => {
+      void snapshot.value;
+      return table.getPendingChanges();
+    },
+  });
+  binding["editRow"] = (key: RowKey): RowDraft<TRow> =>
+    createRowDraft(table, key, (disposeDraft) => {
+      if (disposed) disposeDraft();
+      else drafts.add(disposeDraft);
+      return () => {
+        drafts.delete(disposeDraft);
+      };
+    });
   for (const key of Object.keys(snapshot.value)) {
     Object.defineProperty(binding, key, {
       enumerable: true,
@@ -172,5 +216,6 @@ export function useDataTable<TRow, TSignal extends TreeLoadSignal = TreeLoadSign
   for (const name of OPERATIONS) {
     binding[name] = table[name];
   }
+  binding["destroy"] = dispose;
   return Object.freeze(binding) as unknown as DataTableBinding<TRow>;
 }

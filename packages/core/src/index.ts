@@ -96,6 +96,7 @@ export {
   type CopyOptions,
   type DataTable,
   type EditResult,
+  type EditOptions,
   type EditStatus,
   type ExportOptions,
   type ExpandMode,
