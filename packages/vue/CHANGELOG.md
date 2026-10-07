@@ -1,5 +1,16 @@
 # @vueye-table/vue
 
+## 3.0.0-alpha.7
+
+### Minor Changes
+
+- dbe98ec: Add typed shallow Vue row drafts, plain expanded/pendingChanges accessors, native lazy-load cancellation, keyed grid editing and safe editor metadata resolution. Pending core edits now expose a final completion promise and optional row identity expectations protect draft batches against newer data.
+
+### Patch Changes
+
+- Updated dependencies [dbe98ec]
+  - @vueye-table/core@3.0.0-alpha.7
+
 ## 3.0.0-alpha.6
 
 ### Minor Changes
