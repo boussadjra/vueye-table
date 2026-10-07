@@ -14,7 +14,7 @@ import { createSSRApp } from "vue";
 import { renderToString } from "vue/server-renderer";
 
 const rows = Array.from({ length: 100 }, (_, id) => ({ id, name: `Row ${id}` }));
-function fixture(observer = false) {
+function fixture(observer = false, margin = 0) {
   const scroll = shallowRef<HTMLElement | null>();
   const data = shallowRef(rows);
   const observers: {
@@ -54,6 +54,7 @@ function fixture(observer = false) {
         overscan: 1,
         initialCount: 3,
         grid,
+        scrollMargin: margin,
       });
       columns = useVirtualColumns(grid, {
         scrollElement: scroll,
@@ -74,6 +75,24 @@ function fixture(observer = false) {
 }
 
 describe("Vue virtualization", () => {
+  it("accounts for leading header space and reports invalid margins", async () => {
+    const f = fixture(false, 40);
+    await nextTick();
+    expect(f.virtual.viewportSize).toBe(80);
+    f.virtual.scrollToIndex(99, { align: "end" });
+    expect(f.el.scrollTop).toBe(3960);
+    expect(f.virtual.getItem(99)?.start).toBe(3960);
+    expect(f.virtual.getItem(100)).toBeUndefined();
+    f.el.scrollTop = 440;
+    f.el.dispatchEvent(new Event("scroll"));
+    expect(f.virtual.offset).toBe(400);
+    f.wrapper.unmount();
+    const invalid = fixture(false, -4);
+    expect(invalid.virtual.issues).toEqual(
+      expect.arrayContaining([expect.objectContaining({ code: "invalid_virtual_option" })]),
+    );
+    invalid.wrapper.unmount();
+  });
   it("renders exactly initialCount items in SSR without reading an element", async () => {
     const app = createSSRApp(
       defineComponent({
@@ -131,6 +150,7 @@ describe("Vue virtualization", () => {
       width: 100,
     } as DOMRect);
     f.virtual.measureElement(measured, getRowItemKey(0));
+    await nextTick();
     expect(f.el.scrollTop).toBe(490);
     f.virtual.measureElement(measured, getRowItemKey(0));
     expect(f.el.scrollTop).toBe(490);
@@ -144,6 +164,24 @@ describe("Vue virtualization", () => {
     expect(f.virtual.totalSize).toBe(0);
     f.wrapper.unmount();
   });
+  it("waits for row patches before measuring and skips released refs", async () => {
+    const f = fixture();
+    await nextTick();
+    const target = document.createElement("div");
+    const bounds = vi.spyOn(target, "getBoundingClientRect").mockReturnValue({
+      height: 80,
+      width: 100,
+    } as DOMRect);
+    f.virtual.measureElement(target, getRowItemKey(0));
+    expect(bounds).not.toHaveBeenCalled();
+    f.virtual.measureElement(null, getRowItemKey(0));
+    await nextTick();
+    expect(bounds).not.toHaveBeenCalled();
+    f.virtual.measureElement(target, getRowItemKey(0));
+    await nextTick();
+    expect(f.virtual.totalSize).toBe(4040);
+    f.wrapper.unmount();
+  });
   it("measures details independently and observes row and viewport resizes", async () => {
     const f = fixture(true);
     await nextTick();
@@ -154,6 +192,7 @@ describe("Vue virtualization", () => {
       () => ({ height, width: 150 }) as DOMRect,
     );
     f.virtual.measureElement(detail, getRowItemKey(0, "detail"));
+    await nextTick();
     expect(f.virtual.totalSize).toBe(4080);
     const rowObserver = f.observers[0]!;
     height = 120;

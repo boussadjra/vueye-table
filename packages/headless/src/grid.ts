@@ -28,6 +28,16 @@ import {
 
 import { asProp, columnProp, flag, rowProp } from "./shared";
 import { columnStyle, DataTableHeader } from "./table";
+import {
+  injectVirtual,
+  renderColumns,
+  renderRows,
+  virtualColgroup,
+  virtualOptions,
+  virtualProps,
+  VirtualContent,
+  type ComponentVirtualBinding,
+} from "./virtual";
 
 interface GridContext {
   readonly id: string;
@@ -67,6 +77,9 @@ export const DataGridRoot = defineComponent({
     table: { type: Object as PropType<AnyDataTableBinding>, required: true },
     as: asProp("table"),
     label: { type: String as PropType<string | undefined>, default: undefined },
+    ...virtualProps,
+    /** Width reserved before data columns, for a row-number/header column. */
+    gutter: { type: Number, default: 0 },
   },
   setup(props, { slots, expose }) {
     provideDataTable(props.table);
@@ -79,9 +92,39 @@ export const DataGridRoot = defineComponent({
     };
     provide(gridContextKey, { id, focus });
     expose({ grid, focus });
+    let virtual: ComponentVirtualBinding | undefined;
 
     const onKeydown = (event: KeyboardEvent): void => {
       if (event.target !== element.value) {
+        return;
+      }
+      if (
+        virtual &&
+        !grid.editor &&
+        (event.ctrlKey || event.metaKey) &&
+        (event.key === "Home" || event.key === "End")
+      ) {
+        grid.focusCell(
+          event.key === "Home"
+            ? { row: 0, column: 0 }
+            : { row: props.table.rows.length - 1, column: props.table.columns.length - 1 },
+          { extend: event.shiftKey },
+        );
+        event.preventDefault();
+        return;
+      }
+      if (virtual && !grid.editor && (event.key === "PageUp" || event.key === "PageDown")) {
+        const current = grid.selection?.focus ?? { row: 0, column: 0 };
+        const item = virtual.rowItems.find((entry) => entry.renderItem.rowIndex === current.row);
+        const step = Math.max(
+          1,
+          Math.floor(virtual.rows.viewportSize / (item?.size ?? props.rowHeight)),
+        );
+        grid.focusCell(
+          { row: current.row + (event.key === "PageDown" ? step : -step), column: current.column },
+          { extend: event.shiftKey },
+        );
+        event.preventDefault();
         return;
       }
       if (grid.handleKey(event)) {
@@ -107,7 +150,8 @@ export const DataGridRoot = defineComponent({
       grid.paste(text);
     };
 
-    return () => {
+    const render = (binding?: ComponentVirtualBinding): VNode => {
+      virtual = binding;
       const focusPosition = grid.selection?.focus;
       return h(
         props.as,
@@ -118,7 +162,7 @@ export const DataGridRoot = defineComponent({
           tabindex: 0,
           "aria-label": props.label,
           "aria-multiselectable": "true",
-          "aria-rowcount": props.table.rows.length + 1,
+          "aria-rowcount": (binding ? props.table.rowCount : props.table.rows.length) + 1,
           "aria-colcount": props.table.columns.length,
           "aria-activedescendant":
             focusPosition && !grid.editor
@@ -128,10 +172,44 @@ export const DataGridRoot = defineComponent({
           onCopy: (event: ClipboardEvent) => onCopy(event),
           onCut: (event: ClipboardEvent) => onCopy(event, true),
           onPaste,
+          ...(binding
+            ? {
+                "data-virtual": "",
+                style: binding.columns
+                  ? {
+                      tableLayout: "fixed",
+                      width: `${binding.columns.totalSize + binding.gutter}px`,
+                    }
+                  : undefined,
+              }
+            : {}),
         },
-        slots.default?.({ table: props.table, grid }) ?? [h(DataTableHeader), h(DataGridBody)],
+        binding
+          ? [
+              virtualColgroup(props.table.columns, binding),
+              slots.default?.({ table: props.table, grid }) ?? [
+                h(DataTableHeader),
+                h(DataGridBody),
+              ],
+            ]
+          : (slots.default?.({ table: props.table, grid }) ?? [
+              h(DataTableHeader),
+              h(DataGridBody),
+            ]),
       );
     };
+    return () =>
+      props.virtual
+        ? h(VirtualContent, {
+            table: props.table,
+            grid,
+            options: virtualOptions(props),
+            virtualColumns: props.virtualColumns,
+            gutter: props.gutter,
+            tableElement: () => element.value,
+            render,
+          })
+        : render();
   },
 });
 
@@ -155,11 +233,77 @@ export const DataGridBody = defineComponent({
     rowHeader?: (props: { row: TableRow<unknown>; index: number }) => VNode[];
     cell?: (props: GridCellSlotProps) => VNodeChild;
   }>,
-  props: { as: asProp("tbody") },
+  props: { as: asProp("tbody"), ...virtualProps, colspan: { type: Number, default: undefined } },
   setup(props, { slots }) {
     const table = injectDataTable("<DataGridBody>");
-    return () =>
-      h(
+    const { grid } = useGrid("<DataGridBody>");
+    const virtual = injectVirtual();
+    const element = ref<HTMLElement>();
+    const render = (binding?: ComponentVirtualBinding): VNode => {
+      if (binding && slots.default)
+        return h(
+          props.as,
+          { ref: element },
+          slots.default({
+            rows: binding.rowItems
+              .filter((item) => item.renderItem.kind === "row")
+              .map((item) => item.renderItem.row),
+          }),
+        );
+      if (binding)
+        return h(
+          props.as,
+          { ref: element },
+          renderRows(
+            binding,
+            props.colspan ?? table.columns.length + (slots.rowHeader ? 1 : 0),
+            (item) => {
+              if (item.renderItem.kind !== "row")
+                return h(
+                  "tr",
+                  {
+                    key: item.key,
+                    "aria-hidden": "true",
+                    "data-detail": "",
+                    style: { height: `${item.size}px` },
+                  },
+                  [
+                    h("td", {
+                      colspan: Math.max(1, table.columns.length),
+                      style: { padding: "0" },
+                    }),
+                  ],
+                );
+              const { row, rowIndex } = item.renderItem;
+              const columns = renderColumns(
+                table.columns,
+                binding,
+                (column, columnIndex) =>
+                  h(
+                    DataGridCell,
+                    { key: column.id, row, column, rowIndex, columnIndex },
+                    slots.cell
+                      ? { default: (cellProps: GridCellSlotProps) => slots.cell?.(cellProps) }
+                      : undefined,
+                  ),
+                "td",
+              );
+              return h(
+                "tr",
+                {
+                  key: item.key,
+                  role: "row",
+                  "aria-rowindex": table.pageStart + rowIndex + 1,
+                  "data-key": String(row.key),
+                  "data-virtual-row": "",
+                  ref: (target) => binding.rows.measureElement(target, item.key),
+                },
+                [slots.rowHeader?.({ row, index: rowIndex }), ...columns],
+              );
+            },
+          ),
+        );
+      return h(
         props.as,
         slots.default?.({ rows: table.rows }) ??
           table.rows.map((row, rowIndex) =>
@@ -186,6 +330,17 @@ export const DataGridBody = defineComponent({
             ),
           ),
       );
+    };
+    return () =>
+      props.virtual && !virtual
+        ? h(VirtualContent, {
+            table,
+            grid,
+            options: virtualOptions(props),
+            tableElement: () => element.value?.closest("table"),
+            render,
+          })
+        : render(virtual);
   },
 });
 
@@ -263,6 +418,7 @@ export const DataGridCell = defineComponent({
   setup(props, { slots }) {
     const table = injectDataTable("<DataGridCell>");
     const { grid, context } = useGrid("<DataGridCell>");
+    const virtual = injectVirtual();
     const element = ref<HTMLElement>();
     const position = () => ({
       row: props.rowIndex ?? table.rows.indexOf(props.row),
@@ -272,7 +428,7 @@ export const DataGridCell = defineComponent({
     watch(
       () => grid.isFocused(position()),
       (focused) => {
-        if (focused) {
+        if (focused && !virtual) {
           element.value?.scrollIntoView?.({ block: "nearest", inline: "nearest" });
         }
       },

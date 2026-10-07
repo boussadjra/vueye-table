@@ -33,6 +33,8 @@ line, loading and empty states, and theming.
 
 `selectable`, `select-scope`, `manual`, and `row-key` are read when the table is created.
 
+`virtual`, `height`, `row-height`, `overscan`, `paginate`, and grid `virtual-columns`/`column-width` are described in the [virtualization guide](/guide/virtualization#component-props). Virtualization is opt-in; full virtual tables default to no paging and a sticky header. Its renderer options are creation options, while data and state stay reactive.
+
 ### v-model
 
 `page`, `page-size`, `sorting`, `search`, `filters`, `hidden-columns`, and `selected`. See
@@ -75,6 +77,8 @@ const exportCsv = () => orders.value?.table.exportRows({ format: "csv" });
 ```
 
 ## `<VueyeGrid>`
+
+Use `label` for the grid's accessible name and `aria-describedby` to reference keyboard instructions or other help. `VueyeGrid` and `VtGrid` forward this description to the focusable grid element.
 
 An editable spreadsheet over an array. It accepts the props of `<VueyeTable>` for columns, keys,
 surface, and state, with these differences:

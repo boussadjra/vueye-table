@@ -6,6 +6,8 @@ import {
   DataTableRow,
   DataTableSelectAll,
   DataTableSelectRow,
+  DataTableRoot,
+  DataTableViewport,
 } from "@vueye-table/headless";
 import {
   VtColumnVisibility,
@@ -105,6 +107,7 @@ export const VueyeTable = defineComponent({
       columns: () => resolveColumns(props.columns, props.data) as readonly ColumnDef<unknown>[],
       rowKey: props.rowKey as never,
       manual: props.manual,
+      paginate: props.paginate ?? !props.virtual,
       rowCount: () => props.rowCount,
       selectionMode: selectionMode.value,
       selectScope: props.selectScope,
@@ -136,7 +139,7 @@ export const VueyeTable = defineComponent({
       );
     };
 
-    const body = (): VNodeChild => {
+    const body = (rows: readonly TableRow<unknown>[] = table.rows): VNodeChild => {
       const width = table.columns.length + (selectable() ? 1 : 0);
       if (table.rows.length === 0) {
         // While the first page is loading there is nothing to match yet, so say that instead.
@@ -145,7 +148,7 @@ export const VueyeTable = defineComponent({
           : (slots.empty?.({}) ?? h(VtEmpty));
         return h("tr", { "data-empty": "" }, [h("td", { colspan: Math.max(1, width) }, content)]);
       }
-      return table.rows.map((row) =>
+      return rows.map((row) =>
         h(
           DataTableRow,
           { key: row.key, row, onClick: () => emit("row-click", row.original, row) },
@@ -187,6 +190,52 @@ export const VueyeTable = defineComponent({
       };
     };
 
+    const tableContent = (): VNodeChild => {
+      const children = () => [
+        props.caption ? h(DataTableCaption, () => props.caption) : null,
+        h(VtHeader, null, headerSlots()),
+        h(
+          DataTableBody,
+          { class: "vt-body", colspan: table.columns.length + (selectable() ? 1 : 0) },
+          { default: ({ rows }: { rows: readonly TableRow<unknown>[] }) => body(rows) },
+        ),
+      ];
+      return props.virtual
+        ? h(
+            DataTableViewport,
+            {
+              class: "vt-scroll",
+              height: props.height ?? "24rem",
+              style: { "--vt-row-height": `${props.rowHeight}px` },
+            },
+            {
+              default: () =>
+                h(
+                  DataTableRoot,
+                  {
+                    table,
+                    class: "vt-table",
+                    virtual: props.virtual,
+                    rowHeight: props.rowHeight,
+                    overscan: props.overscan,
+                  },
+                  children,
+                ),
+            },
+          )
+        : h("div", { class: "vt-scroll" }, [
+            h(
+              "table",
+              {
+                class: "vt-table",
+                "aria-rowcount": table.rowCount + 1,
+                "aria-colcount": table.columns.length,
+              },
+              children(),
+            ),
+          ]);
+    };
+
     return () =>
       h(
         "div",
@@ -196,7 +245,8 @@ export const VueyeTable = defineComponent({
           "data-striped": props.striped ? "" : undefined,
           "data-bordered": props.bordered ? "" : undefined,
           "data-hover": props.hover ? "" : undefined,
-          "data-sticky-header": props.stickyHeader ? "" : undefined,
+          "data-sticky-header": props.stickyHeader || props.virtual ? "" : undefined,
+          "data-virtual": props.virtual ? "" : undefined,
           "data-loading": props.loading ? "" : undefined,
           "data-vt-theme": props.theme,
           "aria-busy": props.loading ? "true" : undefined,
@@ -213,22 +263,8 @@ export const VueyeTable = defineComponent({
                 ])
               : null,
             h("div", { class: "vt-progress", role: "presentation" }),
-            h("div", { class: "vt-scroll" }, [
-              h(
-                "table",
-                {
-                  class: "vt-table",
-                  "aria-rowcount": table.rowCount + 1,
-                  "aria-colcount": table.columns.length,
-                },
-                [
-                  props.caption ? h(DataTableCaption, () => props.caption) : null,
-                  h(VtHeader, null, headerSlots()),
-                  h(DataTableBody, { class: "vt-body" }, () => body()),
-                ],
-              ),
-            ]),
-            props.pagination || slots.footer
+            tableContent(),
+            (props.pagination && (!props.virtual || table.paginate)) || slots.footer
               ? h(VtToolbar, { class: "vt-footer" }, () => [
                   h(
                     VtStatus,
@@ -240,7 +276,7 @@ export const VueyeTable = defineComponent({
                         : undefined,
                   ),
                   slots.footer?.({ table }),
-                  props.pagination
+                  props.pagination && (!props.virtual || table.paginate)
                     ? h("div", { class: "vt-footer-controls" }, [
                         h(VtPageSize, { options: props.pageSizeOptions }),
                         h(VtPagination),

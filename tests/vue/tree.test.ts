@@ -52,6 +52,7 @@ describe("Vue trees", () => {
     const child = document.createElement("div");
     vi.spyOn(child, "getBoundingClientRect").mockReturnValue({ height: 80 } as DOMRect);
     virtual.measureElement(child, getRowItemKey(100));
+    await nextTick();
     expect(el.scrollTop).toBe(480);
     table.collapseAll();
     expect(el.scrollTop).toBe(400);

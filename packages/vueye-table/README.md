@@ -1,5 +1,7 @@
 # vueye-table
 
+`VueyeTable` and `VueyeGrid` support opt-in virtualization through `virtual`, `height`, `rowHeight` and `overscan`; grids also expose `virtualColumns` and `columnWidth`. Virtual tables default to no paging, with `paginate` available for large pages. The guide and runnable 100k-record example live in `docs/guide/virtualization.md` and `docs/examples/virtual-components.md`.
+
 A Vue framework for data, data tables, and spreadsheets.
 
 vueye-table began as a single table component. Version 3 is a rewrite around one idea: a table is

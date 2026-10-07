@@ -5,9 +5,31 @@ import {
   type AnyDataTableBinding,
   type DataTableBinding,
 } from "@vueye-table/vue";
-import { defineComponent, h, type PropType, type SlotsType, type VNode } from "vue";
+import {
+  defineComponent,
+  Fragment,
+  h,
+  shallowRef,
+  type PropType,
+  type ShallowRef,
+  type SlotsType,
+  type VNode,
+  type ComponentPublicInstance,
+} from "vue";
 
 import { asProp, columnProp, flag, rowProp } from "./shared";
+import {
+  createComponentVirtual,
+  injectVirtual,
+  renderColumns,
+  renderRows,
+  rowSpacer,
+  virtualProps,
+  virtualOptions,
+  virtualRow,
+  VirtualContent,
+  type ComponentVirtualBinding,
+} from "./virtual";
 
 /**
  * Provides a table to the components inside it and renders the table element. Without a default
@@ -21,19 +43,31 @@ export const DataTableRoot = defineComponent({
   props: {
     table: { type: Object as PropType<AnyDataTableBinding>, required: true },
     as: asProp("table"),
+    ...virtualProps,
   },
   setup(props, { slots }) {
     provideDataTable(props.table);
-    return () =>
+    const element = shallowRef<HTMLElement>();
+    const render = (virtual?: ComponentVirtualBinding) =>
       h(
         props.as,
         {
           "aria-rowcount": props.table.rowCount + 1,
           "aria-colcount": props.table.columns.length,
           "data-empty": flag(props.table.rowCount === 0),
+          ...(virtual ? { ref: element, "data-virtual": "" } : {}),
         },
         slots.default?.({ table: props.table }) ?? [h(DataTableHeader), h(DataTableBody)],
       );
+    return () =>
+      props.virtual
+        ? h(VirtualContent, {
+            table: props.table,
+            options: virtualOptions(props),
+            tableElement: () => element.value,
+            render,
+          })
+        : render();
   },
 });
 
@@ -55,12 +89,19 @@ export const DataTableHeader = defineComponent({
   props: { as: asProp("thead") },
   setup(props, { slots }) {
     const table = injectDataTable("<DataTableHeader>");
+    const virtual = injectVirtual();
     return () =>
       h(
         props.as,
         slots.default?.({ columns: table.columns }) ??
           h(DataTableHeaderRow, () =>
-            table.columns.map((column) => h(DataTableHeaderCell, { key: column.id, column })),
+            virtual?.columns
+              ? h(DataTableVirtualColumns, null, {
+                  default: ({ column }: { column: TableColumn<unknown> }) => [
+                    h(DataTableHeaderCell, { key: column.id, column }),
+                  ],
+                })
+              : table.columns.map((column) => h(DataTableHeaderCell, { key: column.id, column })),
           ),
       );
   },
@@ -72,6 +113,29 @@ export const DataTableHeaderRow = defineComponent({
   props: { as: asProp("tr") },
   setup(props, { slots }) {
     return () => h(props.as, { "aria-rowindex": 1 }, slots.default?.());
+  },
+});
+
+/** Shared header/body column slice, with native spacer cells for omitted columns. */
+export const DataTableVirtualColumns = defineComponent({
+  name: "DataTableVirtualColumns",
+  slots: Object as SlotsType<{
+    default?: (props: { column: TableColumn<unknown>; index: number }) => VNode[];
+  }>,
+  props: { as: { type: String as PropType<"th" | "td">, default: "th" } },
+  setup(props, { slots }) {
+    const table = injectDataTable("<DataTableVirtualColumns>");
+    const virtual = injectVirtual();
+    return () =>
+      h(
+        Fragment,
+        renderColumns(
+          table.columns,
+          virtual,
+          (column, index) => slots.default?.({ column, index }),
+          props.as,
+        ),
+      );
   },
 });
 
@@ -91,6 +155,7 @@ export const DataTableHeaderCell = defineComponent({
   props: { column: columnProp, as: asProp("th") },
   setup(props, { slots }) {
     const table = injectDataTable("<DataTableHeaderCell>");
+    const virtual = injectVirtual();
     return () => {
       const { column } = props;
       const sort = table.getSort(column.id);
@@ -118,6 +183,7 @@ export const DataTableHeaderCell = defineComponent({
           "data-sortable": flag(column.sortable),
           "data-sort": sort?.direction,
           style: columnStyle(column),
+          ...(virtual?.columns ? { "aria-colindex": table.columns.indexOf(column) + 1 } : {}),
         },
         content,
       );
@@ -176,11 +242,19 @@ export const DataTableBody = defineComponent({
   slots: Object as SlotsType<{
     default?: (props: { rows: readonly TableRow<unknown>[] }) => VNode[];
     empty?: () => VNode[];
+    detail?: (props: { row: TableRow<unknown>; rowIndex: number }) => VNode[];
   }>,
-  props: { as: asProp("tbody") },
+  props: {
+    as: asProp("tbody"),
+    ...virtualProps,
+    colspan: { type: Number as PropType<number | undefined>, default: undefined },
+  },
   setup(props, { slots }) {
     const table = injectDataTable("<DataTableBody>");
+    const virtual = injectVirtual();
     return () => {
+      if (props.virtual && !virtual) return h(VirtualDataTableBody, props, slots);
+      if (virtual) return renderTableBody(table, virtual, props.as, props.colspan, slots);
       let content: VNode[] | VNode | undefined = slots.default?.({ rows: table.rows });
       if (!content) {
         content =
@@ -195,6 +269,78 @@ export const DataTableBody = defineComponent({
   },
 });
 
+type TableBodySlots = {
+  default?: (props: { rows: readonly TableRow<unknown>[] }) => VNode[];
+  empty?: () => VNode[];
+  detail?: (props: { row: TableRow<unknown>; rowIndex: number }) => VNode[];
+};
+function renderTableBody(
+  table: DataTableBinding<unknown>,
+  virtual: ComponentVirtualBinding,
+  as: string,
+  colspan: number | undefined,
+  slots: TableBodySlots,
+  element?: ShallowRef<HTMLElement | undefined>,
+): VNode {
+  const width = colspan ?? table.columns.length;
+  const attrs = element ? { ref: element } : {};
+  const content = slots.default?.({
+    rows: virtual.rowItems
+      .filter((item) => item.renderItem.kind === "row")
+      .map((item) => item.renderItem.row),
+  });
+  if (table.rows.length === 0 && slots.empty)
+    return h(
+      as,
+      attrs,
+      h("tr", { "data-empty": "" }, [h("td", { colspan: Math.max(1, width) }, slots.empty())]),
+    );
+  if (content)
+    return h(as, attrs, [
+      rowSpacer(virtual.rows.paddingStart, width, "gap-start"),
+      ...content,
+      rowSpacer(virtual.rows.paddingEnd, width, "gap-end"),
+    ]);
+  return h(
+    as,
+    attrs,
+    renderRows(virtual, width, (item) =>
+      item.renderItem.kind === "row"
+        ? h(DataTableRow, {
+            key: item.key,
+            row: item.renderItem.row,
+            rowIndex: item.renderItem.rowIndex,
+          })
+        : h(
+            "tr",
+            {
+              key: item.key,
+              "data-detail": "",
+              ref: (target) => virtual.rows.measureElement(target, item.key),
+            },
+            [h("td", { colspan: Math.max(1, width) }, slots.detail?.(item.renderItem))],
+          ),
+    ),
+  );
+}
+const VirtualDataTableBody = defineComponent({
+  name: "DataTableVirtualBody",
+  props: {
+    as: asProp("tbody"),
+    ...virtualProps,
+    colspan: { type: Number as PropType<number | undefined>, default: undefined },
+  },
+  slots: Object as SlotsType<TableBodySlots>,
+  setup(props, { slots }) {
+    const table = injectDataTable("<DataTableBody>");
+    const element = shallowRef<HTMLElement>();
+    const virtual = createComponentVirtual(table, virtualOptions(props), () =>
+      element.value?.closest("table"),
+    );
+    return () => renderTableBody(table, virtual, props.as, props.colspan, slots, element);
+  },
+});
+
 /** A body row; `aria-selected` and `data-selected` follow the selection. */
 export const DataTableRow = defineComponent({
   name: "DataTableRow",
@@ -205,13 +351,19 @@ export const DataTableRow = defineComponent({
       columns: readonly TableColumn<unknown>[];
     }) => VNode[];
   }>,
-  props: { row: rowProp, as: asProp("tr") },
+  props: {
+    row: rowProp,
+    as: asProp("tr"),
+    rowIndex: { type: Number as PropType<number | undefined>, default: undefined },
+  },
   setup(props, { slots }) {
     const table = injectDataTable("<DataTableRow>");
+    const virtual = injectVirtual();
     return () => {
       const { row } = props;
       const selected = table.isSelected(row.key);
-      const position = table.rows.indexOf(row);
+      const item = virtual ? virtualRow(virtual, row) : undefined;
+      const position = props.rowIndex ?? item?.renderItem.rowIndex ?? table.rows.indexOf(row);
       return h(
         props.as,
         {
@@ -219,6 +371,13 @@ export const DataTableRow = defineComponent({
           "aria-selected": table.selectionMode === "none" ? undefined : String(selected),
           "data-selected": flag(selected),
           "data-key": String(row.key),
+          ...(virtual && item
+            ? {
+                ref: (element: Element | ComponentPublicInstance | null) =>
+                  virtual.rows.measureElement(element, item.key),
+                "data-virtual-row": "",
+              }
+            : {}),
         },
         slots.default?.({ row, selected, columns: table.columns }) ??
           table.columns.map((column) => h(DataTableCell, { key: column.id, row, column })),

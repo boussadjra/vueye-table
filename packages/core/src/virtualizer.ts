@@ -39,6 +39,8 @@ export interface Virtualizer {
   setViewport(offset: number, size: number): void;
   measure(key: RowKey, size: number): void;
   getWindow(): VirtualWindow;
+  /** Read an item's layout without moving the viewport; out-of-range indices return undefined. */
+  getItem(index: number): VirtualItem | undefined;
   getOffsetForIndex(index: number, align?: VirtualAlign): number;
   subscribe(listener: (view: VirtualWindow) => void): () => void;
 }
@@ -250,6 +252,11 @@ export function createVirtualizer(initialOptions: VirtualizerOptions): Virtualiz
       notify();
     },
     getWindow,
+    getItem(index) {
+      return Number.isSafeInteger(index) && index >= 0 && index < count
+        ? Object.freeze({ index, key: keys[index]!, start: startOf(index), size: sizes[index]! })
+        : undefined;
+    },
     getOffsetForIndex(index, align = "auto") {
       if (count === 0) return 0;
       if (!Number.isFinite(index) || !Number.isInteger(index)) {

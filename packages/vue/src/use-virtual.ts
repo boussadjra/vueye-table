@@ -13,6 +13,7 @@ import {
   computed,
   getCurrentInstance,
   getCurrentScope,
+  nextTick,
   onMounted,
   onScopeDispose,
   shallowRef,
@@ -30,6 +31,8 @@ export interface VirtualViewportOptions {
   readonly overscan?: number | undefined;
   /** Number of items rendered before mount, without overscan. Defaults to 10. */
   readonly initialCount?: number | undefined;
+  /** Space before the items, such as a sticky header or leading row-number column. */
+  readonly scrollMargin?: MaybeRefOrGetter<number> | undefined;
 }
 export interface UseVirtualRowsOptions<TRow> extends VirtualViewportOptions {
   readonly estimateRowHeight?: number | ((index: number) => number) | undefined;
@@ -47,6 +50,7 @@ export interface VirtualColumnItem<TRow> extends VirtualItem {
 }
 export interface VirtualBinding<TItem extends VirtualItem> extends Omit<VirtualWindow, "items"> {
   readonly items: readonly TItem[];
+  getItem(index: number): TItem | undefined;
   scrollToIndex(index: number, options?: { readonly align?: VirtualAlign | undefined }): void;
   scrollToKey(key: RowKey, options?: { readonly align?: VirtualAlign | undefined }): void;
   /** Pass the virtual item key explicitly; null releases its previously observed element. */
@@ -102,20 +106,31 @@ function useVirtualAxis<TSource, TItem extends VirtualItem>(
   const unsubscribe = virtual.subscribe((next) => {
     view.value = next;
   });
+  const marginIssue = shallowRef<TableIssue>();
 
+  function margin(): number {
+    const value = toValue(options.scrollMargin) ?? 0;
+    if (Number.isFinite(value) && value >= 0) {
+      marginIssue.value = undefined;
+      return value;
+    }
+    marginIssue.value ??= Object.freeze({
+      code: "invalid_virtual_option",
+      message: "Scroll margin must be non-negative and finite; 0 is used.",
+    });
+    return 0;
+  }
+  function viewportSize(): number {
+    return element
+      ? Math.max(0, (horizontal ? element.clientWidth : element.clientHeight) - margin())
+      : virtual.getWindow().viewportSize;
+  }
   function move(offset: number): void {
     if (element) {
-      if (horizontal) element.scrollLeft = offset;
-      else element.scrollTop = offset;
+      if (horizontal) element.scrollLeft = offset === 0 ? 0 : offset + margin();
+      else element.scrollTop = offset === 0 ? 0 : offset + margin();
     }
-    virtual.setViewport(
-      offset,
-      element
-        ? horizontal
-          ? element.clientWidth
-          : element.clientHeight
-        : virtual.getWindow().viewportSize,
-    );
+    virtual.setViewport(offset, viewportSize());
   }
   function anchor(): { key: RowKey; inset: number } | undefined {
     const current = virtual.getWindow();
@@ -127,8 +142,9 @@ function useVirtualAxis<TSource, TItem extends VirtualItem>(
     move(index >= 0 && saved ? virtual.getOffsetForIndex(index, "start") + saved.inset : fallback);
     // Reflect the clamp in the scroll element after shrink or removal.
     if (element) {
-      if (horizontal) element.scrollLeft = virtual.getWindow().offset;
-      else element.scrollTop = virtual.getWindow().offset;
+      const offset = virtual.getWindow().offset;
+      if (horizontal) element.scrollLeft = offset === 0 ? 0 : offset + margin();
+      else element.scrollTop = offset === 0 ? 0 : offset + margin();
     }
   }
   function measure(target: Element, key: RowKey): void {
@@ -147,8 +163,8 @@ function useVirtualAxis<TSource, TItem extends VirtualItem>(
   function readViewport(): void {
     if (element)
       virtual.setViewport(
-        horizontal ? element.scrollLeft : element.scrollTop,
-        horizontal ? element.clientWidth : element.clientHeight,
+        Math.max(0, (horizontal ? element.scrollLeft : element.scrollTop) - margin()),
+        viewportSize(),
       );
   }
   const stopSource = watch(
@@ -217,7 +233,14 @@ function useVirtualAxis<TSource, TItem extends VirtualItem>(
       keysByElement.clear();
       element = undefined;
     });
+  margin();
   const binding = {
+    getItem(index: number): TItem | undefined {
+      // Reading the revision connects offscreen lookups to reactive measurements and layout.
+      void view.value;
+      const item = virtual.getItem(index);
+      return item ? Object.freeze(project(item, items[index]!)) : undefined;
+    },
     scrollToIndex(
       index: number,
       { align = "auto" }: { readonly align?: VirtualAlign | undefined } = {},
@@ -242,19 +265,27 @@ function useVirtualAxis<TSource, TItem extends VirtualItem>(
       keysByElement.set(target, key);
       if (mounted) {
         observer?.observe(target);
-        measure(target, key);
+        // A ref can run midway through a keyed row/spacer patch. Reading layout there can
+        // clamp a pending scroll against a temporarily shortened content area.
+        void nextTick(() => {
+          if (!disposed && elements.get(key) === target) measure(target, key);
+        });
       }
     },
   } as Record<string, unknown> &
-    Pick<VirtualBinding<TItem>, "scrollToIndex" | "scrollToKey" | "measureElement">;
+    Pick<VirtualBinding<TItem>, "getItem" | "scrollToIndex" | "scrollToKey" | "measureElement">;
   for (const key of Object.keys(view.value))
     Object.defineProperty(binding, key, {
       enumerable: true,
       get: () =>
         key === "items"
           ? projected.value
-          : key === "issues" && initialIssue
-            ? Object.freeze([...view.value.issues, initialIssue])
+          : key === "issues" && (initialIssue || marginIssue.value)
+            ? Object.freeze([
+                ...view.value.issues,
+                ...(initialIssue ? [initialIssue] : []),
+                ...(marginIssue.value ? [marginIssue.value] : []),
+              ])
             : view.value[key as keyof VirtualWindow],
     });
   return Object.freeze(binding) as unknown as VirtualBinding<TItem>;
@@ -277,9 +308,11 @@ export function useVirtualRows<TRow>(
     () => options.grid?.selection?.focus.row,
     (row) => {
       if (row === undefined) return;
-      const index = table.renderItems.findIndex(
-        (item) => item.kind === "row" && item.rowIndex === row,
-      );
+      const direct = table.renderItems[row];
+      const index =
+        direct?.kind === "row" && direct.rowIndex === row
+          ? row
+          : table.renderItems.findIndex((item) => item.kind === "row" && item.rowIndex === row);
       if (index >= 0) virtual.scrollToIndex(index);
     },
     { flush: "sync" },
