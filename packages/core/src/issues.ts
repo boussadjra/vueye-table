@@ -15,7 +15,13 @@ export type TableIssueCode =
   | "invalid_virtual_option"
   | "invalid_virtual_size"
   | "invalid_virtual_viewport"
-  | "duplicate_virtual_key";
+  | "duplicate_virtual_key"
+  | "tree_cycle"
+  | "tree_depth_exceeded"
+  | "tree_orphan"
+  | "tree_duplicate_key"
+  | "tree_load_error"
+  | "invalid_tree_option";
 
 /**
  * A problem the engine recovered from. Invalid input is never dropped silently: the engine falls

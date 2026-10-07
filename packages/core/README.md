@@ -5,6 +5,10 @@ filtering, stable multi-column sorting, pagination, selection, column visibility
 editing with undo, spreadsheet addressing, clipboard text, and CSV export. No DOM, no Node.js,
 no framework.
 
+Nested and adjacency trees share sibling sorting, hierarchical filtering, cascading selection,
+immutable child edits and lazy loading with injected cancellation. Read the
+[tree guide](https://github.com/boussadjra/vueye-table/blob/main/docs/guide/trees.md) for the API and runnable example.
+
 ```bash
 pnpm add @vueye-table/core
 ```

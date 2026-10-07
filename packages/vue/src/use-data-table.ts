@@ -5,6 +5,7 @@ import {
   type TableOptions,
   type TableSnapshot,
   type TableStatePatch,
+  type TreeLoadSignal,
 } from "@vueye-table/core";
 import {
   getCurrentScope,
@@ -17,10 +18,10 @@ import {
 } from "vue";
 
 /** Options accepted by {@link useDataTable}. Data, columns, and state may be refs or getters. */
-export interface UseDataTableOptions<TRow> extends Omit<
-  TableOptions<TRow>,
-  "data" | "columns" | "rowCount"
-> {
+export interface UseDataTableOptions<
+  TRow,
+  TSignal extends TreeLoadSignal = TreeLoadSignal,
+> extends Omit<TableOptions<TRow, TSignal>, "data" | "columns" | "rowCount"> {
   readonly data: MaybeRefOrGetter<readonly TRow[]>;
   readonly columns: MaybeRefOrGetter<readonly ColumnDef<TRow>[]>;
   readonly rowCount?: MaybeRefOrGetter<number | undefined> | undefined;
@@ -97,8 +98,10 @@ function definedEntries(patch: TableStatePatch | undefined): TableStatePatch {
  * Create a table bound to the current effect scope. The table follows its reactive data,
  * columns, row count, and state, and stops listening when the scope ends.
  */
-export function useDataTable<TRow>(options: UseDataTableOptions<TRow>): DataTableBinding<TRow> {
-  const table = createTable<TRow>({
+export function useDataTable<TRow, TSignal extends TreeLoadSignal = TreeLoadSignal>(
+  options: UseDataTableOptions<TRow, TSignal>,
+): DataTableBinding<TRow> {
+  const table = createTable<TRow, TSignal>({
     ...options,
     data: toRaw(toValue(options.data)),
     columns: toValue(options.columns),

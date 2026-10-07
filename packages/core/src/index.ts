@@ -47,6 +47,14 @@ export {
   type VirtualizerOptions,
 } from "./virtualizer";
 export { humanize } from "./humanize";
+export type {
+  TreeOptions,
+  TreeFilter,
+  TreePagination,
+  TreeLoadSignal,
+  TreeLoadController,
+  ChildStatus,
+} from "./tree";
 export { inferColumns } from "./infer";
 export type { TableIssue, TableIssueCode } from "./issues";
 export { getPath, setPath, type DeepKeys, type PathValue } from "./path";

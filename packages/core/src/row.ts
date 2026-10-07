@@ -1,5 +1,6 @@
 import type { TableColumn } from "./column";
 import type { RowKey } from "./state";
+import type { ChildStatus } from "./tree";
 
 /**
  * One row of data as the engine sees it: its key, its position in the source data, and cached
@@ -12,6 +13,12 @@ export interface TableRow<TRow> {
   readonly original: TRow;
   readonly canExpand: boolean;
   readonly isExpanded: boolean;
+  readonly depth: number;
+  readonly parentKey: RowKey | undefined;
+  readonly childCount: number | undefined;
+  readonly childStatus: ChildStatus;
+  /** Coverage of this row and its loaded descendants. */
+  readonly selection: "none" | "some" | "all";
   getValue(columnId: string): unknown;
   /** The formatted text of a cell, as shown, searched, copied, and exported. */
   getDisplay(columnId: string): string;
@@ -59,6 +66,11 @@ export function createRow<TRow>(
     original,
     canExpand,
     isExpanded: false,
+    depth: 0,
+    parentKey: undefined,
+    childCount: 0,
+    childStatus: "loaded" as const,
+    selection: "none" as const,
     getValue,
     getDisplay(columnId: string): string {
       const cached = displays.get(columnId);

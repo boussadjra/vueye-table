@@ -1,6 +1,6 @@
 # 0007 — Expansion state and detail items
 
-Status: accepted for expansion; tree modeling remains deferred to issue #81.
+Status: accepted for expansion; tree modeling is defined in [ADR 0011](./0011-tree-data).
 
 ## Decision
 
@@ -16,4 +16,4 @@ Malformed expansion state recovers to an empty array with `invalid_expanded`. Du
 
 ## Consequences
 
-Applications supply detail markup. Styled expansion controls, tree traversal and disclosure keyboard behavior are separate work. Complete `TableState` literals must include `expanded`; partial initial state remains compatible. Controlled state, callbacks, reset and opt-in URL adapters can round-trip expansion as plain data. The Vue binding forwards the three core expansion operations now; the remaining Vue expansion/visibility work stays tracked by #84.
+Applications supply detail markup. Styled expansion controls and disclosure keyboard behavior are separate work; [ADR 0011](./0011-tree-data) adds tree traversal. Complete `TableState` literals must include `expanded`; partial initial state remains compatible. Controlled state, callbacks, reset and opt-in URL adapters can round-trip expansion as plain data. The Vue binding forwards the three core expansion operations now; the remaining Vue expansion/visibility work stays tracked by #84.
