@@ -19,6 +19,7 @@
     "core-virtual-layout",
     "framework-rewrite",
     "grid-slots-and-fixes",
+    "tree-data",
     "vue-virtual-bindings"
   ]
 }
