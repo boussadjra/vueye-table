@@ -1,5 +1,16 @@
 # @vueye-table/vue
 
+## 3.0.0-alpha.3
+
+### Minor Changes
+
+- b84f815: Add nested and adjacency trees with sibling sorting, hierarchical filtering, root or row pagination, cascading selection, immutable child edits, visible-tree exports, and cancellable lazy children. Preserve injected native signal types through the Vue binding and reuse virtual row keys across branch toggles.
+
+### Patch Changes
+
+- Updated dependencies [b84f815]
+  - @vueye-table/core@3.0.0-alpha.3
+
 ## 3.0.0-alpha.2
 
 ### Minor Changes
