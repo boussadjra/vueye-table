@@ -51,3 +51,22 @@ and let you own the markup.
 Search, column filters, multi-column sorting, column visibility, server mode (`manual`), CSV and
 TSV export, a spreadsheet (`<VueyeGrid>`) with editing, clipboard, and undo, dark mode, density,
 and theming through CSS custom properties.
+
+## Export and paste behavior in 3.x alpha
+
+`exportRows()` now prefixes formula-like CSV/TSV cell text and headers with an apostrophe by
+default. For example, text `=1+1` exports as `'=1+1`, while the numeric value `-12` stays
+`-12`. Pass `{ escapeFormulas: false }` only when literal output is required and the
+destination handles that text safely. Clipboard copies preserve literal text by default;
+`table.copy(range, { escapeFormulas: true })` and `grid.copy({ escapeFormulas: true })`
+enable escaping.
+
+Pastes now stop at the visible grid and parsing limits. Excess input reports a
+`paste_truncated` issue; a field cut short by the character limit is not written.
+`createTable` and `useDataTable` accept `pasteLimit: { maxCells, maxLength }` to change the
+defaults of 100,000 parsed fields and 5,000,000 UTF-16 code units. See
+[editing and spreadsheets](/guide/editing#paste-limits).
+
+Column paths containing `__proto__`, `constructor`, or `prototype` are ignored with
+`unsafe_path` issues. Safe inherited getters remain readable. Unsafe `setPath` writes return the
+original input unchanged; its optional fourth argument receives the issue.

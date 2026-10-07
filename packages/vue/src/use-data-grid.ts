@@ -7,6 +7,7 @@ import {
   selectionRange,
   type CellPosition,
   type CellRange,
+  type CopyOptions,
   type EditResult,
   type GridBounds,
   type GridDirection,
@@ -52,7 +53,7 @@ export interface DataGridBinding<TRow> {
   commitEdit(then?: GridDirection): EditResult<TRow> | undefined;
   cancelEdit(): void;
   /** The selected range as tab-separated text. */
-  copy(): string;
+  copy(options?: CopyOptions): string;
   /** Paste tab-separated text at the top-left of the selection. */
   paste(text: string): EditResult<TRow> | undefined;
   clear(): EditResult<TRow> | undefined;
@@ -187,8 +188,8 @@ export function useDataGrid<TRow>(table: DataTableBinding<TRow>): DataGridBindin
     cancelEdit() {
       editor.value = undefined;
     },
-    copy() {
-      return range.value ? table.copy(range.value) : "";
+    copy(options) {
+      return range.value ? table.copy(range.value, options) : "";
     },
     paste(text) {
       if (!range.value) {
