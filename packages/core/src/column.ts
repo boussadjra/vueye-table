@@ -1,5 +1,6 @@
 import { humanize } from "./humanize";
 import { getPath, isSafePath, setPath, type DeepKeys, type PathValue } from "./path";
+import type { EditorSpec, Validator } from "./validation";
 
 export type ColumnAlign = "start" | "center" | "end";
 
@@ -44,6 +45,9 @@ export interface ColumnOptions<TRow, TValue> {
    * column's `type`.
    */
   readonly parse?: ((input: string, row: TRow) => TValue) | undefined;
+  readonly validate?: Validator<TValue, TRow> | undefined;
+  /** Serializable editor hints. Core enforces their constraints for every write. */
+  readonly editor?: EditorSpec | undefined;
   /** Free-form data for renderers. The engine never reads it. */
   readonly meta?: Readonly<Record<string, unknown>> | undefined;
 }

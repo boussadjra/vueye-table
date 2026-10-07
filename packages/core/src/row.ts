@@ -1,4 +1,5 @@
 import type { TableColumn } from "./column";
+import type { TableIssue } from "./issues";
 import type { RowKey } from "./state";
 import type { ChildStatus } from "./tree";
 
@@ -19,6 +20,8 @@ export interface TableRow<TRow> {
   readonly childStatus: ChildStatus;
   /** Coverage of this row and its loaded descendants. */
   readonly selection: "none" | "some" | "all";
+  readonly isDirty: boolean;
+  readonly cellIssues: ReadonlyMap<string, TableIssue> | undefined;
   getValue(columnId: string): unknown;
   /** The formatted text of a cell, as shown, searched, copied, and exported. */
   getDisplay(columnId: string): string;
@@ -71,6 +74,8 @@ export function createRow<TRow>(
     childCount: 0,
     childStatus: "loaded" as const,
     selection: "none" as const,
+    isDirty: false,
+    cellIssues: undefined,
     getValue,
     getDisplay(columnId: string): string {
       const cached = displays.get(columnId);
