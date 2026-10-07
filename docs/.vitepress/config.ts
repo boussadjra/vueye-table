@@ -88,6 +88,7 @@ export default defineConfig({
           { text: "0004 Components and theming", link: "/adr/0004-components-and-theming" },
           { text: "0005 Virtualization", link: "/adr/0005-virtualization" },
           { text: "0007 Expansion and detail items", link: "/adr/0007-expansion-and-trees" },
+          { text: "0009 Content boundaries", link: "/adr/0009-content-boundaries" },
         ],
       },
     ],
