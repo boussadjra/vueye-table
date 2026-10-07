@@ -38,6 +38,14 @@ export {
   type MoveOptions,
 } from "./grid";
 export { createUndoStack, type UndoStack } from "./undo-stack";
+export {
+  createVirtualizer,
+  type VirtualAlign,
+  type VirtualItem,
+  type VirtualWindow,
+  type Virtualizer,
+  type VirtualizerOptions,
+} from "./virtualizer";
 export { humanize } from "./humanize";
 export { inferColumns } from "./infer";
 export type { TableIssue, TableIssueCode } from "./issues";

@@ -10,7 +10,11 @@ export type TableIssueCode =
   | "invalid_value"
   | "unsafe_path"
   | "paste_truncated"
-  | "invalid_paste_limit";
+  | "invalid_paste_limit"
+  | "invalid_virtual_option"
+  | "invalid_virtual_size"
+  | "invalid_virtual_viewport"
+  | "duplicate_virtual_key";
 
 /**
  * A problem the engine recovered from. Invalid input is never dropped silently: the engine falls

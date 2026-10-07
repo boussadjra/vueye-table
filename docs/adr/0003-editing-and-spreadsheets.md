@@ -43,5 +43,5 @@ focus on every arrow key.
 
 ## Deferred
 
-Formulas, merged cells, frozen columns, virtualized rows, and fill handles. Each can be added as a
-core feature without changing the model above.
+Formulas, merged cells, frozen columns, and fill handles. Virtualized layout is specified in
+[ADR 0005](/adr/0005-virtualization); component integration follows that contract.

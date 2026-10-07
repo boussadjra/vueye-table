@@ -95,6 +95,7 @@ is `compact`, `comfortable`, or `spacious`.
 - [Columns](/guide/columns): paths, computed values, formatting, sorting, and filters.
 - [State and v-model](/guide/state): control, save, and restore what users change.
 - [Server-side data](/guide/server-data): let a server search, sort, and page.
+- [Large datasets and virtualization](/guide/virtualization): disable pagination and calculate a rendered slice.
 - [Editing and spreadsheets](/guide/editing): parsing, validation, the clipboard, and undo.
 - [Theming](/guide/theming): custom properties, dark mode, and density.
 - [Examples](/examples/): real screens built with every layer.
