@@ -109,6 +109,32 @@
   max-height: var(--vt-max-height, none);
 }
 
+.vt-surface[data-virtual] {
+  min-width: 0;
+}
+
+.vt-surface[data-virtual] .vt-scroll {
+  overflow-anchor: none;
+  scrollbar-color: var(--vt-border) var(--vt-bg);
+}
+
+.vt-surface[data-virtual] .vt-table [data-virtual-row] {
+  height: var(--vt-row-height, 40px);
+}
+
+.vt-table [data-virtual-spacer] > td,
+.vt-table th[data-virtual-spacer],
+.vt-table td[data-virtual-spacer] {
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.vt-surface[data-virtual] .vt-table .vt-row-number {
+  width: 48px;
+  min-width: 48px;
+}
+
 .vt-table {
   width: 100%;
   border-collapse: separate;

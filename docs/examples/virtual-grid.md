@@ -12,4 +12,4 @@ import VirtualGrid from '../.vitepress/theme/components/VirtualGrid.vue'
 
 <<< ../.vitepress/theme/components/VirtualGrid.vue
 
-The example supplies its own grid markup and fixed row sizes. See the [virtualization guide](/guide/virtualization#vue-composables) for variable measurements, expansion details and SSR. Existing styled components gain virtualization separately in #72.
+The example supplies its own grid markup and fixed row sizes. See the [virtualization guide](/guide/virtualization#vue-composables) for variable measurements, expansion details and SSR, or the [full component example](/examples/virtual-components) for virtualization through props.

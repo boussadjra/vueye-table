@@ -13,6 +13,10 @@ import {
   DataTableSearch,
   DataTableSortButton,
   DataTableStatus,
+  DataTableViewport,
+  DataTableVirtualColumns,
+  injectVirtualRenderer,
+  virtualProps,
   type GridCellSlotProps,
 } from "@vueye-table/headless";
 import { injectDataTable, type AnyDataTableBinding, type DataTableBinding } from "@vueye-table/vue";
@@ -32,6 +36,7 @@ export type Density = "compact" | "comfortable" | "spacious";
 
 /** Visual options shared by the styled table and grid. */
 const surfaceProps = {
+  ...virtualProps,
   density: { type: String as PropType<Density>, default: "comfortable" },
   striped: { type: Boolean, default: false },
   bordered: { type: Boolean, default: false },
@@ -50,6 +55,7 @@ function surfaceAttrs(props: {
   readonly stickyHeader: boolean;
   readonly loading: boolean;
   readonly theme: "light" | "dark" | undefined;
+  readonly virtual: boolean | object;
 }) {
   return {
     class: "vt-surface",
@@ -57,11 +63,33 @@ function surfaceAttrs(props: {
     "data-striped": props.striped ? "" : undefined,
     "data-bordered": props.bordered ? "" : undefined,
     "data-hover": props.hover ? "" : undefined,
-    "data-sticky-header": props.stickyHeader ? "" : undefined,
+    "data-sticky-header": props.stickyHeader || props.virtual ? "" : undefined,
+    "data-virtual": props.virtual ? "" : undefined,
     "data-loading": props.loading ? "" : undefined,
     "data-vt-theme": props.theme,
     "aria-busy": props.loading ? "true" : undefined,
   };
+}
+
+function scroller(
+  props: {
+    readonly virtual: boolean | object;
+    readonly height: string | undefined;
+    readonly rowHeight: number;
+  },
+  children: VNode[],
+): VNode {
+  return props.virtual
+    ? h(
+        DataTableViewport,
+        {
+          class: "vt-scroll",
+          height: props.height ?? "24rem",
+          style: { "--vt-row-height": `${props.rowHeight}px` },
+        },
+        { default: () => children },
+      )
+    : h("div", { class: "vt-scroll" }, children);
 }
 
 /** An arrow showing a column's sort direction and, in a multi-column sort, its priority. */
@@ -98,33 +126,40 @@ export const VtHeader = defineComponent({
   >,
   setup(_props, { slots }) {
     const table = injectDataTable("<VtHeader>");
+    const virtual = injectVirtualRenderer();
+    const headerCell = (column: TableColumn<unknown>) =>
+      h(
+        DataTableHeaderCell,
+        { key: column.id, column },
+        {
+          default:
+            slots[`header.${column.id}`] ??
+            (() =>
+              column.sortable
+                ? h(
+                    DataTableSortButton,
+                    { column, class: "vt-sort-button" },
+                    {
+                      default: () => [slots.header?.({ column }) ?? column.header],
+                      indicator: ({ sort }: { sort: SortInfo | undefined }) => [
+                        h(VtSortIndicator, { sort }),
+                      ],
+                    },
+                  )
+                : [slots.header?.({ column }) ?? column.header]),
+        },
+      );
     return () =>
       h(DataTableHeader, { class: "vt-head" }, () =>
         h(DataTableHeaderRow, () => [
           slots.before?.(),
-          ...table.columns.map((column) =>
-            h(
-              DataTableHeaderCell,
-              { key: column.id, column },
-              {
-                default:
-                  slots[`header.${column.id}`] ??
-                  (() =>
-                    column.sortable
-                      ? h(
-                          DataTableSortButton,
-                          { column, class: "vt-sort-button" },
-                          {
-                            default: () => [slots.header?.({ column }) ?? column.header],
-                            indicator: ({ sort }: { sort: SortInfo | undefined }) => [
-                              h(VtSortIndicator, { sort }),
-                            ],
-                          },
-                        )
-                      : [slots.header?.({ column }) ?? column.header]),
-              },
-            ),
-          ),
+          ...(virtual?.columns
+            ? [
+                h(DataTableVirtualColumns, null, {
+                  default: ({ column }: { column: TableColumn<unknown> }) => [headerCell(column)],
+                }),
+              ]
+            : table.columns.map(headerCell)),
           slots.after?.(),
         ]),
       );
@@ -148,10 +183,16 @@ export const VtTable = defineComponent({
     return () =>
       h("div", surfaceAttrs(props), [
         h("div", { class: "vt-progress", role: "presentation" }),
-        h("div", { class: "vt-scroll" }, [
+        scroller(props, [
           h(
             DataTableRoot,
-            { table: props.table, class: "vt-table" },
+            {
+              table: props.table,
+              class: "vt-table",
+              virtual: props.virtual,
+              rowHeight: props.rowHeight,
+              overscan: props.overscan,
+            },
             {
               default: () => slots.default?.({ table: props.table }) ?? [h(VtHeader), h(VtBody)],
             },
@@ -168,11 +209,12 @@ export const VtBody = defineComponent({
     default?: (props: { rows: readonly TableRow<unknown>[] }) => VNode[];
     empty?: () => VNode[];
   }>,
-  setup(_props, { slots }) {
+  props: { ...virtualProps },
+  setup(props, { slots }) {
     return () =>
       h(
         DataTableBody,
-        { class: "vt-body" },
+        { class: "vt-body", ...props },
         {
           ...slots,
           empty: slots.empty ?? (() => h(VtEmpty)),
@@ -335,7 +377,7 @@ export const VtGrid = defineComponent({
     columnLetters: { type: Boolean, default: false },
     ...surfaceProps,
   },
-  setup(props, { slots }) {
+  setup(props, { slots, attrs }) {
     const cellSlots = (): Record<string, CellSlot> => {
       const found: Record<string, CellSlot> = {};
       for (const [name, slot] of Object.entries(slots)) {
@@ -364,10 +406,21 @@ export const VtGrid = defineComponent({
     return () =>
       h("div", surfaceAttrs(props), [
         h("div", { class: "vt-progress", role: "presentation" }),
-        h("div", { class: "vt-scroll" }, [
+        scroller(props, [
           h(
             DataGridRoot,
-            { table: props.table, label: props.label, class: "vt-table vt-grid" },
+            {
+              table: props.table,
+              label: props.label,
+              "aria-describedby": attrs["aria-describedby"],
+              class: "vt-table vt-grid",
+              virtual: props.virtual,
+              virtualColumns: props.virtualColumns,
+              rowHeight: props.rowHeight,
+              overscan: props.overscan,
+              columnWidth: props.columnWidth,
+              gutter: props.rowNumbers ? 48 : 0,
+            },
             {
               default: (slotProps: Record<string, unknown>) =>
                 slots.default?.(slotProps) ?? [

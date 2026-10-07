@@ -61,7 +61,7 @@ export const VueyeGrid = defineComponent({
     "edit-error": (issues: readonly TableIssue[]) => boolean;
     export: (csv: string) => boolean;
   },
-  setup(props, { emit, slots, expose }) {
+  setup(props, { emit, slots, expose, attrs }) {
     const resolveColumns = createColumnResolver();
     const columns = computed(() =>
       resolveColumns(props.columns, props.data).map(
@@ -82,6 +82,7 @@ export const VueyeGrid = defineComponent({
       data: () => props.data,
       columns,
       rowKey: props.rowKey as never,
+      paginate: props.paginate ?? (props.virtual ? props.pagination : true),
       selectionMode: "none",
       initialState: { pagination: initialPagination },
       state: () => {
@@ -148,6 +149,7 @@ export const VueyeGrid = defineComponent({
           {
             table,
             label: props.label,
+            "aria-describedby": attrs["aria-describedby"],
             rowNumbers: props.rowNumbers,
             columnLetters: props.columnLetters,
             density: props.density,
@@ -157,6 +159,12 @@ export const VueyeGrid = defineComponent({
             stickyHeader: props.stickyHeader,
             loading: props.loading,
             theme: props.theme,
+            virtual: props.virtual,
+            virtualColumns: props.virtualColumns,
+            height: props.height,
+            rowHeight: props.rowHeight,
+            overscan: props.overscan,
+            columnWidth: props.columnWidth,
             ...(props.maxHeight ? { style: { "--vt-max-height": props.maxHeight } } : {}),
           },
           gridSlots(),

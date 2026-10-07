@@ -17,7 +17,15 @@ export {
   DataTableHeader,
   DataTableHeaderCell,
   DataTableHeaderRow,
+  DataTableVirtualColumns,
   DataTableRoot,
   DataTableRow,
   DataTableSortButton,
 } from "./table";
+export {
+  DataTableViewport,
+  injectVirtual as injectVirtualRenderer,
+  virtualProps,
+  type ComponentVirtualOptions,
+  type ComponentVirtualBinding,
+} from "./virtual";

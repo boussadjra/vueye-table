@@ -8,11 +8,15 @@ import {
   type TableState,
   type TableStatePatch,
 } from "@vueye-table/core";
+import { virtualProps } from "@vueye-table/headless";
 import type { Density } from "@vueye-table/styled";
 import type { PropType } from "vue";
 
 /** Props both full components share. */
 export const commonProps = {
+  ...virtualProps,
+  /** Override the virtual default of no pagination; permits virtualizing a large page. */
+  paginate: { type: Boolean as PropType<boolean | undefined>, default: undefined },
   /** Column definitions. Without them, columns are inferred from the data. */
   columns: { type: Array as PropType<readonly AnyColumnDef[]>, default: undefined },
   /** A path into each row, or a function, giving its key. Defaults to `id`, then position. */

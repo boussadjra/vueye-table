@@ -20,6 +20,8 @@ const fullComponents = ["VueyeTable", "VueyeGrid"] as const;
 
 const layerComponents = [
   "DataTableRoot",
+  "DataTableViewport",
+  "DataTableVirtualColumns",
   "DataTableCaption",
   "DataTableHeader",
   "DataTableHeaderRow",

@@ -2,6 +2,17 @@ import { createTable, createVirtualizer, type RowKey, type VirtualWindow } from 
 import { describe, expect, it, vi } from "vitest";
 
 describe("createVirtualizer", () => {
+  it("looks up measured offscreen items without changing the viewport", () => {
+    const virtual = createVirtualizer({ count: 100, estimateSize: 40 });
+    virtual.setViewport(0, 80);
+    const before = virtual.getWindow();
+    expect(virtual.getItem(99)).toEqual({ index: 99, key: 99, start: 3960, size: 40 });
+    expect(virtual.getWindow()).toBe(before);
+    for (const index of [-1, 100, NaN, 1.5]) expect(virtual.getItem(index)).toBeUndefined();
+    virtual.measure(0, 80);
+    expect(virtual.getItem(99)?.start).toBe(4000);
+    expect(Object.isFrozen(virtual.getItem(99))).toBe(true);
+  });
   it("calculates fixed sizes, overscan and padding without including the next boundary item", () => {
     const virtual = createVirtualizer({ count: 100_000, estimateSize: 40, overscan: 2 });
     expect(virtual.getWindow().items).toEqual([]);
