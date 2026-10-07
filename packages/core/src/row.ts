@@ -10,9 +10,28 @@ export interface TableRow<TRow> {
   /** Position in the data the table was given. */
   readonly index: number;
   readonly original: TRow;
+  readonly canExpand: boolean;
+  readonly isExpanded: boolean;
   getValue(columnId: string): unknown;
   /** The formatted text of a cell, as shown, searched, copied, and exported. */
   getDisplay(columnId: string): string;
+}
+
+export type RowItemKind = "row" | "detail";
+
+/** A renderer item; detail items do not count as data rows or grid coordinates. */
+export interface TableRenderItem<TRow> {
+  readonly kind: RowItemKind;
+  readonly key: string;
+  /** The parent data row, also for detail items. */
+  readonly row: TableRow<TRow>;
+  /** Position of the parent in snapshot.rows. */
+  readonly rowIndex: number;
+}
+
+/** Disjoint namespaces and typed keys avoid collisions between 1, "1", and detail-like ids. */
+export function getRowItemKey(key: RowKey, kind: RowItemKind = "row"): string {
+  return JSON.stringify([kind, typeof key, key]);
 }
 
 export function createRow<TRow>(
@@ -20,6 +39,7 @@ export function createRow<TRow>(
   key: RowKey,
   index: number,
   columns: ReadonlyMap<string, TableColumn<TRow>>,
+  canExpand = false,
 ): TableRow<TRow> {
   const values = new Map<string, unknown>();
   const displays = new Map<string, string>();
@@ -37,6 +57,8 @@ export function createRow<TRow>(
     key,
     index,
     original,
+    canExpand,
+    isExpanded: false,
     getValue,
     getDisplay(columnId: string): string {
       const cached = displays.get(columnId);

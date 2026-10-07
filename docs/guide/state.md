@@ -1,5 +1,7 @@
 # State and v-model
 
+Expansion is part of state as `expanded: readonly RowKey[] | true`, defaulting to `[]`. Complete state literals must include this field. See [row expansion](/guide/expansion) for rendering details and single-row rules.
+
 Everything a user can change about a table is one plain, serializable object:
 
 ```ts

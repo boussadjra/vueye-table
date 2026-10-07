@@ -1,5 +1,8 @@
+import { issue, type TableIssue } from "./issues";
+
 /** A stable identity for a row, read from the row itself or produced by a function. */
 export type RowKey = string | number;
+export type ExpandedState = readonly RowKey[] | true;
 
 export type SortDirection = "asc" | "desc";
 
@@ -29,6 +32,8 @@ export interface TableState {
   readonly filters: Readonly<Record<string, unknown>>;
   readonly pagination: PaginationState;
   readonly selection: readonly RowKey[];
+  /** Expanded keys, or true for every expandable row. */
+  readonly expanded: ExpandedState;
   readonly hiddenColumns: readonly string[];
   /** Column ids in display order. Columns missing from the list keep their definition order. */
   readonly columnOrder: readonly string[];
@@ -41,22 +46,32 @@ export type TableStatePatch = {
 
 export const DEFAULT_PAGE_SIZE = 10;
 
-export function createInitialState(patch: TableStatePatch = {}): TableState {
+export function createInitialState(
+  patch: TableStatePatch = {},
+  onIssue?: (problem: TableIssue) => void,
+): TableState {
   return freezeState({
     sorting: patch.sorting ?? [],
     search: patch.search ?? "",
     filters: patch.filters ?? {},
     pagination: patch.pagination ?? { page: 1, pageSize: DEFAULT_PAGE_SIZE },
     selection: patch.selection ?? [],
+    expanded: normalizeExpanded(patch.expanded === undefined ? [] : patch.expanded, onIssue),
     hiddenColumns: patch.hiddenColumns ?? [],
     columnOrder: patch.columnOrder ?? [],
   });
 }
 
-export function mergeState(state: TableState, patch: TableStatePatch): TableState {
+export function mergeState(
+  state: TableState,
+  patch: TableStatePatch,
+  onIssue?: (problem: TableIssue) => void,
+): TableState {
   let changed = false;
   const next: Record<string, unknown> = { ...state };
-  for (const [key, value] of Object.entries(patch)) {
+  for (const [key, input] of Object.entries(patch)) {
+    const value =
+      key === "expanded" && input !== undefined ? normalizeExpanded(input, onIssue) : input;
     if (value === undefined || Object.is(next[key], value)) {
       continue;
     }
@@ -66,24 +81,77 @@ export function mergeState(state: TableState, patch: TableStatePatch): TableStat
     ) {
       continue;
     }
+    if (key === "expanded" && sameExpanded(state.expanded, value as ExpandedState)) continue;
     next[key] = value;
     changed = true;
   }
-  return changed ? freezeState(next as unknown as TableState) : state;
+  return changed ? freezeState(next as unknown as TableState, state) : state;
+}
+
+function normalizeExpanded(value: unknown, onIssue?: (problem: TableIssue) => void): ExpandedState {
+  if (value === true) return true;
+  if (
+    Array.isArray(value) &&
+    value.every(
+      (key: unknown) =>
+        typeof key === "string" || (typeof key === "number" && Number.isFinite(key)),
+    )
+  ) {
+    return [...new Set(value as RowKey[])];
+  }
+  onIssue?.(
+    issue(
+      "invalid_expanded",
+      "Expanded state must be true or an array of string/finite number keys; an empty array is used.",
+    ),
+  );
+  return [];
+}
+
+function sameExpanded(left: ExpandedState, right: ExpandedState): boolean {
+  return (
+    left === right ||
+    (left !== true &&
+      right !== true &&
+      left.length === right.length &&
+      left.every((key, index) => key === right[index]))
+  );
 }
 
 function samePagination(left: PaginationState, right: PaginationState): boolean {
   return left.page === right.page && left.pageSize === right.pageSize;
 }
 
-function freezeState(state: TableState): TableState {
+function freezeState(state: TableState, previous?: TableState): TableState {
   return Object.freeze({
-    sorting: Object.freeze(state.sorting.map((rule) => Object.freeze({ ...rule }))),
+    sorting:
+      state.sorting === previous?.sorting
+        ? previous.sorting
+        : Object.freeze(state.sorting.map((rule) => Object.freeze({ ...rule }))),
     search: state.search,
-    filters: Object.freeze({ ...state.filters }),
-    pagination: Object.freeze({ ...state.pagination }),
-    selection: Object.freeze([...state.selection]),
-    hiddenColumns: Object.freeze([...state.hiddenColumns]),
-    columnOrder: Object.freeze([...state.columnOrder]),
+    filters:
+      state.filters === previous?.filters ? previous.filters : Object.freeze({ ...state.filters }),
+    pagination:
+      state.pagination === previous?.pagination
+        ? previous.pagination
+        : Object.freeze({ ...state.pagination }),
+    selection:
+      state.selection === previous?.selection
+        ? previous.selection
+        : Object.freeze([...state.selection]),
+    expanded:
+      state.expanded === previous?.expanded
+        ? previous.expanded
+        : state.expanded === true
+          ? true
+          : Object.freeze([...state.expanded]),
+    hiddenColumns:
+      state.hiddenColumns === previous?.hiddenColumns
+        ? previous.hiddenColumns
+        : Object.freeze([...state.hiddenColumns]),
+    columnOrder:
+      state.columnOrder === previous?.columnOrder
+        ? previous.columnOrder
+        : Object.freeze([...state.columnOrder]),
   });
 }

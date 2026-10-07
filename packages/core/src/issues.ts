@@ -8,6 +8,7 @@ export type TableIssueCode =
   | "unknown_row"
   | "read_only_cell"
   | "invalid_value"
+  | "invalid_expanded"
   | "unsafe_path"
   | "paste_truncated"
   | "invalid_paste_limit"
