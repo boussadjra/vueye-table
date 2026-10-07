@@ -1,5 +1,13 @@
 # @vueye-table/headless
 
+## 3.0.0-alpha.5
+
+### Patch Changes
+
+- Updated dependencies [5598ba8]
+  - @vueye-table/core@3.0.0-alpha.5
+  - @vueye-table/vue@3.0.0-alpha.5
+
 ## 3.0.0-alpha.4
 
 ### Patch Changes
