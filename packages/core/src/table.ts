@@ -13,12 +13,13 @@ import {
   type PageItem,
   paginationItems,
 } from "./pipeline";
-import { createRow, type TableRow } from "./row";
+import { createRow, getRowItemKey, type TableRow, type TableRenderItem } from "./row";
 import {
   DEFAULT_PAGE_SIZE,
   createInitialState,
   mergeState,
   type RowKey,
+  type ExpandedState,
   type SortDirection,
   type TableState,
   type TableStatePatch,
@@ -26,6 +27,7 @@ import {
 import { createUndoStack } from "./undo-stack";
 
 export type SelectionMode = "none" | "single" | "multiple";
+export type ExpandMode = "single" | "multiple";
 
 /** Which rows "select all" covers: the current page, or every row that passes the filters. */
 export type SelectScope = "page" | "all";
@@ -41,6 +43,8 @@ export interface TableOptions<TRow> {
   readonly initialState?: TableStatePatch | undefined;
   /** Present all processed rows rather than a page. Defaults to true. */
   readonly paginate?: boolean | undefined;
+  readonly getRowCanExpand?: ((row: TRow) => boolean) | undefined;
+  readonly expandMode?: ExpandMode | undefined;
   /** Defaults to `"multiple"`. */
   readonly selectionMode?: SelectionMode | undefined;
   /** Defaults to `"all"`. */
@@ -84,6 +88,8 @@ export interface TableSnapshot<TRow> {
   readonly allColumns: readonly TableColumn<TRow>[];
   /** Rows on the current page, or all processed rows when pagination is disabled. */
   readonly rows: readonly TableRow<TRow>[];
+  /** Data rows followed by their open details; details do not affect pagination or grid positions. */
+  readonly renderItems: readonly TableRenderItem<TRow>[];
   readonly paginate: boolean;
   /** Rows on every page, filtered and sorted. For `manual` tables this is the current page. */
   readonly processedRows: readonly TableRow<TRow>[];
@@ -212,6 +218,10 @@ export interface DataTable<TRow> {
   /** The selected rows that are present in the data. */
   getSelectedRows(): readonly TableRow<TRow>[];
 
+  toggleExpanded(key: RowKey, expanded?: boolean): void;
+  expandAll(): void;
+  collapseAll(): void;
+
   toggleColumn(columnId: string, visible?: boolean): void;
   moveColumn(columnId: string, toIndex: number): void;
 
@@ -274,6 +284,7 @@ interface IndexedRows<TRow> {
 /** Create a data table. */
 export function createTable<TRow>(options: TableOptions<TRow>): DataTable<TRow> {
   const paginate = options.paginate ?? true;
+  const expandMode = options.expandMode ?? "multiple";
   const selectionMode = options.selectionMode ?? "multiple";
   const selectScope = options.selectScope ?? "all";
   const manual = options.manual ?? false;
@@ -283,12 +294,18 @@ export function createTable<TRow>(options: TableOptions<TRow>): DataTable<TRow> 
   let data = options.data;
   let definitions = options.columns;
   let rowCount = options.rowCount;
-  const initialState = createInitialState({
-    ...options.initialState,
-    hiddenColumns:
-      options.initialState?.hiddenColumns ??
-      options.columns.filter((column) => column.hidden === true).map((column) => column.id),
-  });
+  let expandedIssue: TableIssue | undefined;
+  let initialState = createInitialState(
+    {
+      ...options.initialState,
+      hiddenColumns:
+        options.initialState?.hiddenColumns ??
+        options.columns.filter((column) => column.hidden === true).map((column) => column.id),
+    },
+    (problem) => {
+      expandedIssue = problem;
+    },
+  );
   let state = initialState;
   let snapshot: TableSnapshot<TRow> | undefined;
 
@@ -326,7 +343,13 @@ export function createTable<TRow>(options: TableOptions<TRow>): DataTable<TRow> 
           );
           key = `${String(key)}#${index}`;
         }
-        const row = createRow(original, key, index, byId);
+        const row = createRow(
+          original,
+          key,
+          index,
+          byId,
+          options.getRowCanExpand?.(original) ?? false,
+        );
         byKey.set(key, row);
         return row;
       });
@@ -357,9 +380,23 @@ export function createTable<TRow>(options: TableOptions<TRow>): DataTable<TRow> 
   const filterStage = memo(filterRows<TRow>);
   const sortStage = memo(sortRows<TRow>);
   const selectedSet = memo((selection: readonly RowKey[]) => new Set(selection));
+  const expansionStage = memo((indexed: IndexedRows<TRow>, expanded: ExpandedState) => {
+    const keys = expanded === true ? undefined : new Set(expanded);
+    const rows = indexed.rows.map((row) =>
+      row.canExpand && (expanded === true || keys?.has(row.key))
+        ? Object.freeze({ ...row, isExpanded: true })
+        : row,
+    );
+    return { rows, byKey: new Map(rows.map((row) => [row.key, row])) };
+  });
+  const expandedOrder = memo(
+    (rows: readonly TableRow<TRow>[], byKey: ReadonlyMap<RowKey, TableRow<TRow>>) =>
+      rows.map((row) => byKey.get(row.key)!),
+  );
 
   function stateIssues(byId: ReadonlyMap<string, TableColumn<TRow>>): TableIssue[] {
     const issues: TableIssue[] = [];
+    if (expandedIssue) issues.push(expandedIssue);
     const referenced = new Set([
       ...state.sorting.map((rule) => rule.column),
       ...Object.keys(state.filters),
@@ -390,6 +427,7 @@ export function createTable<TRow>(options: TableOptions<TRow>): DataTable<TRow> 
   function computeSnapshot(): TableSnapshot<TRow> {
     const { columns, byId } = resolveColumns(definitions);
     const indexed = indexRows(data, byId);
+    const expanded = expansionStage(indexed, state.expanded);
     const ordered = orderColumns(columns, state.columnOrder, state.hiddenColumns);
     const issues = [...indexed.issues, ...stateIssues(byId)];
     const requestedSize = state.pagination.pageSize;
@@ -402,14 +440,14 @@ export function createTable<TRow>(options: TableOptions<TRow>): DataTable<TRow> 
     let page: number;
     let pageCount: number;
     if (manual) {
-      processedRows = indexed.rows;
-      rows = indexed.rows;
+      processedRows = expanded.rows;
+      rows = expanded.rows;
       filteredCount = rowCount ?? indexed.rows.length;
       pageCount = countPages(filteredCount, pageSize);
       page = clampPage(state.pagination.page, pageCount);
     } else {
       const filtered = filterStage(indexed.rows, columns, state.search, state.filters);
-      processedRows = sortStage(filtered, columns, state.sorting);
+      processedRows = expandedOrder(sortStage(filtered, columns, state.sorting), expanded.byKey);
       filteredCount = processedRows.length;
       pageCount = countPages(filteredCount, pageSize);
       page = clampPage(state.pagination.page, pageCount);
@@ -438,6 +476,27 @@ export function createTable<TRow>(options: TableOptions<TRow>): DataTable<TRow> 
       columns: ordered.visible,
       allColumns: ordered.all,
       rows,
+      renderItems: Object.freeze(
+        rows.flatMap((row, rowIndex): TableRenderItem<TRow>[] => {
+          const item = Object.freeze({
+            kind: "row" as const,
+            key: getRowItemKey(row.key),
+            row,
+            rowIndex,
+          });
+          return row.isExpanded
+            ? [
+                item,
+                Object.freeze({
+                  kind: "detail" as const,
+                  key: getRowItemKey(row.key, "detail"),
+                  row,
+                  rowIndex,
+                }),
+              ]
+            : [item];
+        }),
+      ),
       paginate,
       processedRows,
       page,
@@ -460,7 +519,7 @@ export function createTable<TRow>(options: TableOptions<TRow>): DataTable<TRow> 
       isSelected: (key: RowKey): boolean => selected.has(key),
       getSort: (columnId: string): SortInfo | undefined => sortIndex.get(columnId),
       getColumn: (columnId: string): TableColumn<TRow> | undefined => byId.get(columnId),
-      getRow: (key: RowKey): TableRow<TRow> | undefined => indexed.byKey.get(key),
+      getRow: (key: RowKey): TableRow<TRow> | undefined => expanded.byKey.get(key),
     });
   }
 
@@ -483,13 +542,43 @@ export function createTable<TRow>(options: TableOptions<TRow>): DataTable<TRow> 
   /** Apply a change made by a table operation. */
   function commit(patch: TableStatePatch): void {
     const previous = state;
-    const next = mergeState(state, patch);
-    if (next === previous) {
+    const previousIssue = expandedIssue;
+    const next = mergePatch(patch);
+    if (next === previous && previousIssue === expandedIssue) {
       return;
     }
     state = next;
-    options.onStateChange?.(state, previous);
+    if (next !== previous) options.onStateChange?.(state, previous);
     notify();
+  }
+
+  function canonicalExpanded(
+    expanded: ExpandedState,
+    candidate: TableState = state,
+  ): ExpandedState {
+    if (expandMode === "multiple") return expanded;
+    if (expanded !== true) return expanded.slice(-1);
+    const { columns, byId } = resolveColumns(definitions);
+    const indexed = indexRows(data, byId);
+    const processed = manual
+      ? indexed.rows
+      : sortStage(
+          filterStage(indexed.rows, columns, candidate.search, candidate.filters),
+          columns,
+          candidate.sorting,
+        );
+    const first = processed.find((row) => row.canExpand);
+    return first ? [first.key] : [];
+  }
+
+  function mergePatch(patch: TableStatePatch): TableState {
+    if (patch.expanded !== undefined) expandedIssue = undefined;
+    const next = mergeState(state, patch, (problem) => {
+      expandedIssue = problem;
+    });
+    return expandMode === "single" && patch.expanded !== undefined
+      ? mergeState(state, { ...patch, expanded: canonicalExpanded(next.expanded, next) })
+      : next;
   }
 
   const firstPage = (): { readonly page: number; readonly pageSize: number } => ({
@@ -663,6 +752,12 @@ export function createTable<TRow>(options: TableOptions<TRow>): DataTable<TRow> 
     );
   }
 
+  if (expandMode === "single") {
+    initialState = mergeState(initialState, { expanded: canonicalExpanded(initialState.expanded) });
+    state = initialState;
+    snapshot = undefined;
+  }
+
   const table: DataTable<TRow> = {
     getSnapshot,
     getState: () => state,
@@ -674,8 +769,9 @@ export function createTable<TRow>(options: TableOptions<TRow>): DataTable<TRow> 
     },
 
     setState(patch) {
-      const next = mergeState(state, patch);
-      if (next !== state) {
+      const previousIssue = expandedIssue;
+      const next = mergePatch(patch);
+      if (next !== state || previousIssue !== expandedIssue) {
         state = next;
         notify();
       }
@@ -809,6 +905,35 @@ export function createTable<TRow>(options: TableOptions<TRow>): DataTable<TRow> 
         const row = current.getRow(key);
         return row ? [row] : [];
       });
+    },
+
+    toggleExpanded(key, expanded) {
+      const row = getSnapshot().getRow(key);
+      if (!row?.canExpand) return;
+      const open = expanded ?? !row.isExpanded;
+      if (open === row.isExpanded) return;
+      if (expandMode === "single") {
+        commit({ expanded: open ? [key] : [] });
+      } else if (state.expanded === true) {
+        const { byId } = resolveColumns(definitions);
+        commit({
+          expanded: indexRows(data, byId)
+            .rows.filter((candidate) => candidate.canExpand && candidate.key !== key)
+            .map((candidate) => candidate.key),
+        });
+      } else {
+        commit({
+          expanded: open
+            ? [...state.expanded, key]
+            : state.expanded.filter((candidate) => candidate !== key),
+        });
+      }
+    },
+    expandAll() {
+      commit({ expanded: true });
+    },
+    collapseAll() {
+      commit({ expanded: [] });
     },
 
     toggleColumn(columnId, visible) {

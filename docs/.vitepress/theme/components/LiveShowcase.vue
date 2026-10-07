@@ -53,6 +53,7 @@ const initialState: TableState = {
   filters: {},
   pagination: { page: 1, pageSize: 5 },
   selection: [],
+  expanded: [],
   hiddenColumns: [],
   columnOrder: [],
 };

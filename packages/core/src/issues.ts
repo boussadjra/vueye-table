@@ -8,6 +8,7 @@ export type TableIssueCode =
   | "unknown_row"
   | "read_only_cell"
   | "invalid_value"
+  | "invalid_expanded"
   | "invalid_virtual_option"
   | "invalid_virtual_size"
   | "invalid_virtual_viewport"

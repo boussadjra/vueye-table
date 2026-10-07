@@ -59,9 +59,10 @@ export {
   sortRows,
   type PageItem,
 } from "./pipeline";
-export type { TableRow } from "./row";
+export { getRowItemKey, type TableRow, type TableRenderItem, type RowItemKind } from "./row";
 export {
   DEFAULT_PAGE_SIZE,
+  type ExpandedState,
   type PaginationState,
   type RowKey,
   type SortDirection,
@@ -79,6 +80,7 @@ export {
   type EditResult,
   type EditStatus,
   type ExportOptions,
+  type ExpandMode,
   type SelectScope,
   type SelectionCoverage,
   type SelectionMode,

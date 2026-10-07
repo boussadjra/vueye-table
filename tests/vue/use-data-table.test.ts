@@ -6,6 +6,20 @@ import { defineComponent, effectScope, h, nextTick, ref, shallowRef, watch } fro
 import { people, type Person } from "../fixtures";
 
 describe("useDataTable", () => {
+  it("forwards expansion operations and updates detail items reactively", () => {
+    const scope = effectScope();
+    const table = scope.run(() =>
+      useDataTable({ data: people, columns: [{ id: "age" }], getRowCanExpand: () => true }),
+    )!;
+    table.toggleExpanded(1);
+    expect(table.getRow(1)?.isExpanded).toBe(true);
+    expect(table.renderItems[1]?.kind).toBe("detail");
+    table.expandAll();
+    expect(table.state.expanded).toBe(true);
+    table.collapseAll();
+    expect(table.state.expanded).toEqual([]);
+    scope.stop();
+  });
   it("exposes snapshot fields as plain reactive properties", async () => {
     const scope = effectScope();
     const table = scope.run(() =>
