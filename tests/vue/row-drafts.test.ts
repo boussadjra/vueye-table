@@ -610,6 +610,9 @@ describe("keyed grid editors", () => {
     ]);
     expect(grid.editorFor({ row: 0, column: 0 })).toEqual({ kind: "text" });
     expect(grid.lastResult?.issues[0]?.code).toBe("invalid_value");
+    const firstRefusal = grid.lastResult;
+    expect(grid.editorFor({ row: 0, column: 0 })).toEqual({ kind: "text" });
+    expect(grid.lastResult).toBe(firstRefusal);
     table.setColumns([
       {
         id: "status",

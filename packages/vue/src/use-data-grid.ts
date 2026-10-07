@@ -75,6 +75,7 @@ export function useDataGrid<TRow>(table: DataTableBinding<TRow>): DataGridBindin
     | { readonly key: RowKey; readonly column: TableColumn<TRow>; readonly original: TRow }
     | undefined;
   let resultToken: object | undefined;
+  const invalidEditors = new WeakSet<object>();
   const record = (result: EditResult<TRow>): EditResult<TRow> => {
     const token = {};
     resultToken = token;
@@ -190,22 +191,25 @@ export function useDataGrid<TRow>(table: DataTableBinding<TRow>): DataGridBindin
         });
       }
       if (spec) {
-        record(
-          Object.freeze({
-            status: "rejected",
-            changes: Object.freeze([]),
-            rowChanges: Object.freeze([]),
-            pendingCells: Object.freeze([]),
-            issues: Object.freeze([
-              Object.freeze({
-                code: "invalid_value",
-                rowKey: cell.row.key,
-                column: cell.column.id,
-                message: "Invalid editor metadata; text metadata is used.",
-              }),
-            ]),
-          }),
-        );
+        if (!invalidEditors.has(cell.column.definition)) {
+          invalidEditors.add(cell.column.definition);
+          record(
+            Object.freeze({
+              status: "rejected",
+              changes: Object.freeze([]),
+              rowChanges: Object.freeze([]),
+              pendingCells: Object.freeze([]),
+              issues: Object.freeze([
+                Object.freeze({
+                  code: "invalid_value",
+                  rowKey: cell.row.key,
+                  column: cell.column.id,
+                  message: "Invalid editor metadata; text metadata is used.",
+                }),
+              ]),
+            }),
+          );
+        }
         return Object.freeze({ kind: "text" });
       }
       const type =

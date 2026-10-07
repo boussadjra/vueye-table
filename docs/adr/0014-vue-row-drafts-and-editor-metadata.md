@@ -18,7 +18,7 @@ Drafts survive sorting, paging, expansion and unrelated source updates because t
 
 The grid keeps its public `{ position, draft }` editor shape while privately retaining row key, original row and column identity. Reordering rows/columns moves the active editor and focus to that cell. A changed or invisible cell ends the editor with a stale issue. Grid `lastResult` follows async completion only while it remains the latest operation.
 
-`editorFor(position)` returns a frozen `EditorSpec` for an editable cell, inferring text/number/checkbox/date when absent. It copies known metadata fields and option values. An unknown runtime kind falls back to text and reports `invalid_value` through `lastResult`. There is no component registry, HTML rendering or string evaluation.
+`editorFor(position)` returns a frozen `EditorSpec` for an editable cell, inferring text/number/checkbox/date when absent. It copies known metadata fields and primitive option values. Invalid runtime metadata falls back to text and reports `invalid_value` through `lastResult` once per column definition; repeated render-time lookups do not publish repeated results. There is no component registry, HTML rendering or string evaluation.
 
 ## Consequences
 

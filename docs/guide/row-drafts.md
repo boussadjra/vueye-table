@@ -50,7 +50,7 @@ const result = grid.commitEdit();
 const final = result?.completion ? await result.completion : result;
 ```
 
-`editorFor` returns a frozen copy of column metadata for an editable cell, or an inferred text/number/checkbox/date spec. A missing or read-only cell returns undefined. Unknown runtime kinds fall back to text and report an issue through `grid.lastResult`. The operation resolves metadata only; applications choose controls in code. Option strings and messages have no HTML rendering contract.
+`editorFor` returns a frozen copy of column metadata for an editable cell, or an inferred text/number/checkbox/date spec. A missing or read-only cell returns undefined. Invalid runtime metadata falls back to text and reports an issue through `grid.lastResult` once per column definition, so repeated render-time lookups do not keep changing the result. The operation resolves metadata only; applications choose controls in code. Option strings and messages have no HTML rendering contract.
 
 An active editor follows its row key and column id through sorting, column movement and unrelated source updates. Its position and focus move together. A changed, removed or invisible cell closes the editor with a stale issue. `grid.lastResult` follows async completion for the latest edit, paste or clear.
 
