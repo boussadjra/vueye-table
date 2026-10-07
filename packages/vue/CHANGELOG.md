@@ -1,5 +1,33 @@
 # @vueye-table/vue
 
+## 3.0.0-alpha.2
+
+### Minor Changes
+
+- b11b290: Add keyed row expansion state, atomic expansion operations, eligible/open row flags and a shared data/detail render-item model. Preserve pipeline memoization on unrelated state changes, report malformed expansion inputs, and forward expansion operations through the Vue binding.
+- 0c7186c: Add standalone reactive row and column virtualizers with deterministic SSR windows, mounted element observation, keyed measurements, scroll anchoring, keyboard focus integration and effect-scope cleanup. Expose the table through the grid binding for horizontal layout integration.
+
+### Patch Changes
+
+- bc81c20: Escape formula-like CSV/TSV cells and headers by default. This changes exported text beginning
+  with formula prefixes; pass `escapeFormulas: false` to retain literal output. Finite numeric
+  values formatted as numbers stay numeric. Clipboard copies keep their existing default and
+  accept `escapeFormulas: true` through table and grid bindings.
+
+  Reject prototype-sensitive column paths with `unsafe_path` issues, and copy only own
+  properties in path writes. Safe inherited getters remain readable. `setPath` leaves unsafe
+  writes unchanged and accepts an optional issue callback.
+
+  Bound paste parsing to the visible destination and `pasteLimit` budgets (100,000 fields and
+  5,000,000 UTF-16 code units by default). Excess input reports `paste_truncated`; incomplete
+  fields at the character limit are not applied. Invalid limits recover to defaults with
+  `invalid_paste_limit` issues.
+
+- Updated dependencies [bc81c20]
+- Updated dependencies [b11b290]
+- Updated dependencies [8885afc]
+  - @vueye-table/core@3.0.0-alpha.2
+
 ## 3.0.0-alpha.1
 
 ### Major Changes
