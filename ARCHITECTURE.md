@@ -73,3 +73,4 @@ enforced, with a stricter floor for the engine.
 - The engine: plain state, snapshots, operations, and issues — ADR 0002.
 - Editing and the spreadsheet model — ADR 0003.
 - Component layers, rendering, and theming — ADR 0004.
+- Export, path, and paste boundaries — ADR 0009.

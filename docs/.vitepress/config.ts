@@ -82,6 +82,7 @@ export default defineConfig({
           { text: "0002 Engine state and snapshots", link: "/adr/0002-engine-state-and-snapshots" },
           { text: "0003 Editing and spreadsheets", link: "/adr/0003-editing-and-spreadsheets" },
           { text: "0004 Components and theming", link: "/adr/0004-components-and-theming" },
+          { text: "0009 Content boundaries", link: "/adr/0009-content-boundaries" },
         ],
       },
     ],

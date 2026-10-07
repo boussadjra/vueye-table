@@ -99,7 +99,8 @@ const summary = computed(() => ({
 
 ### Rejections with A1 addresses
 
-`@edit-error` delivers `TableIssue` objects carrying the row key and column id. `toA1` turns a
+Cell refusals from `@edit-error` carry the row key and column id. A `paste_truncated` issue
+describes the whole paste and has no cell address. `toA1` turns a
 position into `"E7"`. Positions count what is shown, the row on the page and the column among the
 visible columns, which is what the grid's row numbers and column letters display.
 
@@ -118,6 +119,8 @@ The category buttons set ordinary table state, `:filters="{ category: ['Audio'] 
 keeps rows whose value is one of its items. The download calls the exposed `table.exportRows()`,
 which writes the visible columns of every filtered row as their formatted text, and creates the
 file inside the click handler, so nothing touches browser APIs while the page renders.
+Formula-like text is escaped by default; numeric values formatted as numbers stay numeric.
+See the [export and paste limits example](/examples/grid#export-and-paste-limits) for a comparison.
 
 ```ts
 function download(): void {

@@ -1,5 +1,5 @@
 import { humanize } from "./humanize";
-import { getPath, setPath, type DeepKeys, type PathValue } from "./path";
+import { getPath, isSafePath, setPath, type DeepKeys, type PathValue } from "./path";
 
 export type ColumnAlign = "start" | "center" | "end";
 
@@ -313,14 +313,17 @@ export function resolveColumn<TRow>(definition: ColumnDef<TRow>): TableColumn<TR
   // Both branches of the union share these members; the value type is erased at runtime.
   const def = definition as ComputedColumnDef<TRow> | PathColumnDef<TRow, string>;
   const { accessor } = def;
-  const getValue: (row: TRow) => unknown = accessor ?? ((row) => getPath(row, def.id));
+  const safe = isSafePath(def.id);
+  const getValue: (row: TRow) => unknown = safe
+    ? (accessor ?? ((row) => getPath(row, def.id)))
+    : () => undefined;
   const format = def.format ?? ((value: unknown) => formatValue(value));
   const compare = def.compare ?? compareValues;
   const customFilter = def.filter;
   const customParse = def.parse;
   const editable = def.editable ?? false;
   const customSetValue = def.setValue;
-  const canWrite = accessor === undefined || customSetValue !== undefined;
+  const canWrite = safe && (accessor === undefined || customSetValue !== undefined);
 
   return Object.freeze({
     id: def.id,
@@ -358,6 +361,9 @@ export function resolveColumn<TRow>(definition: ColumnDef<TRow>): TableColumn<TR
       return parseAs(input, def.type ?? typeOf(getValue(row)) ?? typeOf(sample) ?? "text");
     },
     setValue(row: TRow, value: unknown): TRow | undefined {
+      if (!safe) {
+        return undefined;
+      }
       if (customSetValue) {
         return customSetValue(row, value);
       }

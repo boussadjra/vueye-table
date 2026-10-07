@@ -113,12 +113,64 @@ const problems = ref<readonly TableIssue[]>([]);
 </template>
 ```
 
-| Code             | Why the cell was refused                                  |
-| ---------------- | --------------------------------------------------------- |
-| `invalid_value`  | The text could not be read, or `parse` threw.             |
-| `read_only_cell` | The column is not editable for that row, or cannot write. |
-| `unknown_row`    | No row has the key the edit named.                        |
-| `unknown_column` | No column has the id the edit named.                      |
+| Code              | Why the cell was refused                                   |
+| ----------------- | ---------------------------------------------------------- |
+| `invalid_value`   | The text could not be read, or `parse` threw.              |
+| `read_only_cell`  | The column is not editable for that row, or cannot write.  |
+| `unknown_row`     | No row has the key the edit named.                         |
+| `unknown_column`  | No column has the id the edit named.                       |
+| `unsafe_path`     | The column id contains a prototype-sensitive path segment. |
+| `paste_truncated` | The paste exceeds the visible grid or a parsing limit.     |
+
+## Paste limits
+
+Pasting starts at the selected range's top-left cell and fills the visible grid from that
+position; the selection's size does not limit the paste. Parsing stops once the destination
+is filled. Extra columns are skipped without storing their text so later rows stay aligned.
+
+`createTable` and `useDataTable` accept `pasteLimit`:
+
+```ts
+const table = useDataTable({
+  data: lines,
+  columns,
+  pasteLimit: { maxCells: 10_000, maxLength: 1_000_000 },
+  onDataChange: (next) => (lines.value = next),
+});
+```
+
+The defaults are 100,000 parsed fields, including skipped columns, and 5,000,000 UTF-16 code
+units examined. Both limits must be positive safe integers. Invalid limits fall back to the
+defaults and appear as `invalid_paste_limit` issues in the table snapshot.
+
+If input exceeds the grid or either limit, `paste()` returns a `paste_truncated` issue and
+`onEditIssues` / `edit-error` receives it. Complete cells still apply as one undo batch.
+The status is `partial` when some values change and `rejected` when no values change. A field
+cut short by the character limit is discarded rather than written as an incomplete value.
+
+Try the [export and paste limits example](/examples/grid#export-and-paste-limits) to compare
+output text and undo a partially applied paste.
+
+## Exported formulas and clipboard text
+
+`exportRows()` defaults to `escapeFormulas: true` for both CSV and TSV. Cell text and headers
+starting with `=`, `+`, `-`, `@`, tab, carriage return, line feed, or the full-width
+versions of those four formula prefixes receive an apostrophe before normal delimited
+quoting. Text `"-12"` is escaped; the numeric value `-12` formatted as a number is preserved.
+A custom formatter that produces formula-like text is escaped even for a numeric value.
+The rows and displayed cell values do not change.
+
+```ts
+table.exportRows({ format: "csv" }); // formula-like text escaped
+table.exportRows({ escapeFormulas: false }); // literal text, for a trusted destination
+table.copy(range, { escapeFormulas: true });
+grid.copy({ escapeFormulas: true });
+```
+
+Clipboard copies default to `escapeFormulas: false` to preserve existing spreadsheet editing
+and round trips. Escaping changes the output text. Spreadsheet applications differ in how
+they handle CSV and saved files, so this option does not guarantee safety after a file is
+edited or saved again; see [OWASP's CSV injection guidance](https://owasp.org/www-community/attacks/CSV_Injection).
 
 ## Events
 
@@ -126,7 +178,7 @@ const problems = ref<readonly TableIssue[]>([]);
 | ------------- | ---------------------------------------------------------- |
 | `update:data` | The new array, after an edit, paste, clear, undo, or redo. |
 | `edit`        | The changes: `{ rowKey, column, previous, value, row }[]`. |
-| `edit-error`  | The issues of refused cells.                               |
+| `edit-error`  | Refused-cell issues and paste truncation issues.           |
 | `export`      | CSV of every filtered row, from the toolbar button.        |
 
 `edit` is the place to save changes to a server: it names exactly the cells that changed and their

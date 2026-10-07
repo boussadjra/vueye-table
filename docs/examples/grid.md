@@ -7,6 +7,7 @@ import { ref } from "vue";
 import { defineColumns, type TableIssue } from "vueye-table";
 
 import { useEditLog } from "../.vitepress/theme/edit-log";
+import ContentBoundaries from "../.vitepress/theme/components/ContentBoundaries.vue";
 
 interface Line {
   readonly id: number;
@@ -82,6 +83,55 @@ paste, Delete, undo, and redo work like a spreadsheet. The total column is compu
 
 The `cell.taxable` slot draws the cell while it is not being edited. Type `yes`, `no`, `true`, or
 `0` into it and the column's boolean type reads the text.
+
+## Export and paste limits
+
+CSV and TSV exports escape formula-like text by default. Clipboard copies keep literal text
+unless you opt into escaping. Compare the previews below: `=1+1` gets an apostrophe in CSV,
+while the numeric value `-12` stays numeric in both outputs. The checkboxes change the output
+without changing the cells.
+
+<ContentBoundaries />
+
+**Paste sample** starts at A1 and changes the first five of nine fields. The remaining fields
+produce a `paste_truncated` issue. **Undo** restores all five changes together. This small limit
+makes the behavior visible; the defaults allow 100,000 fields and 5,000,000 UTF-16 code units.
+
+The demo composes `VtGrid` with `useDataTable` to configure `pasteLimit`:
+
+```ts
+const table = useDataTable({
+  data: rows,
+  columns,
+  pasteLimit: { maxCells: 5, maxLength: 128 },
+  onDataChange: (next) => (rows.value = next),
+  onEditIssues: (next) => (issues.value = next),
+});
+
+table.exportRows(); // CSV: formula-like text escaped
+table.exportRows({ format: "tsv", escapeFormulas: false });
+table.copy({ top: 0, left: 0, bottom: 2, right: 2 }, { escapeFormulas: true });
+```
+
+### Unsafe column paths
+
+Column ids containing `__proto__`, `constructor`, or `prototype` in any path segment are
+ignored and reported as `unsafe_path` snapshot issues. The path helpers apply the same rule:
+
+```ts
+import { getPath, setPath, type TableIssue } from "vueye-table";
+
+const row = { name: "Ada" };
+const issues: TableIssue[] = [];
+
+getPath(row, "constructor.prototype.name"); // undefined
+const next = setPath(row, "__proto__.name", "Grace", (issue) => issues.push(issue));
+next === row; // true: the unsafe write leaves the input unchanged
+issues[0]?.code; // "unsafe_path"
+```
+
+See [Editing](/guide/editing#paste-limits) for limits, issue handling, and the differences
+between exported files and clipboard text.
 
 <style scoped>
 .flag {
