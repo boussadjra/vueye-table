@@ -16,8 +16,8 @@ are O(1) for fixed sizes and O(log n) for variable sizes, plus the returned item
 Measurements are keyed by unique string/number identities, not positions. They survive reorder
 and temporary filtering for the lifetime of the virtualizer. Estimates are cached until
 `setOptions`; reconfiguration can refresh an estimate callback that closes over changed data.
-Detail and parent items must use distinct, type-preserving keys; the expansion ADR will define
-the flattened render-item contract. Arithmetic does not interpret item kinds.
+Detail and parent items use distinct, type-preserving keys defined by [ADR 0007](/adr/0007-expansion-and-trees).
+Arithmetic does not interpret item kinds.
 
 `VirtualWindow` contains inclusive indices, item offsets/sizes, padding, total size, clamped
 viewport values, and recovery issues. Empty results use `startIndex: 0`, `endIndex: -1`.
@@ -41,10 +41,17 @@ application, even if their server total is larger.
 
 ### Measurement and rendering integration
 
-The Vue composables will connect element refs, scroll/resize, keyed measurements, scroll
-anchoring, and grid focus to this engine. They must obtain platform facilities through the
-element's owner view and clean up with their effect scope. SSR uses a deterministic initial
-item count before observation starts.
+The Vue public API decision is recorded in [ADR 0010](/adr/0010-vue-virtual-bindings).
+
+The standalone Vue composables `useVirtualRows(table, options)` and `useVirtualColumns(grid, options)` connect element refs, scroll/resize, keyed measurements, scroll anchoring and grid focus to this engine. Observation starts after mount through the element's owner view, and ends with the effect scope. `ResizeObserver` is optional: without it, scrolling and owner-view resizing still update fixed estimates; explicit measurements still work.
+
+SSR renders `initialCount` items (default 10, clamped by source length), without overscan. The mounted viewport replaces this deterministic window and enables configured overscan. Invalid initial counts recover to 10 with a TableIssue. With no element the initial window remains available. Options are read once except the reactive scroll-element source.
+
+Virtual rows consume `table.renderItems`, including independently keyed details, and expose each source item as `item.renderItem`. `scrollToIndex` uses render-item indices; row `scrollToKey` uses the original typed data-row key. `measureElement(element, virtualKey)` takes an explicit key to preserve typed identity without DOM attributes; passing null releases observation. Hidden zero-size elements retain estimates. Column items expose `item.column`; column scroll keys are column ids.
+
+Layout changes retain the first visible key and its inset when it remains present, otherwise clamp the old offset. Applications disable native scroll anchoring on the scroller to avoid competing corrections. Keyed measurements survive temporary removal for the binding lifetime. Element replacement detaches previous listeners and observers.
+
+`DataGridBinding.table` exposes the owning table. Passing `grid` in row options connects logical row focus, skipping details. Column virtualization observes its grid's logical column focus. Focus changes use auto alignment; ordinary scrolling does not rewrite selection. These composables supply layout, not DOM focus or rendering.
 
 Renderers can use spacer rows for native table structure or positioned transforms for a custom
 row surface. They must preserve table/grid semantics, logical `aria-rowcount`/`aria-rowindex`,
