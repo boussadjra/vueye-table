@@ -71,6 +71,7 @@ export default defineConfig({
           { text: "Full table", link: "/examples/table" },
           { text: "Spreadsheet", link: "/examples/grid" },
           { text: "Virtual layout", link: "/examples/virtual-layout" },
+          { text: "Virtual grid", link: "/examples/virtual-grid" },
           { text: "Order details", link: "/examples/row-expansion" },
           { text: "Orders dashboard", link: "/examples/orders-dashboard" },
           { text: "CRM contacts", link: "/examples/crm-contacts" },

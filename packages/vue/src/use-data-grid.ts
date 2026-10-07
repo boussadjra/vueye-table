@@ -32,6 +32,7 @@ export interface GridEditor {
  * copy, paste, and clearing. Positions refer to the current page and the visible columns.
  */
 export interface DataGridBinding<TRow> {
+  readonly table: DataTableBinding<TRow>;
   readonly selection: GridSelection | undefined;
   readonly range: CellRange | undefined;
   readonly editor: GridEditor | undefined;
@@ -107,6 +108,7 @@ export function useDataGrid<TRow>(table: DataTableBinding<TRow>): DataGridBindin
   };
 
   const grid: DataGridBinding<TRow> = {
+    table,
     get selection() {
       return selection.value;
     },
