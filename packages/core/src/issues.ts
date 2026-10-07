@@ -7,7 +7,11 @@ export type TableIssueCode =
   | "invalid_page_size"
   | "unknown_row"
   | "read_only_cell"
-  | "invalid_value";
+  | "invalid_value"
+  | "invalid_virtual_option"
+  | "invalid_virtual_size"
+  | "invalid_virtual_viewport"
+  | "duplicate_virtual_key";
 
 /**
  * A problem the engine recovered from. Invalid input is never dropped silently: the engine falls

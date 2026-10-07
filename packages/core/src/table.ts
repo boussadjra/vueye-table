@@ -39,6 +39,8 @@ export interface TableOptions<TRow> {
    */
   readonly rowKey?: DeepKeys<TRow> | ((row: TRow, index: number) => RowKey) | undefined;
   readonly initialState?: TableStatePatch | undefined;
+  /** Present all processed rows rather than a page. Defaults to true. */
+  readonly paginate?: boolean | undefined;
   /** Defaults to `"multiple"`. */
   readonly selectionMode?: SelectionMode | undefined;
   /** Defaults to `"all"`. */
@@ -80,8 +82,9 @@ export interface TableSnapshot<TRow> {
   readonly columns: readonly TableColumn<TRow>[];
   /** Every column in display order, hidden ones included. */
   readonly allColumns: readonly TableColumn<TRow>[];
-  /** Rows on the current page. */
+  /** Rows on the current page, or all processed rows when pagination is disabled. */
   readonly rows: readonly TableRow<TRow>[];
+  readonly paginate: boolean;
   /** Rows on every page, filtered and sorted. For `manual` tables this is the current page. */
   readonly processedRows: readonly TableRow<TRow>[];
   /** The current page, clamped into range. */
@@ -270,6 +273,7 @@ interface IndexedRows<TRow> {
 
 /** Create a data table. */
 export function createTable<TRow>(options: TableOptions<TRow>): DataTable<TRow> {
+  const paginate = options.paginate ?? true;
   const selectionMode = options.selectionMode ?? "multiple";
   const selectScope = options.selectScope ?? "all";
   const manual = options.manual ?? false;
@@ -372,7 +376,7 @@ export function createTable<TRow>(options: TableOptions<TRow>): DataTable<TRow> 
       }
     }
     const { pageSize } = state.pagination;
-    if (!Number.isInteger(pageSize) || pageSize < 1) {
+    if (paginate && (!Number.isInteger(pageSize) || pageSize < 1)) {
       issues.push(
         issue(
           "invalid_page_size",
@@ -389,7 +393,7 @@ export function createTable<TRow>(options: TableOptions<TRow>): DataTable<TRow> 
     const ordered = orderColumns(columns, state.columnOrder, state.hiddenColumns);
     const issues = [...indexed.issues, ...stateIssues(byId)];
     const requestedSize = state.pagination.pageSize;
-    const pageSize =
+    let pageSize =
       Number.isInteger(requestedSize) && requestedSize >= 1 ? requestedSize : DEFAULT_PAGE_SIZE;
 
     let processedRows: readonly TableRow<TRow>[];
@@ -412,6 +416,13 @@ export function createTable<TRow>(options: TableOptions<TRow>): DataTable<TRow> 
       rows = paginateRows(processedRows, { page, pageSize });
     }
 
+    if (!paginate) {
+      rows = processedRows;
+      page = 1;
+      pageCount = 1;
+      pageSize = Math.max(1, rows.length);
+    }
+
     const selected = selectedSet(state.selection);
     const pageSelected = rows.filter((row) => selected.has(row.key)).length;
     const scopeRows = selectScope === "page" || manual ? rows : processedRows;
@@ -427,6 +438,7 @@ export function createTable<TRow>(options: TableOptions<TRow>): DataTable<TRow> 
       columns: ordered.visible,
       allColumns: ordered.all,
       rows,
+      paginate,
       processedRows,
       page,
       pageSize,
@@ -732,6 +744,7 @@ export function createTable<TRow>(options: TableOptions<TRow>): DataTable<TRow> 
     },
 
     goToPage(page) {
+      if (!paginate) return;
       const { pageCount, page: currentPage } = getSnapshot();
       const next = clampPage(page, pageCount);
       if (next !== currentPage || next !== state.pagination.page) {
@@ -745,6 +758,7 @@ export function createTable<TRow>(options: TableOptions<TRow>): DataTable<TRow> 
       table.goToPage(getSnapshot().page - 1);
     },
     setPageSize(pageSize) {
+      if (!paginate) return;
       if (!Number.isInteger(pageSize) || pageSize < 1 || pageSize === state.pagination.pageSize) {
         return;
       }

@@ -176,5 +176,5 @@ Controls outside `<VtTable>` need the table provided above them, which is what
 | `defineColumns<Row>(columns)` | Typed column definitions.                                |
 
 `useDataTable` options: `data`, `columns`, `rowCount`, and `state` accept refs or getters;
-`rowKey`, `initialState`, `selectionMode`, `selectScope`, `manual`, `historyLimit`,
+`rowKey`, `initialState`, `selectionMode`, `selectScope`, `manual`, `paginate`, `historyLimit`,
 `onStateChange`, `onDataChange`, and `onEditIssues` are read once.
