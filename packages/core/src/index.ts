@@ -47,6 +47,8 @@ export {
   type VirtualizerOptions,
 } from "./virtualizer";
 export { humanize } from "./humanize";
+export type { EditorSpec, ValidationResult, Validator, PendingCell } from "./validation";
+export type { InsertPosition, RowChange, UpdatedRow, PendingChanges } from "./pending-changes";
 export type {
   TreeOptions,
   TreeFilter,

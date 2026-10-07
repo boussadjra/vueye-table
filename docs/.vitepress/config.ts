@@ -59,6 +59,7 @@ export default defineConfig({
           { text: "Row expansion", link: "/guide/expansion" },
           { text: "Tree data", link: "/guide/trees" },
           { text: "Editing and spreadsheets", link: "/guide/editing" },
+          { text: "Validation and saving", link: "/guide/validation" },
           { text: "Theming", link: "/guide/theming" },
           { text: "Component reference", link: "/guide/components" },
           { text: "Nuxt", link: "/guide/nuxt" },
@@ -93,6 +94,10 @@ export default defineConfig({
           { text: "0007 Expansion and detail items", link: "/adr/0007-expansion-and-trees" },
           { text: "0009 Content boundaries", link: "/adr/0009-content-boundaries" },
           { text: "0011 Tree data", link: "/adr/0011-tree-data" },
+          {
+            text: "0012 Validation and row operations",
+            link: "/adr/0012-validation-and-row-operations",
+          },
         ],
       },
     ],

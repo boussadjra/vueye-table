@@ -1,5 +1,9 @@
 # Columns
 
+Editable columns also accept typed `validate` callbacks and serializable `editor` constraints.
+These receive values and plain text messages; core produces no HTML. See
+[Validation and changes since save](/guide/validation) for direct-edit/paste enforcement and async behavior.
+
 A column says where a cell's value comes from and how it is shown, sorted, filtered, and edited.
 Columns are plain objects, declared once with `defineColumns<Row>()` so every callback is typed by
 your row.

@@ -8,6 +8,8 @@ export type TableIssueCode =
   | "unknown_row"
   | "read_only_cell"
   | "invalid_value"
+  | "validation_failed"
+  | "invalid_row_operation"
   | "invalid_expanded"
   | "unsafe_path"
   | "paste_truncated"
@@ -32,12 +34,17 @@ export interface TableIssue {
   readonly message: string;
   readonly column?: string | undefined;
   readonly rowKey?: RowKey | undefined;
+  readonly validationCode?: string | undefined;
 }
 
 export function issue(
   code: TableIssueCode,
   message: string,
-  details: { readonly column?: string | undefined; readonly rowKey?: RowKey | undefined } = {},
+  details: {
+    readonly column?: string | undefined;
+    readonly rowKey?: RowKey | undefined;
+    readonly validationCode?: string | undefined;
+  } = {},
 ): TableIssue {
   return Object.freeze({ code, message, ...details });
 }

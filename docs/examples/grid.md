@@ -8,6 +8,7 @@ import { defineColumns, type TableIssue } from "vueye-table";
 
 import { useEditLog } from "../.vitepress/theme/edit-log";
 import ContentBoundaries from "../.vitepress/theme/components/ContentBoundaries.vue";
+import ValidatedEdits from "../.vitepress/theme/components/ValidatedEdits.vue";
 
 interface Line {
   readonly id: number;
@@ -132,6 +133,22 @@ issues[0]?.code; // "unsafe_path"
 
 See [Editing](/guide/editing#paste-limits) for limits, issue handling, and the differences
 between exported files and clipboard text.
+
+## Validated edits
+
+Edit a row draft, then choose **Apply row**. The sample holds edits while its delayed rule checks
+the item name. Try “Reserved” to see a refusal, or submit “Bulk” with quantity 10 to pass the
+cross-field rule. Insert and remove rows, undo a batch, and compare pending records before
+**Revert changes** or **Mark saved locally**. The latter resets the local baseline and sends no request.
+
+<ValidatedEdits />
+
+The component composes `useDataTable` with native inputs; full component editor/async integration
+remains follow-up work. See [Validation and changes since save](/guide/validation) for the contracts.
+
+::: details Runnable example source
+<<< @/.vitepress/theme/components/ValidatedEdits.vue
+:::
 
 <style scoped>
 .flag {

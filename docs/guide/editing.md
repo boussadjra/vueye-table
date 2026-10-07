@@ -88,6 +88,9 @@ Empty text clears a number, boolean, or date cell to `null`.
 
 ## Refused cells
 
+Business validation, enforced editor limits, async batches, row insertion/removal and saved
+baselines are described in [Validation and changes since save](/guide/validation).
+
 A batch of edits (one cell, a pasted range, or a cleared range) applies every cell it can and
 refuses the rest with a reason. Nothing is written for a refused cell and nothing is dropped
 silently: `edit-error` receives one issue per refusal.

@@ -16,6 +16,7 @@
     "typecheck": "tsc -p tsconfig.json && turbo run typecheck",
     "test": "vitest run",
     "bench:tree": "vitest bench --config tooling/vitest/bench.ts --run",
+    "bench:validation": "vitest bench --config tooling/vitest/validation-bench.ts --run",
     "test:coverage": "vitest run --coverage",
     "boundary:check": "node scripts/check-boundaries.mjs",
     "package:check": "turbo run package:check",
