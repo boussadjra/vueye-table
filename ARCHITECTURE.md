@@ -27,10 +27,11 @@ data + column definitions + state
         → index rows (keys, cached values)
         → filter (search terms, column filters)
         → sort (stable, several rules, empty last)
-        → paginate
+        → paginate (or all processed rows with paginate: false)
         → frozen snapshot → subscribers → Vue shallowRef → render
 operations → new state → onStateChange → snapshot invalidated → subscribers
 edits → parse → setValue (copy on write) → new data → onDataChange → history
+viewport + estimates + keyed measurements → core virtualizer → render slice + offsets
 ```
 
 Each pipeline stage is memoized on its inputs, so changing the page does not re-sort and selecting
@@ -73,3 +74,4 @@ enforced, with a stricter floor for the engine.
 - The engine: plain state, snapshots, operations, and issues — ADR 0002.
 - Editing and the spreadsheet model — ADR 0003.
 - Component layers, rendering, and theming — ADR 0004.
+- Virtual layout and pagination disabling — ADR 0005.
