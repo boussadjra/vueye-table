@@ -1,5 +1,11 @@
 # @vueye-table/core
 
+## 3.0.0-alpha.6
+
+### Minor Changes
+
+- a39786b: Add opt-in table and grid virtualization with native spacers, aligned virtual columns, stable logical indices, active-cell/editor retention, deterministic SSR windows and viewport-aware keyboard navigation. Expose headless viewport/column composition, offscreen layout lookup and Vue scroll margins; forward props through styled/full components and register the new Nuxt layer components.
+
 ## 3.0.0-alpha.5
 
 ### Minor Changes
