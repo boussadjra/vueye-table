@@ -55,7 +55,7 @@ table.markSaved([17]);
 table.upsertData([{ id: 17, name: "Remote update" }]); // explicitly retry
 ```
 
-Source operations create no undo step or pending-save record. Undo/redo applies user batches over received data, preserving independent incoming rows. After saving, a cell undo restores its recorded user value and becomes a pending edit against the latest source row. Source removal prunes undo entries for deleted keys. Use `insertRows`/`removeRows` for user actions that should be undoable.
+Source operations create no undo step or pending-save record. Undo/redo applies user batches over received data, preserving independent incoming rows. After saving, a cell undo restores its recorded user value and becomes a pending edit against the latest source row. Source removal prunes undo entries, selection and expansion for deleted keys, notifying `onStateChange` when state changes. Use `insertRows`/`removeRows` for user actions that should be undoable.
 
 Nested upserts address a child's key and require an immutable `setChildren`. Omitted children preserve loaded children; an explicit children array replaces them. Valid adjacency source rows can change parents; cached lazy children retain their parent. New duplicate/cycle/orphan/depth issues reject the candidate tree. Removing a parent removes loaded descendants. See [Tree data](/guide/trees) for lazy-cache ownership and cancellation.
 

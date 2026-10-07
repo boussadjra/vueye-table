@@ -2,6 +2,7 @@ import {
   createTable,
   type TableOptions,
   type TableSnapshot,
+  type TableState,
   type StreamSignal,
 } from "@vueye-table/core";
 import { describe, expect, it, vi } from "vitest";
@@ -259,6 +260,32 @@ describe("incremental source ingestion", () => {
     table.destroy();
     expect(table.removeData([2]).status).toBe("rejected");
     expect(table.appendData([row(3)]).status).toBe("rejected");
+  });
+
+  it("notifies controlled state when source operations prune selection and expansion", () => {
+    const onStateChange = vi.fn<(next: TableState, previous: TableState) => void>();
+    const table = create({
+      data: [{ ...row(1), children: [row(2)] }],
+      getChildren: (item) => item.children,
+      setChildren: (item, children) => ({ ...item, children }),
+      getRowCanExpand: () => true,
+      initialState: { selection: [2], expanded: [1, 2] },
+      onStateChange,
+    });
+    const before = table.getState();
+    table.upsertData([row(2, 20)]);
+    expect(onStateChange).not.toHaveBeenCalled();
+    expect(table.getState()).toBe(before);
+    table.upsertData([{ ...row(1), children: [row(3)] }]);
+    expect(onStateChange).toHaveBeenCalledExactlyOnceWith(table.getState(), before);
+    expect(table.getState()).toMatchObject({ selection: [], expanded: [1] });
+    const updated = table.getState();
+    table.removeData([1]);
+    expect(onStateChange).toHaveBeenLastCalledWith(table.getState(), updated);
+    expect(onStateChange).toHaveBeenCalledTimes(2);
+    expect(table.getState()).toMatchObject({ selection: [], expanded: [] });
+    table.removeData([99]);
+    expect(onStateChange).toHaveBeenCalledTimes(2);
   });
 
   it("protects pending async validation, which still settles across unrelated appends", async () => {

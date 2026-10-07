@@ -2238,6 +2238,7 @@ export function createTable<TRow, TSignal extends TreeLoadSignal = TreeLoadSigna
     }
     const replaced = [...updates.keys()].filter((key) => previous.byKey.has(key)).length;
     const appended = updates.size - replaced;
+    const previousState = state;
     try {
       if (!model && !replaced) {
         const added = Object.freeze([...updates.values()]);
@@ -2323,25 +2324,28 @@ export function createTable<TRow, TSignal extends TreeLoadSignal = TreeLoadSigna
           loadValidationIssues.delete(key);
         }
         validation.cancel([...removedKeys]);
+        const selection = state.selection.filter((key) => !removedKeys.has(key));
         state = mergeState(state, {
-          selection: state.selection.filter((key) => !removedKeys.has(key)),
+          selection: selection.length === state.selection.length ? state.selection : selection,
           expanded:
             state.expanded === true ? true : state.expanded.filter((key) => !removedKeys.has(key)),
         });
       }
       validation.cancel([...updates.keys()]);
       ingestionIssues = problems;
-      options.onDataChange?.(data, []);
-      notify();
-      startVisibleLoads();
-      return ingestionResult(appended, replaced, 0, problems);
     } catch (error) {
       return reject(
         issue("invalid_ingestion", error instanceof Error ? error.message : String(error)),
       );
     }
+    if (state !== previousState) options.onStateChange?.(state, previousState);
+    options.onDataChange?.(data, []);
+    notify();
+    startVisibleLoads();
+    return ingestionResult(appended, replaced, 0, problems);
   }
   function removeData(keys: readonly RowKey[]): DataIngestionResult {
+    const previousState = state;
     const problems: TableIssue[] = [];
     const removed = new Set<RowKey>();
     const previous = sourceRows();
@@ -2403,17 +2407,14 @@ export function createTable<TRow, TSignal extends TreeLoadSignal = TreeLoadSigna
           loadIssues.delete(key);
           loadValidationIssues.delete(key);
         }
+        const selection = state.selection.filter((key) => !removed.has(key));
         state = mergeState(state, {
-          selection: state.selection.filter((key) => !removed.has(key)),
+          selection: selection.length === state.selection.length ? state.selection : selection,
           expanded:
             state.expanded === true ? true : state.expanded.filter((key) => !removed.has(key)),
         });
-        options.onDataChange?.(data, []);
       }
       ingestionIssues = problems;
-      notify();
-      startVisibleLoads();
-      return ingestionResult(0, 0, removed.size, problems);
     } catch (error) {
       ingestionIssues = [
         issue("invalid_ingestion", error instanceof Error ? error.message : String(error)),
@@ -2421,6 +2422,11 @@ export function createTable<TRow, TSignal extends TreeLoadSignal = TreeLoadSigna
       notify();
       return ingestionResult(0, 0, 0, ingestionIssues);
     }
+    if (state !== previousState) options.onStateChange?.(state, previousState);
+    if (removed.size) options.onDataChange?.(data, []);
+    notify();
+    startVisibleLoads();
+    return ingestionResult(0, 0, removed.size, problems);
   }
 
   if (expandMode === "single") {
