@@ -11,6 +11,8 @@ export interface UndoStack<TEntry> {
   /** Take the most recently undone batch to redo, if any. */
   redo(): TEntry | undefined;
   clear(): void;
+  /** Reconcile retained user batches after source ingestion. Undefined drops a batch. */
+  transform(map: (entry: TEntry) => TEntry | undefined): void;
 }
 
 export function createUndoStack<TEntry>(limit = 100): UndoStack<TEntry> {
@@ -47,6 +49,17 @@ export function createUndoStack<TEntry>(limit = 100): UndoStack<TEntry> {
     clear(): void {
       past.length = 0;
       future.length = 0;
+    },
+    transform(map): void {
+      const update = (entries: TEntry[]): TEntry[] =>
+        entries.flatMap((entry) => {
+          const value = map(entry);
+          return value === undefined ? [] : [value];
+        });
+      const nextPast = update(past);
+      const nextFuture = update(future);
+      past.splice(0, past.length, ...nextPast);
+      future.splice(0, future.length, ...nextFuture);
     },
   };
 }

@@ -70,6 +70,8 @@ watch(
 The [server-side API example](/examples/server-side) runs this against a simulated API with a live
 network log.
 
+For accumulating cursor pages or keyed feed updates, use [Incremental data and streams](/guide/streaming). `appendData` retains prior rows in manual mode instead of replacing each page; `paginate: false` presents the accumulated list.
+
 ## What manual mode changes
 
 - `data` is the current page. The table shows it as it is, without searching, filtering, sorting,

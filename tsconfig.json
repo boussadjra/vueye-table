@@ -4,5 +4,5 @@
     "allowImportingTsExtensions": true,
     "noEmit": true
   },
-  "include": ["tests/**/*.ts", "tooling/vitest/config.ts", "vitest.config.ts"]
+  "include": ["tests/**/*.ts", "examples/**/*.ts", "tooling/vitest/config.ts", "vitest.config.ts"]
 }

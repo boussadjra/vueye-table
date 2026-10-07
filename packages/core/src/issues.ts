@@ -2,6 +2,10 @@ import type { RowKey } from "./state";
 
 /** Every problem the engine can report. The union grows in minor versions. */
 export type TableIssueCode =
+  | "stream_error"
+  | "invalid_stream_option"
+  | "ingestion_conflict"
+  | "invalid_ingestion"
   | "duplicate_row_key"
   | "unknown_column"
   | "invalid_page_size"

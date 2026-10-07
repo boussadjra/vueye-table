@@ -61,6 +61,7 @@ export function readonlyMap<TKey, TValue>(
 export function createEditValidation<TRow>(host: ValidationHost<TRow>): {
   edit(edits: readonly CellEdit[], recovered?: readonly TableIssue[]): EditResult<TRow>;
   cells(): readonly PendingCell[];
+  hasPending(key: RowKey): boolean;
   problems(): ReadonlyMap<RowKey, ReadonlyMap<string, TableIssue>>;
   cancel(keys?: readonly RowKey[]): void;
 } {
@@ -191,6 +192,7 @@ export function createEditValidation<TRow>(host: ValidationHost<TRow>): {
     });
   }
   return {
+    hasPending: (key) => (pending.get(key)?.size ?? 0) > 0,
     cells: () => Object.freeze([...pending.values()].flatMap((row) => [...row.values()])),
     problems: () =>
       new Map(

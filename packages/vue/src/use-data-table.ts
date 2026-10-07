@@ -54,6 +54,10 @@ export type DataTableBinding<TRow> = TableSnapshot<TRow> &
 export type AnyDataTableBinding = DataTableBinding<any>;
 
 const OPERATIONS = [
+  "appendData",
+  "upsertData",
+  "removeData",
+  "stream",
   "insertRows",
   "removeRows",
   "getPendingChanges",

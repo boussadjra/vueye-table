@@ -9,6 +9,8 @@ Nested and adjacency trees share sibling sorting, hierarchical filtering, cascad
 immutable child edits and lazy loading with injected cancellation. Read the
 [tree guide](https://github.com/boussadjra/vueye-table/blob/main/docs/guide/trees.md) for the API and runnable example.
 
+Append cursor batches, upsert keyed source records, or consume cancellable async iterables without clearing local edits. Read the [streaming guide](https://github.com/boussadjra/vueye-table/blob/main/docs/guide/streaming.md) and [runnable source example](https://github.com/boussadjra/vueye-table/blob/main/examples/streaming.ts) for load state, conflict reporting and undo retention.
+
 ```bash
 pnpm add @vueye-table/core
 ```
