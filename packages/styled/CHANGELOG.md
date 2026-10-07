@@ -1,5 +1,14 @@
 # @vueye-table/styled
 
+## 3.0.0-alpha.4
+
+### Patch Changes
+
+- Updated dependencies [7f2183e]
+  - @vueye-table/core@3.0.0-alpha.4
+  - @vueye-table/vue@3.0.0-alpha.4
+  - @vueye-table/headless@3.0.0-alpha.4
+
 ## 3.0.0-alpha.3
 
 ### Patch Changes

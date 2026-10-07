@@ -17,6 +17,7 @@
     "content-boundaries",
     "core-row-expansion",
     "core-virtual-layout",
+    "edit-validation",
     "framework-rewrite",
     "grid-slots-and-fixes",
     "tree-data",

@@ -1,5 +1,19 @@
 # vueye-table
 
+## 3.0.0-alpha.4
+
+### Minor Changes
+
+- 7f2183e: Add cell and row validation, held or optimistic async batches, enforced editor constraints, undoable tree-aware row operations, and pending changes with save/revert baselines. Expose immutable row issue/dirty metadata and forward the new operations through useDataTable.
+
+### Patch Changes
+
+- Updated dependencies [7f2183e]
+  - @vueye-table/core@3.0.0-alpha.4
+  - @vueye-table/vue@3.0.0-alpha.4
+  - @vueye-table/headless@3.0.0-alpha.4
+  - @vueye-table/styled@3.0.0-alpha.4
+
 ## 3.0.0-alpha.3
 
 ### Minor Changes
