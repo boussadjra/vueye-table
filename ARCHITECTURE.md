@@ -75,3 +75,4 @@ enforced, with a stricter floor for the engine.
 - Editing and the spreadsheet model — ADR 0003.
 - Component layers, rendering, and theming — ADR 0004.
 - Virtual layout and pagination disabling — ADR 0005.
+- Export, path, and paste boundaries — ADR 0009.

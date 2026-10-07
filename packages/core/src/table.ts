@@ -1,9 +1,9 @@
 import { resolveColumn, type ColumnDef, type TableColumn } from "./column";
-import { parseDelimited, toDelimited } from "./delimited";
+import { escapeFormula, readDelimited, toDelimited } from "./delimited";
 import { rangeContains, type CellPosition, type CellRange } from "./grid";
 import { issue, type TableIssue } from "./issues";
 import type { DeepKeys } from "./path";
-import { getPath } from "./path";
+import { getPath, isSafePath } from "./path";
 import {
   clampPage,
   countPages,
@@ -29,6 +29,13 @@ export type SelectionMode = "none" | "single" | "multiple";
 
 /** Which rows "select all" covers: the current page, or every row that passes the filters. */
 export type SelectScope = "page" | "all";
+
+export interface PasteLimit {
+  /** Maximum fields examined per paste, including clipped columns. Defaults to 100,000. */
+  readonly maxCells?: number | undefined;
+  /** Maximum UTF-16 code units examined per paste. Defaults to 5,000,000. */
+  readonly maxLength?: number | undefined;
+}
 
 export interface TableOptions<TRow> {
   readonly data: readonly TRow[];
@@ -62,6 +69,8 @@ export interface TableOptions<TRow> {
   readonly onEditIssues?: ((issues: readonly TableIssue[]) => void) | undefined;
   /** The most edit batches `undo` can reach. Defaults to 100. */
   readonly historyLimit?: number | undefined;
+  /** Bound clipboard parsing. Only complete cells inside the visible grid are applied. */
+  readonly pasteLimit?: PasteLimit | undefined;
 }
 
 export type SelectionCoverage = "none" | "some" | "all";
@@ -154,7 +163,14 @@ export interface EditResult<TRow> {
   readonly issues: readonly TableIssue[];
 }
 
-export interface ExportOptions {
+export interface CopyOptions {
+  /** Prefix formula-like text with an apostrophe. Defaults to false for clipboard copies. */
+  readonly escapeFormulas?: boolean | undefined;
+}
+
+export interface ExportOptions extends CopyOptions {
+  /** Prefix formula-like text with an apostrophe. Defaults to true for exports. */
+  readonly escapeFormulas?: boolean | undefined;
   /** Defaults to `"csv"`. */
   readonly format?: "csv" | "tsv" | undefined;
   /** Column ids to export. Defaults to the visible columns. */
@@ -219,7 +235,7 @@ export interface DataTable<TRow> {
   undo(): boolean;
   redo(): boolean;
   /** The text of a range of shown cells, tab-separated like a spreadsheet clipboard. */
-  copy(range: CellRange): string;
+  copy(range: CellRange, options?: CopyOptions): string;
   /** Paste tab-separated text with its top-left cell at `origin`, clipped to the grid. */
   paste(origin: CellPosition, text: string): EditResult<TRow>;
   /** Empty every editable cell in a range. */
@@ -271,6 +287,27 @@ interface IndexedRows<TRow> {
   readonly issues: readonly TableIssue[];
 }
 
+function pasteLimit(
+  value: number | undefined,
+  fallback: number,
+  name: string,
+  issues: TableIssue[],
+): number {
+  if (value === undefined) {
+    return fallback;
+  }
+  if (Number.isSafeInteger(value) && value > 0) {
+    return value;
+  }
+  issues.push(
+    issue(
+      "invalid_paste_limit",
+      `Paste ${name} ${String(value)} is not a positive safe integer; ${fallback} is used.`,
+    ),
+  );
+  return fallback;
+}
+
 /** Create a data table. */
 export function createTable<TRow>(options: TableOptions<TRow>): DataTable<TRow> {
   const paginate = options.paginate ?? true;
@@ -279,6 +316,14 @@ export function createTable<TRow>(options: TableOptions<TRow>): DataTable<TRow> 
   const manual = options.manual ?? false;
   const undoStack = createUndoStack<readonly CellChange<TRow>[]>(options.historyLimit);
   const listeners = new Set<(snapshot: TableSnapshot<TRow>) => void>();
+  const optionIssues: TableIssue[] = [];
+  const maxPasteCells = pasteLimit(options.pasteLimit?.maxCells, 100_000, "maxCells", optionIssues);
+  const maxPasteLength = pasteLimit(
+    options.pasteLimit?.maxLength,
+    5_000_000,
+    "maxLength",
+    optionIssues,
+  );
 
   let data = options.data;
   let definitions = options.columns;
@@ -306,8 +351,21 @@ export function createTable<TRow>(options: TableOptions<TRow>): DataTable<TRow> 
   };
 
   const resolveColumns = memo((defs: readonly ColumnDef<TRow>[]) => {
-    const columns = defs.map((definition) => resolveColumn(definition));
-    return { columns, byId: new Map(columns.map((column) => [column.id, column])) };
+    const issues: TableIssue[] = [];
+    const columns = defs.flatMap((definition) => {
+      if (!isSafePath(definition.id)) {
+        issues.push(
+          issue(
+            "unsafe_path",
+            `The column "${definition.id}" addresses a prototype and is ignored.`,
+            { column: definition.id },
+          ),
+        );
+        return [];
+      }
+      return [resolveColumn(definition)];
+    });
+    return { columns, byId: new Map(columns.map((column) => [column.id, column])), issues };
   });
 
   const indexRows = memo(
@@ -388,10 +446,10 @@ export function createTable<TRow>(options: TableOptions<TRow>): DataTable<TRow> 
   }
 
   function computeSnapshot(): TableSnapshot<TRow> {
-    const { columns, byId } = resolveColumns(definitions);
+    const { columns, byId, issues: columnIssues } = resolveColumns(definitions);
     const indexed = indexRows(data, byId);
     const ordered = orderColumns(columns, state.columnOrder, state.hiddenColumns);
-    const issues = [...indexed.issues, ...stateIssues(byId)];
+    const issues = [...optionIssues, ...columnIssues, ...indexed.issues, ...stateIssues(byId)];
     const requestedSize = state.pagination.pageSize;
     let pageSize =
       Number.isInteger(requestedSize) && requestedSize >= 1 ? requestedSize : DEFAULT_PAGE_SIZE;
@@ -528,10 +586,14 @@ export function createTable<TRow>(options: TableOptions<TRow>): DataTable<TRow> 
     commit({ selection });
   }
 
-  function applyChanges(edits: readonly CellEdit[], record: boolean): EditResult<TRow> {
+  function applyChanges(
+    edits: readonly CellEdit[],
+    record: boolean,
+    recoveredIssues: readonly TableIssue[] = [],
+  ): EditResult<TRow> {
     const current = getSnapshot();
     const working = [...data];
-    const issues: TableIssue[] = [];
+    const issues: TableIssue[] = [...recoveredIssues];
     const changes: CellChange<TRow>[] = [];
     // A value from another row tells a column's type when the edited cell is empty. It is looked
     // up once per column, not once per edit, so pasting a large range stays linear.
@@ -555,6 +617,16 @@ export function createTable<TRow>(options: TableOptions<TRow>): DataTable<TRow> 
             rowKey: edit.rowKey,
             column: edit.column,
           }),
+        );
+        continue;
+      }
+      if (!isSafePath(edit.column)) {
+        issues.push(
+          issue(
+            "unsafe_path",
+            `The path "${edit.column}" addresses a prototype and cannot be written.`,
+            { rowKey: edit.rowKey, column: edit.column },
+          ),
         );
         continue;
       }
@@ -860,14 +932,15 @@ export function createTable<TRow>(options: TableOptions<TRow>): DataTable<TRow> 
       replay(changes, "redo");
       return true;
     },
-    copy(range) {
+    copy(range, { escapeFormulas = false } = {}) {
       const { rows, columns } = getSnapshot();
       const matrix: string[][] = [];
       rows.forEach((row, rowIndex) => {
         const line: string[] = [];
         columns.forEach((column, columnIndex) => {
           if (rangeContains(range, { row: rowIndex, column: columnIndex })) {
-            line.push(row.getDisplay(column.id));
+            const display = row.getDisplay(column.id);
+            line.push(escapeFormulas ? escapeFormula(display, row.getValue(column.id)) : display);
           }
         });
         if (line.length > 0) {
@@ -877,7 +950,35 @@ export function createTable<TRow>(options: TableOptions<TRow>): DataTable<TRow> 
       return toDelimited(matrix);
     },
     paste(origin, text) {
-      return applyChanges(rangeEdits(origin, parseDelimited(text)), true);
+      if (
+        !Number.isInteger(origin.row) ||
+        !Number.isInteger(origin.column) ||
+        origin.row < 0 ||
+        origin.column < 0
+      ) {
+        return applyChanges([], true, [
+          issue(
+            "invalid_value",
+            "The paste origin must use non-negative whole row and column indices.",
+          ),
+        ]);
+      }
+      const { rows, columns } = getSnapshot();
+      const parsed = readDelimited(text, {
+        maxRows: Math.max(0, rows.length - origin.row),
+        maxColumns: Math.max(0, columns.length - origin.column),
+        maxCells: maxPasteCells,
+        maxLength: maxPasteLength,
+      });
+      const issues = parsed.truncated
+        ? [
+            issue(
+              "paste_truncated",
+              "The paste exceeds the visible grid or parsing limits; only complete cells within those limits are applied.",
+            ),
+          ]
+        : [];
+      return applyChanges(rangeEdits(origin, parsed.rows), true, issues);
     },
     clear(range) {
       const matrix = Array.from({ length: range.bottom - range.top + 1 }, () =>
@@ -892,7 +993,13 @@ export function createTable<TRow>(options: TableOptions<TRow>): DataTable<TRow> 
       });
       return applyChanges(edits, true);
     },
-    exportRows({ format = "csv", columns: ids, pageOnly = false, headers = true } = {}) {
+    exportRows({
+      format = "csv",
+      columns: ids,
+      pageOnly = false,
+      headers = true,
+      escapeFormulas = true,
+    } = {}) {
       const current = getSnapshot();
       const columns = ids
         ? ids.flatMap((id) => {
@@ -901,9 +1008,16 @@ export function createTable<TRow>(options: TableOptions<TRow>): DataTable<TRow> 
           })
         : current.columns;
       const rows = pageOnly ? current.rows : current.processedRows;
-      const matrix = rows.map((row) => columns.map((column) => row.getDisplay(column.id)));
+      const matrix = rows.map((row) =>
+        columns.map((column) => {
+          const display = row.getDisplay(column.id);
+          return escapeFormulas ? escapeFormula(display, row.getValue(column.id)) : display;
+        }),
+      );
       if (headers) {
-        matrix.unshift(columns.map((column) => column.header));
+        matrix.unshift(
+          columns.map((column) => (escapeFormulas ? escapeFormula(column.header) : column.header)),
+        );
       }
       return toDelimited(matrix, format === "csv" ? "," : "\t");
     },

@@ -173,6 +173,31 @@ describe("useDataGrid", () => {
     expect(grid.lastResult?.status).toBe("unchanged");
   });
 
+  it("forwards paste limits and optional clipboard escaping through the bindings", () => {
+    const scope = effectScope();
+    const { table, grid } = scope.run(() => {
+      const binding = useDataTable({
+        data: [
+          { id: 1, value: "=1+1" },
+          { id: 2, value: "original" },
+        ],
+        columns: [{ id: "value", editable: true }],
+        pasteLimit: { maxCells: 1 },
+      });
+      return { table: binding, grid: useDataGrid(binding) };
+    })!;
+    grid.focusCell({ row: 0, column: 0 });
+    expect(grid.copy()).toBe("=1+1");
+    expect(grid.copy({ escapeFormulas: true })).toBe("'=1+1");
+    expect(table.exportRows({ headers: false })).toBe("'=1+1\noriginal");
+    const result = grid.paste("next\nignored");
+    expect(result?.status).toBe("partial");
+    expect(result?.issues[0]?.code).toBe("paste_truncated");
+    expect(grid.lastResult).toBe(result);
+    expect(table.rows.map((row) => row.original.value)).toEqual(["next", "original"]);
+    scope.stop();
+  });
+
   it("keeps the selection on cells that exist when the grid shrinks", async () => {
     const { grid, table } = setup();
     grid.focusCell({ row: 1, column: 1 });

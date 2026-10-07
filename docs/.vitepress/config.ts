@@ -85,6 +85,7 @@ export default defineConfig({
           { text: "0003 Editing and spreadsheets", link: "/adr/0003-editing-and-spreadsheets" },
           { text: "0004 Components and theming", link: "/adr/0004-components-and-theming" },
           { text: "0005 Virtualization", link: "/adr/0005-virtualization" },
+          { text: "0009 Content boundaries", link: "/adr/0009-content-boundaries" },
         ],
       },
     ],
