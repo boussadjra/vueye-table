@@ -1,4 +1,5 @@
 export {
+  type TableStatusSlotProps,
   DataTableColumnVisibility,
   DataTablePageSize,
   DataTablePagination,
@@ -7,6 +8,7 @@ export {
   DataTableSelectRow,
   DataTableStatus,
 } from "./controls";
+export { DataTableLoadMore } from "./loading";
 export { cellId, DataGridBody, DataGridCell, DataGridRoot, type GridCellSlotProps } from "./grid";
 export {
   columnStyle,

@@ -8,6 +8,7 @@ import {
   DataTableSelectRow,
   DataTableRoot,
   DataTableViewport,
+  type TableStatusSlotProps,
 } from "@vueye-table/headless";
 import {
   VtColumnVisibility,
@@ -17,6 +18,7 @@ import {
   VtPagination,
   VtSearch,
   VtStatus,
+  VtLoadMore,
   VtToolbar,
 } from "@vueye-table/styled";
 import { provideDataTable, useDataTable, type DataTableBinding } from "@vueye-table/vue";
@@ -40,13 +42,7 @@ export interface CellSlotProps {
 }
 
 /** Slot props of `status`, the "1–10 of 57 rows" line. */
-export interface StatusSlotProps {
-  readonly start: number;
-  readonly end: number;
-  readonly rowCount: number;
-  readonly totalRowCount: number;
-  readonly selectedCount: number;
-}
+export type StatusSlotProps = TableStatusSlotProps;
 
 /**
  * A complete data table: search, column visibility, sorting, selection, pagination, a live
@@ -56,7 +52,7 @@ export interface StatusSlotProps {
 export const VueyeTable = defineComponent({
   name: "VueyeTable",
   props: {
-    data: { type: Array as PropType<readonly unknown[]>, required: true },
+    data: { type: Array as PropType<readonly unknown[]>, default: () => [] },
     ...commonProps,
     /** `true` or `"multiple"` for checkboxes, `"single"` for one row at a time. */
     selectable: {
@@ -65,8 +61,6 @@ export const VueyeTable = defineComponent({
     },
     selected: { type: Array as PropType<readonly RowKey[]>, default: undefined },
     /** The data is one page from a server; `rowCount` is the total. */
-    manual: { type: Boolean, default: false },
-    rowCount: { type: Number as PropType<number | undefined>, default: undefined },
     /** Shown instead of the empty state while `loading` and there are no rows yet. */
     loadingText: { type: String, default: "Loading…" },
   },
@@ -104,10 +98,13 @@ export const VueyeTable = defineComponent({
     let binding: DataTableBinding<unknown> | undefined;
     const table = useDataTable<unknown>({
       data: () => props.data,
+      source: computed(() => props.source),
+      loadMore: computed(() => props.loadMore),
+      endThreshold: props.endThreshold,
       columns: () => resolveColumns(props.columns, props.data) as readonly ColumnDef<unknown>[],
       rowKey: props.rowKey as never,
       manual: props.manual,
-      paginate: props.paginate ?? !props.virtual,
+      paginate: props.paginate ?? !(props.virtual || props.source || props.loadMore),
       rowCount: () => props.rowCount,
       selectionMode: selectionMode.value,
       selectScope: props.selectScope,
@@ -122,6 +119,8 @@ export const VueyeTable = defineComponent({
     binding = table;
     provideDataTable(table);
     expose({ table });
+    const busy = (): boolean =>
+      props.loading || table.loadState === "loading" || table.loadState === "streaming";
 
     const selectable = (): boolean => selectionMode.value !== "none";
 
@@ -143,9 +142,15 @@ export const VueyeTable = defineComponent({
       const width = table.columns.length + (selectable() ? 1 : 0);
       if (table.rows.length === 0) {
         // While the first page is loading there is nothing to match yet, so say that instead.
-        const content = props.loading
+        const content = busy()
           ? (slots.loading?.({}) ?? h(VtEmpty, { text: props.loadingText }))
-          : (slots.empty?.({}) ?? h(VtEmpty));
+          : (slots.empty?.({}) ??
+            h(VtEmpty, {
+              text:
+                table.loadingMode && table.loadState === "error"
+                  ? "Could not load rows."
+                  : "No matching rows",
+            }));
         return h("tr", { "data-empty": "" }, [h("td", { colspan: Math.max(1, width) }, content)]);
       }
       return rows.map((row) =>
@@ -230,6 +235,7 @@ export const VueyeTable = defineComponent({
                 class: "vt-table",
                 "aria-rowcount": table.rowCount + 1,
                 "aria-colcount": table.columns.length,
+                "aria-busy": busy() ? "true" : undefined,
               },
               children(),
             ),
@@ -247,7 +253,7 @@ export const VueyeTable = defineComponent({
           "data-hover": props.hover ? "" : undefined,
           "data-sticky-header": props.stickyHeader || props.virtual ? "" : undefined,
           "data-virtual": props.virtual ? "" : undefined,
-          "data-loading": props.loading ? "" : undefined,
+          "data-loading": busy() ? "" : undefined,
           "data-vt-theme": props.theme,
           "aria-busy": props.loading ? "true" : undefined,
           style: props.maxHeight ? { "--vt-max-height": props.maxHeight } : undefined,
@@ -264,7 +270,10 @@ export const VueyeTable = defineComponent({
               : null,
             h("div", { class: "vt-progress", role: "presentation" }),
             tableContent(),
-            (props.pagination && (!props.virtual || table.paginate)) || slots.footer
+            (props.pagination && (!props.virtual || table.paginate)) ||
+            slots.footer ||
+            slots.status ||
+            table.loadingMode
               ? h(VtToolbar, { class: "vt-footer" }, () => [
                   h(
                     VtStatus,
@@ -275,8 +284,9 @@ export const VueyeTable = defineComponent({
                         ? { default: () => props.loadingText }
                         : undefined,
                   ),
+                  ...(table.loadingMode ? [h(VtLoadMore)] : []),
                   slots.footer?.({ table }),
-                  props.pagination && (!props.virtual || table.paginate)
+                  props.pagination && table.paginate && (!props.virtual || table.paginate)
                     ? h("div", { class: "vt-footer-controls" }, [
                         h(VtPageSize, { options: props.pageSizeOptions }),
                         h(VtPagination),

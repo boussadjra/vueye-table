@@ -10,6 +10,8 @@ import {
 } from "@vueye-table/vue";
 import {
   computed,
+  onMounted,
+  watch,
   defineComponent,
   h,
   inject,
@@ -112,6 +114,20 @@ export function createComponentVirtual(
     initialCount: options.initialCount,
     grid,
     scrollMargin: () => tableElement()?.querySelector("thead")?.getBoundingClientRect().height ?? 0,
+  });
+  onMounted(() => {
+    watch(
+      () => [rows.endIndex, table.renderItems.length, table.canLoadMore] as const,
+      () => {
+        if (
+          table.loadingMode === "cursor" &&
+          table.canLoadMore &&
+          rows.endIndex >= table.renderItems.length - 1 - table.endThreshold
+        )
+          void table.loadNext();
+      },
+      { immediate: true },
+    );
   });
   const columns =
     grid && virtualColumns

@@ -424,6 +424,12 @@
   color: var(--vt-muted);
 }
 
+.vt-load-sentinel {
+  height: var(--vt-row-height, 40px);
+  color: var(--vt-muted);
+  text-align: center;
+}
+
 .vt-menu {
   position: relative;
 }

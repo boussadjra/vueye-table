@@ -13,6 +13,7 @@ import {
   DataTableSearch,
   DataTableSortButton,
   DataTableStatus,
+  DataTableLoadMore,
   DataTableViewport,
   DataTableVirtualColumns,
   injectVirtualRenderer,
@@ -181,24 +182,34 @@ export const VtTable = defineComponent({
   },
   setup(props, { slots }) {
     return () =>
-      h("div", surfaceAttrs(props), [
-        h("div", { class: "vt-progress", role: "presentation" }),
-        scroller(props, [
-          h(
-            DataTableRoot,
-            {
-              table: props.table,
-              class: "vt-table",
-              virtual: props.virtual,
-              rowHeight: props.rowHeight,
-              overscan: props.overscan,
-            },
-            {
-              default: () => slots.default?.({ table: props.table }) ?? [h(VtHeader), h(VtBody)],
-            },
-          ),
-        ]),
-      ]);
+      h(
+        "div",
+        surfaceAttrs({
+          ...props,
+          loading:
+            props.loading ||
+            props.table.loadState === "loading" ||
+            props.table.loadState === "streaming",
+        }),
+        [
+          h("div", { class: "vt-progress", role: "presentation" }),
+          scroller(props, [
+            h(
+              DataTableRoot,
+              {
+                table: props.table,
+                class: "vt-table",
+                virtual: props.virtual,
+                rowHeight: props.rowHeight,
+                overscan: props.overscan,
+              },
+              {
+                default: () => slots.default?.({ table: props.table }) ?? [h(VtHeader), h(VtBody)],
+              },
+            ),
+          ]),
+        ],
+      );
   },
 });
 
@@ -211,13 +222,24 @@ export const VtBody = defineComponent({
   }>,
   props: { ...virtualProps },
   setup(props, { slots }) {
+    const table = injectDataTable("<VtBody>");
     return () =>
       h(
         DataTableBody,
         { class: "vt-body", ...props },
         {
           ...slots,
-          empty: slots.empty ?? (() => h(VtEmpty)),
+          empty:
+            slots.empty ??
+            (() =>
+              h(VtEmpty, {
+                text:
+                  table.loadingMode && table.loadState === "loading"
+                    ? "Loading rows…"
+                    : table.loadingMode && table.loadState === "error"
+                      ? "Could not load rows."
+                      : "No matching rows",
+              })),
         },
       );
   },
@@ -310,6 +332,7 @@ export const VtColumnVisibility = defineComponent({
 
 export const VtPagination = withClass(DataTablePagination, "vt-pagination", "VtPagination");
 export const VtStatus = withClass(DataTableStatus, "vt-status", "VtStatus");
+export const VtLoadMore = withClass(DataTableLoadMore, "vt-button", "VtLoadMore");
 
 /** A horizontal bar for controls above or below a table. */
 export const VtToolbar = defineComponent({
@@ -404,32 +427,42 @@ export const VtGrid = defineComponent({
             : column.header,
       });
     return () =>
-      h("div", surfaceAttrs(props), [
-        h("div", { class: "vt-progress", role: "presentation" }),
-        scroller(props, [
-          h(
-            DataGridRoot,
-            {
-              table: props.table,
-              label: props.label,
-              "aria-describedby": attrs["aria-describedby"],
-              class: "vt-table vt-grid",
-              virtual: props.virtual,
-              virtualColumns: props.virtualColumns,
-              rowHeight: props.rowHeight,
-              overscan: props.overscan,
-              columnWidth: props.columnWidth,
-              gutter: props.rowNumbers ? 48 : 0,
-            },
-            {
-              default: (slotProps: Record<string, unknown>) =>
-                slots.default?.(slotProps) ?? [
-                  header(),
-                  h(GridBody, { rowNumbers: props.rowNumbers, cells: cellSlots() }),
-                ],
-            },
-          ),
-        ]),
-      ]);
+      h(
+        "div",
+        surfaceAttrs({
+          ...props,
+          loading:
+            props.loading ||
+            props.table.loadState === "loading" ||
+            props.table.loadState === "streaming",
+        }),
+        [
+          h("div", { class: "vt-progress", role: "presentation" }),
+          scroller(props, [
+            h(
+              DataGridRoot,
+              {
+                table: props.table,
+                label: props.label,
+                "aria-describedby": attrs["aria-describedby"],
+                class: "vt-table vt-grid",
+                virtual: props.virtual,
+                virtualColumns: props.virtualColumns,
+                rowHeight: props.rowHeight,
+                overscan: props.overscan,
+                columnWidth: props.columnWidth,
+                gutter: props.rowNumbers ? 48 : 0,
+              },
+              {
+                default: (slotProps: Record<string, unknown>) =>
+                  slots.default?.(slotProps) ?? [
+                    header(),
+                    h(GridBody, { rowNumbers: props.rowNumbers, cells: cellSlots() }),
+                  ],
+              },
+            ),
+          ]),
+        ],
+      );
   },
 });

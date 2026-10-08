@@ -10,11 +10,20 @@ import {
 } from "@vueye-table/core";
 import { virtualProps } from "@vueye-table/headless";
 import type { Density } from "@vueye-table/styled";
+import type { TableSource, LoadMore } from "@vueye-table/vue";
 import type { PropType } from "vue";
 
 /** Props both full components share. */
 export const commonProps = {
   ...virtualProps,
+  source: {
+    type: [Object, Function] as PropType<TableSource<unknown> | undefined>,
+    default: undefined,
+  },
+  loadMore: { type: Function as PropType<LoadMore<unknown> | undefined>, default: undefined },
+  endThreshold: { type: Number, default: 5 },
+  manual: { type: Boolean as PropType<boolean | undefined>, default: undefined },
+  rowCount: { type: Number as PropType<number | undefined>, default: undefined },
   /** Override the virtual default of no pagination; permits virtualizing a large page. */
   paginate: { type: Boolean as PropType<boolean | undefined>, default: undefined },
   /** Column definitions. Without them, columns are inferred from the data. */

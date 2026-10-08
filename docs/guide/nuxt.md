@@ -22,3 +22,5 @@ is shared between requests.
 | `composables` | `true`  | Auto-import `useDataTable`, `useDataGrid`, and `defineColumns`.                       |
 
 Options go under `vueyeTable` in `nuxt.config`.
+
+With `layers: true`, `DataTableLoadMore` and `VtLoadMore` are registered alongside the status controls. Sources start after client mount, so a server-rendered table can use initial rows without opening its async source. See [Vue sources and cursor loading](/guide/streaming#manage-a-source-in-vue).
