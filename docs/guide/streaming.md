@@ -63,6 +63,71 @@ Nested upserts address a child's key and require an immutable `setChildren`. Omi
 
 Unsorted flat append indexes and filters only incoming rows; sorted append sorts new matches and merges them stably into the prior order. Paging does not repeat those stages. Ingestion publishes readonly array views, so the old dataset is not copied just to publish an append. Array access, iteration, `map`, `slice`, JSON output and `Array.isArray` work; mutation is refused. Use `Array.from(next)` when your application needs a mutable copy or a plain array for APIs such as `structuredClone`. Reading or copying the entire dataset costs O(n).
 
-Expanded detail enumeration, tree processing, changed queries/columns, upserts and removals can visit existing rows. The [append benchmark](/benchmarks/streaming) covers flat append publication separately from those costs and rendering. There is no automatic transport or frame scheduling in core. Vue source adapters, infinite-scroll controls and component loading presentation remain follow-up work.
+Expanded detail enumeration, tree processing, changed queries/columns, upserts and removals can visit existing rows. The [append benchmark](/benchmarks/streaming) covers flat append publication separately from those costs and rendering. There is no automatic transport or frame scheduling in core.
 
 Run the [source example](/examples/streaming) to see progress, edit conflicts, undo retention and cancellation. Public decisions are recorded in [ADR 0006](/adr/0006-incremental-ingestion-and-streaming).
+
+## Manage a source in Vue
+
+Pass `source` to `useDataTable`, `<VueyeTable>`, or `<VueyeGrid>`. It accepts an async iterable or a factory returning one. `data` is optional and supplies initial rows. Define columns explicitly when those initial rows are empty, and give received rows stable keys.
+
+```ts
+import { ref } from "vue";
+import { useDataTable } from "vueye-table";
+
+const region = ref("North");
+const table = useDataTable<Order>({
+  columns,
+  paginate: false,
+  source: ({ signal }) => {
+    const selectedRegion = region.value;
+    return receiveOrders(selectedRegion, signal); // AsyncIterable<Order | readonly Order[]>
+  },
+  streamOptions: { mode: "upsert", batchSize: 250 },
+});
+```
+
+Read reactive dependencies synchronously inside the factory, before returning the iterable. Changing a dependency or replacing a source ref aborts the previous signal before constructing the next factory. Scope disposal aborts pending reads; late results cannot enter the table. `retry()` reconstructs the source from current initial data. Use a factory when retrying: a consumed single-use iterator cannot restart itself.
+
+Managed sources publish at most one Vue binding snapshot per rendering frame. Core ingestion and application callbacks still run for each batch; this does not make ingestion constant-cost. Non-component scopes use a 16ms timer. Tests or other rendering runtimes can supply `scheduleFrame(callback)`, returning a cancellation function. Direct calls to the binding's `stream()` keep their existing publication behavior.
+
+Components defer source construction until mount. Server rendering shows initial rows, or an empty loading state, with the same first client markup. Fetch initial data in your application's server loader when needed; the package does not fetch a source during server rendering. Start the client source after those initial records to avoid duplicate keys.
+
+## Load cursor pages
+
+Choose `loadMore` instead of `source` for a paged service:
+
+```vue
+<script setup lang="ts">
+import { VueyeTable, type LoadMore } from "vueye-table";
+
+const loadMore: LoadMore<Order> = async ({ cursor, state, signal }) => {
+  const page = await fetchOrders({
+    cursor,
+    search: state.search,
+    sorting: state.sorting,
+    filters: state.filters,
+    signal,
+  });
+  return { rows: page.rows, cursor: page.nextCursor, done: page.nextCursor == null };
+};
+</script>
+
+<template>
+  <VueyeTable :columns="columns" :load-more="loadMore" virtual height="24rem" :end-threshold="5" />
+</template>
+```
+
+The cursor is opaque (`unknown`) and starts as `undefined`. Narrow it in your loader. Return readonly rows and a boolean `done`. Only one page is requested at a time. Cursor mode defaults to `manual: true`, so the service owns search, filtering and sort order; pagination defaults off in the full components. Query changes abort the old request, restore initial data and request the first page with the new state, keeping page size. Selection and scroll position survive appended pages. Explicit source/query resets clear pending edits and undo; save or discard local work before resetting.
+
+Virtual table and grid renderers request the next page when the rendered end reaches `endThreshold` remaining flattened items, including overscan. The default is 5; invalid values recover to 5 and report `invalid_stream_option`. Non-virtual composition uses `loadNext()` or the load-more button. A response with no rows, no changed cursor and `done: false` becomes a retryable error, preventing an endless request loop.
+
+`loadingMode` is `source`, `cursor`, or `undefined`. The binding also exposes `canLoadMore`, `loadError`, `loadNext()` and `retry()`. A failed cursor request retains loaded rows and retries that same page. `loadState` is `idle` between pages and `done` after the final page. Choosing both `source` and `loadMore` reports a `stream_error`.
+
+## Present progress and recovery
+
+Full components include a polite status line with loaded counts, a retry control after errors, and a keyboard-accessible **Load more rows** button between cursor requests. The data table or grid has `aria-busy` while receiving rows. A visual loading sentinel below received cursor rows stays outside the logical row count and is hidden from assistive technology.
+
+For composition, pair `DataTableStatus` with `DataTableLoadMore`, or `VtStatus` with `VtLoadMore`. Load-more labels are configurable with `label`, `loadingLabel` and `retryLabel`. The status slot adds `loadState`, `loadedRowCount`, `loadError`, `canLoadMore`, `loadNext` and `retry` to the existing range and selection fields. Provide translated status text through this slot.
+
+Try the [live Vue source and cursor example](/examples/streaming-components), including table/grid switching and retry. The contract is recorded in [ADR 0015](/adr/0015-vue-sources-and-cursor-loading).

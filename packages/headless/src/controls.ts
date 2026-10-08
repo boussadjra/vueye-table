@@ -1,4 +1,10 @@
-import type { PageItem, SelectionCoverage, TableColumn } from "@vueye-table/core";
+import type {
+  PageItem,
+  SelectionCoverage,
+  TableColumn,
+  LoadState,
+  TableIssue,
+} from "@vueye-table/core";
 import { injectDataTable } from "@vueye-table/vue";
 import { defineComponent, h, onScopeDispose, type PropType, type SlotsType, type VNode } from "vue";
 
@@ -260,16 +266,23 @@ export const DataTableColumnVisibility = defineComponent({
  * A polite live region describing what is shown, such as "1–10 of 57 rows". Screen readers
  * announce it after a search, filter, or page change.
  */
+export interface TableStatusSlotProps {
+  readonly start: number;
+  readonly end: number;
+  readonly rowCount: number;
+  readonly totalRowCount: number;
+  readonly selectedCount: number;
+  readonly loadState: LoadState;
+  readonly loadedRowCount: number;
+  readonly loadError: TableIssue | undefined;
+  readonly canLoadMore: boolean;
+  readonly retry: () => void;
+  readonly loadNext: () => Promise<void>;
+}
 export const DataTableStatus = defineComponent({
   name: "DataTableStatus",
   slots: Object as SlotsType<{
-    default?: (props: {
-      start: number;
-      end: number;
-      rowCount: number;
-      totalRowCount: number;
-      selectedCount: number;
-    }) => VNode[];
+    default?: (props: TableStatusSlotProps) => VNode[];
   }>,
   props: { as: asProp("p") },
   setup(props, { slots }) {
@@ -281,9 +294,23 @@ export const DataTableStatus = defineComponent({
         rowCount: table.rowCount,
         totalRowCount: table.totalRowCount,
         selectedCount: table.selectedCount,
+        loadState: table.loadState,
+        loadedRowCount: table.loadedRowCount,
+        loadError: table.loadError,
+        canLoadMore: table.canLoadMore,
+        retry: () => table.retry(),
+        loadNext: () => table.loadNext(),
       };
-      const text =
-        table.rowCount === 0
+      const count = `Loaded ${table.loadedRowCount.toLocaleString()} ${table.loadedRowCount === 1 ? "row" : "rows"}`;
+      const text = table.loadingMode
+        ? table.loadState === "error"
+          ? `${count}. Could not load rows. Retry loading.`
+          : table.loadState === "aborted"
+            ? `${count}. Loading stopped.`
+            : table.loadState === "loading" || table.loadState === "streaming"
+              ? `${count}…`
+              : `${count}${table.loadState === "done" ? ". All rows loaded." : "."}`
+        : table.rowCount === 0
           ? "No rows"
           : `${table.pageStart}–${table.pageEnd} of ${table.rowCount} rows` +
             (table.selectedCount > 0 ? `, ${table.selectedCount} selected` : "");

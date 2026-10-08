@@ -26,6 +26,7 @@ import {
   type VNodeChild,
 } from "vue";
 
+import { loadSentinel } from "./loading";
 import { asProp, columnProp, flag, rowProp } from "./shared";
 import { columnStyle, DataTableHeader } from "./table";
 import {
@@ -164,6 +165,10 @@ export const DataGridRoot = defineComponent({
           "aria-multiselectable": "true",
           "aria-rowcount": (binding ? props.table.rowCount : props.table.rows.length) + 1,
           "aria-colcount": props.table.columns.length,
+          "aria-busy":
+            props.table.loadState === "loading" || props.table.loadState === "streaming"
+              ? "true"
+              : undefined,
           "aria-activedescendant":
             focusPosition && !grid.editor
               ? cellId(id, focusPosition.row, focusPosition.column)
@@ -240,21 +245,21 @@ export const DataGridBody = defineComponent({
     const virtual = injectVirtual();
     const element = ref<HTMLElement>();
     const render = (binding?: ComponentVirtualBinding): VNode => {
-      if (binding && slots.default)
-        return h(
-          props.as,
-          { ref: element },
-          slots.default({
-            rows: binding.rowItems
-              .filter((item) => item.renderItem.kind === "row")
-              .map((item) => item.renderItem.row),
-          }),
+      if (binding && slots.default) {
+        const sentinel = loadSentinel(
+          table,
+          props.colspan ?? table.columns.length + (slots.rowHeader ? 1 : 0),
         );
+        const content = slots.default({
+          rows: binding.rowItems
+            .filter((item) => item.renderItem.kind === "row")
+            .map((item) => item.renderItem.row),
+        });
+        return h(props.as, { ref: element }, sentinel ? [...content, sentinel] : content);
+      }
       if (binding)
-        return h(
-          props.as,
-          { ref: element },
-          renderRows(
+        return h(props.as, { ref: element }, [
+          ...renderRows(
             binding,
             props.colspan ?? table.columns.length + (slots.rowHeader ? 1 : 0),
             (item) => {
@@ -302,34 +307,45 @@ export const DataGridBody = defineComponent({
               );
             },
           ),
-        );
-      return h(
-        props.as,
-        slots.default?.({ rows: table.rows }) ??
-          table.rows.map((row, rowIndex) =>
-            h(
-              "tr",
-              {
-                key: row.key,
-                role: "row",
-                "aria-rowindex": rowIndex + 2,
-                "data-key": String(row.key),
-              },
-              [
-                slots.rowHeader?.({ row, index: rowIndex }),
-                ...table.columns.map((column, columnIndex) =>
-                  h(
-                    DataGridCell,
-                    { key: column.id, row, column, rowIndex, columnIndex },
-                    slots.cell
-                      ? { default: (cellProps: GridCellSlotProps) => slots.cell?.(cellProps) }
-                      : undefined,
-                  ),
+          ...(loadSentinel(table, props.colspan ?? table.columns.length + (slots.rowHeader ? 1 : 0))
+            ? [
+                loadSentinel(
+                  table,
+                  props.colspan ?? table.columns.length + (slots.rowHeader ? 1 : 0),
                 ),
-              ],
-            ),
+              ]
+            : []),
+        ]);
+      const content =
+        slots.default?.({ rows: table.rows }) ??
+        table.rows.map((row, rowIndex) =>
+          h(
+            "tr",
+            {
+              key: row.key,
+              role: "row",
+              "aria-rowindex": rowIndex + 2,
+              "data-key": String(row.key),
+            },
+            [
+              slots.rowHeader?.({ row, index: rowIndex }),
+              ...table.columns.map((column, columnIndex) =>
+                h(
+                  DataGridCell,
+                  { key: column.id, row, column, rowIndex, columnIndex },
+                  slots.cell
+                    ? { default: (cellProps: GridCellSlotProps) => slots.cell?.(cellProps) }
+                    : undefined,
+                ),
+              ),
+            ],
           ),
+        );
+      const sentinel = loadSentinel(
+        table,
+        props.colspan ?? table.columns.length + (slots.rowHeader ? 1 : 0),
       );
+      return h(props.as, sentinel ? [...content, sentinel] : content);
     };
     return () =>
       props.virtual && !virtual

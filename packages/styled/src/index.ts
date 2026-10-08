@@ -9,6 +9,7 @@ export {
   VtSearch,
   VtSortIndicator,
   VtStatus,
+  VtLoadMore,
   VtTable,
   VtToolbar,
   type Density,

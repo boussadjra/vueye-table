@@ -7,31 +7,36 @@ line, loading and empty states, and theming.
 
 ### Props
 
-| Prop                  | Type                                       | Default            |
-| --------------------- | ------------------------------------------ | ------------------ |
-| `data`                | `readonly Row[]`                           | required           |
-| `columns`             | `ColumnDef<Row>[]`                         | inferred           |
-| `row-key`             | path or `(row, index) => RowKey`           | `id`, then index   |
-| `selectable`          | `boolean \| "single" \| "multiple"`        | `false`            |
-| `select-scope`        | `"page" \| "all"`                          | `"all"`            |
-| `manual`              | `boolean`                                  | `false`            |
-| `row-count`           | `number`, the total for `manual`           |                    |
-| `loading`             | `boolean`                                  | `false`            |
-| `loading-text`        | `string`                                   | `"Loading…"`       |
-| `caption`             | `string`                                   |                    |
-| `searchable`          | `boolean`                                  | `true`             |
-| `search-placeholder`  | `string`                                   | `"Search…"`        |
-| `column-toggle`       | `boolean`                                  | `true`             |
-| `pagination`          | `boolean`                                  | `true`             |
-| `page-size-options`   | `number[]`                                 | `[5, 10, 20, 50]`  |
-| `density`             | `"compact" \| "comfortable" \| "spacious"` | `"comfortable"`    |
-| `striped`, `bordered` | `boolean`                                  | `false`            |
-| `hover`               | `boolean`                                  | `true`             |
-| `sticky-header`       | `boolean`                                  | `false`            |
-| `max-height`          | CSS height                                 |                    |
-| `theme`               | `"light" \| "dark"`                        | follows the system |
+| Prop                  | Type                                       | Default                                    |
+| --------------------- | ------------------------------------------ | ------------------------------------------ |
+| `data`                | `readonly Row[]`, initial rows             | `[]`                                       |
+| `source`              | `TableSource<Row>`                         |                                            |
+| `load-more`           | `LoadMore<Row>`                            |                                            |
+| `end-threshold`       | non-negative integer                       | `5`                                        |
+| `columns`             | `ColumnDef<Row>[]`                         | inferred                                   |
+| `row-key`             | path or `(row, index) => RowKey`           | `id`, then index                           |
+| `selectable`          | `boolean \| "single" \| "multiple"`        | `false`                                    |
+| `select-scope`        | `"page" \| "all"`                          | `"all"`                                    |
+| `manual`              | `boolean`                                  | `true` with `load-more`, otherwise `false` |
+| `row-count`           | `number`, the total for `manual`           |                                            |
+| `loading`             | `boolean`                                  | `false`                                    |
+| `loading-text`        | `string`                                   | `"Loading…"`                               |
+| `caption`             | `string`                                   |                                            |
+| `searchable`          | `boolean`                                  | `true`                                     |
+| `search-placeholder`  | `string`                                   | `"Search…"`                                |
+| `column-toggle`       | `boolean`                                  | `true`                                     |
+| `pagination`          | `boolean`                                  | `true`                                     |
+| `page-size-options`   | `number[]`                                 | `[5, 10, 20, 50]`                          |
+| `density`             | `"compact" \| "comfortable" \| "spacious"` | `"comfortable"`                            |
+| `striped`, `bordered` | `boolean`                                  | `false`                                    |
+| `hover`               | `boolean`                                  | `true`                                     |
+| `sticky-header`       | `boolean`                                  | `false`                                    |
+| `max-height`          | CSS height                                 |                                            |
+| `theme`               | `"light" \| "dark"`                        | follows the system                         |
 
 `selectable`, `select-scope`, `manual`, and `row-key` are read when the table is created.
+
+Choose `source` or `load-more`; both full components accept them and show loaded counts and retry controls. They default to no pagination with either option. Supply explicit columns for an empty initial dataset. See [Vue sources and cursor loading](/guide/streaming#manage-a-source-in-vue).
 
 `virtual`, `height`, `row-height`, `overscan`, `paginate`, and grid `virtual-columns`/`column-width` are described in the [virtualization guide](/guide/virtualization#component-props). Virtualization is opt-in; full virtual tables default to no paging and a sticky header. Its renderer options are creation options, while data and state stay reactive.
 
@@ -49,15 +54,15 @@ line, loading and empty states, and theming.
 
 ### Slots
 
-| Slot          | Props                                                                                 |
-| ------------- | ------------------------------------------------------------------------------------- |
-| `cell.<id>`   | `{ item, row, value, display, column }`                                               |
-| `header.<id>` | `{ column }`                                                                          |
-| `toolbar`     | `{ table }`, placed between the search and the column menu                            |
-| `footer`      | `{ table }`, placed after the status line                                             |
-| `empty`       | Shown when no row passes the search and filters.                                      |
-| `loading`     | Shown while `loading` with no rows yet.                                               |
-| `status`      | `{ start, end, rowCount, totalRowCount, selectedCount }`, replacing "1–10 of 57 rows" |
+| Slot          | Props                                                                                                                    |
+| ------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| `cell.<id>`   | `{ item, row, value, display, column }`                                                                                  |
+| `header.<id>` | `{ column }`                                                                                                             |
+| `toolbar`     | `{ table }`, placed between the search and the column menu                                                               |
+| `footer`      | `{ table }`, placed after the status line                                                                                |
+| `empty`       | Shown when no row passes the search and filters.                                                                         |
+| `loading`     | Shown while `loading` with no rows yet.                                                                                  |
+| `status`      | `TableStatusSlotProps`: range, selection, `loadState`, `loadedRowCount`, `loadError`, `canLoadMore`, `retry`, `loadNext` |
 
 ### Exposed
 
@@ -96,6 +101,8 @@ Events: `update:data`, `edit`, `edit-error`, `export`, `state-change`, and the s
 updates. Slots: `cell.<id>` with `{ item, row, column, value, display, editable }`. See
 [Editing and spreadsheets](/guide/editing).
 
+The grid also accepts the `status` slot with `TableStatusSlotProps`.
+
 ## Styled components
 
 `@vueye-table/styled` arranges the headless components with the theme. Each reads the table
@@ -113,6 +120,7 @@ provided by `<VtTable>`, `<VtGrid>`, or `provideDataTable`.
 | `VtPageSize`         | "Rows per page" with a picker. Prop: `options`.                                                                             |
 | `VtPagination`       | Previous, numbered, and next buttons.                                                                                       |
 | `VtStatus`           | "1–10 of 57 rows, 3 selected", announced politely.                                                                          |
+| `VtLoadMore`         | A styled load-more or retry button. Props: `label`, `loading-label`, `retry-label`.                                         |
 | `VtEmpty`            | The empty state. Prop: `text`.                                                                                              |
 | `VtSortIndicator`    | The sort arrow, with priority in multi-column sorts.                                                                        |
 
@@ -165,6 +173,7 @@ Controls outside `<VtTable>` need the table provided above them, which is what
 | `DataTablePageSize`                     | The page size `<select>`.                                                             |
 | `DataTableColumnVisibility`             | A checkbox per column. Slot: `{ columns, toggle }`.                                   |
 | `DataTableStatus`                       | A polite live region. Slot: `{ start, end, rowCount, … }`.                            |
+| `DataTableLoadMore`                     | A keyboard-accessible cursor load-more or source retry button.                        |
 | `DataGridRoot`                          | A `role="grid"` spreadsheet with keyboard and clipboard handling.                     |
 | `DataGridBody`                          | Grid rows. Slots: `cell`, `rowHeader`.                                                |
 | `DataGridCell`                          | A grid cell with selection, editing, and `aria-selected`. Slots: `default`, `editor`. |
@@ -182,3 +191,5 @@ Controls outside `<VtTable>` need the table provided above them, which is what
 `useDataTable` options: `data`, `columns`, `rowCount`, and `state` accept refs or getters;
 `rowKey`, `initialState`, `selectionMode`, `selectScope`, `manual`, `paginate`, `historyLimit`, `pasteLimit`,
 `onStateChange`, `onDataChange`, and `onEditIssues` are read once.
+
+`data` defaults to an empty array. `source` and `loadMore` accept values or refs. A source factory tracks its synchronous reactive reads and restarts on changes. `streamOptions`, `scheduleFrame` and `endThreshold` are creation options. The binding adds `loadingMode`, `canLoadMore`, `loadError`, `loadNext()` and `retry()`; see [streaming](/guide/streaming).

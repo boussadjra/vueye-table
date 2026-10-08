@@ -1,11 +1,12 @@
 import type { CellChange, ColumnDef, TableIssue, TableState } from "@vueye-table/core";
-import type { GridCellSlotProps } from "@vueye-table/headless";
+import type { GridCellSlotProps, TableStatusSlotProps } from "@vueye-table/headless";
 import {
   VtGrid,
   VtPageSize,
   VtPagination,
   VtSearch,
   VtStatus,
+  VtLoadMore,
   VtToolbar,
 } from "@vueye-table/styled";
 import { provideDataTable, useDataTable, type DataTableBinding } from "@vueye-table/vue";
@@ -30,10 +31,11 @@ export const VueyeGrid = defineComponent({
   slots: Object as SlotsType<
     { [key: `cell.${string}`]: GridCellSlotProps & { readonly item: unknown } } & {
       default?: (props: Record<string, unknown>) => VNode[];
+      status?: (props: TableStatusSlotProps) => VNode[];
     }
   >,
   props: {
-    data: { type: Array as PropType<readonly unknown[]>, required: true },
+    data: { type: Array as PropType<readonly unknown[]>, default: () => [] },
     ...commonProps,
     searchable: { type: Boolean, default: false },
     columnToggle: { type: Boolean, default: false },
@@ -80,9 +82,16 @@ export const VueyeGrid = defineComponent({
     let binding: DataTableBinding<unknown> | undefined;
     const table = useDataTable<unknown>({
       data: () => props.data,
+      source: computed(() => props.source),
+      loadMore: computed(() => props.loadMore),
+      endThreshold: props.endThreshold,
+      manual: props.manual,
+      rowCount: () => props.rowCount,
       columns,
       rowKey: props.rowKey as never,
-      paginate: props.paginate ?? (props.virtual ? props.pagination : true),
+      paginate:
+        props.paginate ??
+        (props.source || props.loadMore ? false : props.virtual ? props.pagination : true),
       selectionMode: "none",
       initialState: { pagination: initialPagination },
       state: () => {
@@ -118,9 +127,10 @@ export const VueyeGrid = defineComponent({
       for (const [name, slot] of Object.entries(slots)) {
         if (name === "default" && slot) {
           forwarded[name] = slot;
-        } else if (name.startsWith("cell.") && slot) {
+        } else if (name.startsWith("cell.")) {
+          const cellSlot = slots[name as `cell.${string}`];
           forwarded[name] = (cellProps: GridCellSlotProps) =>
-            slot({ ...cellProps, item: cellProps.row.original });
+            cellSlot?.({ ...cellProps, item: cellProps.row.original });
         }
       }
       return forwarded;
@@ -157,7 +167,8 @@ export const VueyeGrid = defineComponent({
             bordered: props.bordered,
             hover: false,
             stickyHeader: props.stickyHeader,
-            loading: props.loading,
+            loading:
+              props.loading || table.loadState === "loading" || table.loadState === "streaming",
             theme: props.theme,
             virtual: props.virtual,
             virtualColumns: props.virtualColumns,
@@ -169,13 +180,22 @@ export const VueyeGrid = defineComponent({
           },
           gridSlots(),
         ),
-        props.pagination
+        props.pagination || table.loadingMode || slots.status
           ? h(VtToolbar, { class: "vt-footer" }, () => [
-              h(VtStatus),
-              h("div", { class: "vt-footer-controls" }, [
-                h(VtPageSize, { options: props.pageSizeOptions }),
-                h(VtPagination),
-              ]),
+              h(
+                VtStatus,
+                null,
+                slots.status
+                  ? { default: (status: TableStatusSlotProps) => slots.status?.(status) }
+                  : undefined,
+              ),
+              ...(table.loadingMode ? [h(VtLoadMore)] : []),
+              props.pagination && table.paginate
+                ? h("div", { class: "vt-footer-controls" }, [
+                    h(VtPageSize, { options: props.pageSizeOptions }),
+                    h(VtPagination),
+                  ])
+                : null,
             ])
           : null,
       ]);

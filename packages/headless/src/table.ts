@@ -17,6 +17,7 @@ import {
   type ComponentPublicInstance,
 } from "vue";
 
+import { loadSentinel } from "./loading";
 import { asProp, columnProp, flag, rowProp } from "./shared";
 import {
   createComponentVirtual,
@@ -54,6 +55,10 @@ export const DataTableRoot = defineComponent({
         {
           "aria-rowcount": props.table.rowCount + 1,
           "aria-colcount": props.table.columns.length,
+          "aria-busy":
+            props.table.loadState === "loading" || props.table.loadState === "streaming"
+              ? "true"
+              : undefined,
           "data-empty": flag(props.table.rowCount === 0),
           ...(virtual ? { ref: element, "data-virtual": "" } : {}),
         },
@@ -264,7 +269,8 @@ export const DataTableBody = defineComponent({
               ])
             : table.rows.map((row) => h(DataTableRow, { key: row.key, row }));
       }
-      return h(props.as, content);
+      const sentinel = loadSentinel(table, props.colspan ?? table.columns.length);
+      return h(props.as, sentinel ? [content, sentinel] : content);
     };
   },
 });
@@ -300,11 +306,10 @@ function renderTableBody(
       rowSpacer(virtual.rows.paddingStart, width, "gap-start"),
       ...content,
       rowSpacer(virtual.rows.paddingEnd, width, "gap-end"),
+      ...(loadSentinel(table, width) ? [loadSentinel(table, width)] : []),
     ]);
-  return h(
-    as,
-    attrs,
-    renderRows(virtual, width, (item) =>
+  return h(as, attrs, [
+    ...renderRows(virtual, width, (item) =>
       item.renderItem.kind === "row"
         ? h(DataTableRow, {
             key: item.key,
@@ -321,7 +326,8 @@ function renderTableBody(
             [h("td", { colspan: Math.max(1, width) }, slots.detail?.(item.renderItem))],
           ),
     ),
-  );
+    ...(loadSentinel(table, width) ? [loadSentinel(table, width)] : []),
+  ]);
 }
 const VirtualDataTableBody = defineComponent({
   name: "DataTableVirtualBody",

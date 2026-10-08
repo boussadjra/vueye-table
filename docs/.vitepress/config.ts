@@ -83,6 +83,7 @@ export default defineConfig({
           { text: "CRM contacts", link: "/examples/crm-contacts" },
           { text: "Server-side API", link: "/examples/server-side" },
           { text: "Streaming source (core)", link: "/examples/streaming" },
+          { text: "Streaming components (Vue)", link: "/examples/streaming-components" },
           { text: "Row drafts (Vue)", link: "/examples/row-drafts" },
           { text: "Inventory sheet", link: "/examples/inventory" },
           { text: "Financial report", link: "/examples/financial-report" },
@@ -109,6 +110,10 @@ export default defineConfig({
           },
           { text: "0013 Component virtualization", link: "/adr/0013-component-virtualization" },
           { text: "0014 Vue row drafts", link: "/adr/0014-vue-row-drafts-and-editor-metadata" },
+          {
+            text: "0015 Vue sources and cursor loading",
+            link: "/adr/0015-vue-sources-and-cursor-loading",
+          },
         ],
       },
     ],

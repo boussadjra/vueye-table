@@ -17,18 +17,19 @@ import {
   shallowRef,
   toRaw,
   toValue,
+  unref,
   watch,
   type MaybeRefOrGetter,
 } from "vue";
 
 import { createRowDraft, type RowDraft } from "./row-draft";
+import { createSource, type SourceOptions, type SourceBinding } from "./source";
 
 /** Options accepted by {@link useDataTable}. Data, columns, and state may be refs or getters. */
-export interface UseDataTableOptions<
-  TRow,
-  TSignal extends TreeLoadSignal = AbortSignal,
-> extends Omit<TableOptions<TRow, TSignal>, "data" | "columns" | "rowCount"> {
-  readonly data: MaybeRefOrGetter<readonly TRow[]>;
+export interface UseDataTableOptions<TRow, TSignal extends TreeLoadSignal = AbortSignal>
+  extends Omit<TableOptions<TRow, TSignal>, "data" | "columns" | "rowCount">, SourceOptions<TRow> {
+  /** Initial rows for a source, or the caller-owned array for an ordinary table. */
+  readonly data?: MaybeRefOrGetter<readonly TRow[]> | undefined;
   readonly columns: MaybeRefOrGetter<readonly ColumnDef<TRow>[]>;
   readonly rowCount?: MaybeRefOrGetter<number | undefined> | undefined;
   /**
@@ -46,6 +47,7 @@ type TableOperations<TRow> = Omit<DataTable<TRow>, "getSnapshot" | "getState" | 
  * Watching a field needs a getter: `watch(() => table.page, ...)`.
  */
 export type DataTableBinding<TRow> = TableSnapshot<TRow> &
+  SourceBinding &
   TableOperations<TRow> & {
     /** The engine behind the binding. */
     readonly table: DataTable<TRow>;
@@ -126,9 +128,12 @@ export function useDataTable<TRow, TSignal extends TreeLoadSignal = AbortSignal>
 export function useDataTable<TRow, TSignal extends TreeLoadSignal = AbortSignal>(
   options: UseDataTableOptions<TRow, TSignal>,
 ): DataTableBinding<TRow> {
+  const empty: readonly TRow[] = Object.freeze([]);
+  const seed = (): readonly TRow[] => toRaw(toValue(options.data) ?? empty);
   const table = createTable<TRow, TSignal>({
     ...options,
-    data: toRaw(toValue(options.data)),
+    manual: options.manual ?? !!unref(options.loadMore),
+    data: seed(),
     columns: toValue(options.columns),
     rowCount: toValue(options.rowCount),
     initialState: { ...options.initialState, ...definedEntries(toValue(options.state)) },
@@ -140,15 +145,17 @@ export function useDataTable<TRow, TSignal extends TreeLoadSignal = AbortSignal>
   const drafts = new Set<() => void>();
   let disposed = false;
   const snapshot = shallowRef(table.getSnapshot());
-  const unsubscribe = table.subscribe((next) => {
+  const source = createSource(table, options, seed, (next) => {
     snapshot.value = next;
   });
+  snapshot.value = source.initial();
+  const unsubscribe = table.subscribe(source.update);
 
   const stops = [
     watch(
       () => toValue(options.data),
       // Reactive arrays arrive as proxies; the engine works on, and compares, the raw array.
-      (data) => table.setData(toRaw(data)),
+      (data) => table.setData(toRaw(data ?? empty)),
     ),
     watch(
       () => toValue(options.columns),
@@ -176,6 +183,7 @@ export function useDataTable<TRow, TSignal extends TreeLoadSignal = AbortSignal>
   const dispose = (): void => {
     if (disposed) return;
     disposed = true;
+    source.dispose();
     for (const disposeDraft of drafts) disposeDraft();
     drafts.clear();
     for (const stop of stops) {
@@ -187,6 +195,17 @@ export function useDataTable<TRow, TSignal extends TreeLoadSignal = AbortSignal>
   if (getCurrentScope()) onScopeDispose(dispose);
 
   const binding = { table } as Record<string, unknown>;
+  for (const key of ["endThreshold", "loadingMode", "canLoadMore", "loadError"] as const) {
+    Object.defineProperty(binding, key, {
+      enumerable: true,
+      get: () => {
+        void snapshot.value;
+        return source[key];
+      },
+    });
+  }
+  binding["retry"] = source.retry;
+  binding["loadNext"] = source.loadNext;
   Object.defineProperty(binding, "snapshot", { enumerable: true, get: () => snapshot.value });
   Object.defineProperty(binding, "expanded", {
     enumerable: true,
