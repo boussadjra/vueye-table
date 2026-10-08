@@ -1,5 +1,21 @@
 # vueye-table
 
+## 3.0.0-alpha.10
+
+### Minor Changes
+
+- d90554a: Add inline table cell/row editing, typed and custom grid editors, validation feedback,
+  dirty/revert and row actions. Preserve unchanged row projections during edits and expose
+  shared editor primitives through the component layers and optional Nuxt registration.
+
+### Patch Changes
+
+- Updated dependencies [d90554a]
+  - @vueye-table/core@3.0.0-alpha.10
+  - @vueye-table/vue@3.0.0-alpha.10
+  - @vueye-table/headless@3.0.0-alpha.10
+  - @vueye-table/styled@3.0.0-alpha.10
+
 ## 3.0.0-alpha.9
 
 ### Minor Changes

@@ -22,6 +22,7 @@
     "edit-validation",
     "framework-rewrite",
     "grid-slots-and-fixes",
+    "inline-typed-editors",
     "tree-data",
     "tree-detail-components",
     "vue-row-drafts",
