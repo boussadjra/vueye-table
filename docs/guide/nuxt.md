@@ -24,3 +24,8 @@ is shared between requests.
 Options go under `vueyeTable` in `nuxt.config`.
 
 With `layers: true`, `DataTableLoadMore` and `VtLoadMore` are registered alongside the status controls. Sources start after client mount, so a server-rendered table can use initial rows without opening its async source. See [Vue sources and cursor loading](/guide/streaming#manage-a-source-in-vue).
+
+The same option registers `DataTableExpandToggle`, `DataTableDetailRow`, `DataTableTreeCell` and
+their styled equivalents `VtExpandToggle`, `VtDetailRow`, `VtTreeCell`. Expansion IDs use Vue's
+SSR-stable instance IDs; provide the same initial rows and expanded state on server and client.
+See [row expansion](/guide/expansion) and [tree data](/guide/trees).

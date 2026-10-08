@@ -36,6 +36,14 @@ line, loading and empty states, and theming.
 
 `selectable`, `select-scope`, `manual`, and `row-key` are read when the table is created.
 
+Both full components also accept `row-can-expand: (item) => boolean`, `expand-mode: 'single' | 'multiple'`
+(default `'multiple'`), `tree-column: string`, and `keep-alive-detail: boolean` (default false).
+Tree props mirror engine options: `get-children`, `set-children`, `get-parent-key`, `has-children`,
+`load-children`, `tree-filter`, `paginate-by`. Callbacks, filter/page mode, eligibility and expansion
+mode are creation options. See [expansion](/guide/expansion) and [trees](/guide/trees).
+The `expanded` slot receives `{ row, rowIndex }`; `v-model:expanded` accepts readonly row keys or
+`true`. `expand` / `collapse` events receive `(item, row)`.
+
 Choose `source` or `load-more`; both full components accept them and show loaded counts and retry controls. They default to no pagination with either option. Supply explicit columns for an empty initial dataset. See [Vue sources and cursor loading](/guide/streaming#manage-a-source-in-vue).
 
 `virtual`, `height`, `row-height`, `overscan`, `paginate`, and grid `virtual-columns`/`column-width` are described in the [virtualization guide](/guide/virtualization#component-props). Virtualization is opt-in; full virtual tables default to no paging and a sticky header. Its renderer options are creation options, while data and state stay reactive.
@@ -155,30 +163,44 @@ Controls outside `<VtTable>` need the table provided above them, which is what
 `@vueye-table/headless` renders semantic, accessible markup with no styles. Every component takes
 `as` to change its element and passes its state to its default slot.
 
-| Component                               | Role                                                                                  |
-| --------------------------------------- | ------------------------------------------------------------------------------------- |
-| `DataTableRoot`                         | Provides the table; renders `<table>` with `aria-rowcount`.                           |
-| `DataTableCaption`                      | The caption.                                                                          |
-| `DataTableHeader`, `DataTableHeaderRow` | The header section and row.                                                           |
-| `DataTableHeaderCell`                   | A header cell with `aria-sort`. Slot: `{ column, sort, toggleSort }`.                 |
-| `DataTableSortButton`                   | Toggles a column's sort; Shift adds it to the sort.                                   |
-| `DataTableBody`                         | Body rows. Slots: `default` with `{ rows }`, `empty`.                                 |
-| `DataTableRow`                          | A row with `aria-selected`. Slot: `{ row, selected, columns }`.                       |
-| `DataTableCell`                         | A cell. Slot: `{ row, column, value, display }`.                                      |
-| `DataTableEmpty`                        | Renders its slot only when no row matches.                                            |
-| `DataTableSelectAll`                    | The select-all checkbox, indeterminate when partial. Slot: `{ state, toggle }`.       |
-| `DataTableSelectRow`                    | A row's checkbox. Slot: `{ selected, toggle }`.                                       |
-| `DataTableSearch`                       | The search input. Prop: `debounce` in milliseconds.                                   |
-| `DataTablePagination`                   | Page buttons with `aria-current`. Slot: `{ page, pageCount, items, … }`.              |
-| `DataTablePageSize`                     | The page size `<select>`.                                                             |
-| `DataTableColumnVisibility`             | A checkbox per column. Slot: `{ columns, toggle }`.                                   |
-| `DataTableStatus`                       | A polite live region. Slot: `{ start, end, rowCount, … }`.                            |
-| `DataTableLoadMore`                     | A keyboard-accessible cursor load-more or source retry button.                        |
-| `DataGridRoot`                          | A `role="grid"` spreadsheet with keyboard and clipboard handling.                     |
-| `DataGridBody`                          | Grid rows. Slots: `cell`, `rowHeader`.                                                |
-| `DataGridCell`                          | A grid cell with selection, editing, and `aria-selected`. Slots: `default`, `editor`. |
+| Component                               | Role                                                                                                               |
+| --------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| `DataTableRoot`                         | Provides the table; renders `<table>` with `aria-rowcount`.                                                        |
+| `DataTableCaption`                      | The caption.                                                                                                       |
+| `DataTableHeader`, `DataTableHeaderRow` | The header section and row.                                                                                        |
+| `DataTableHeaderCell`                   | A header cell with `aria-sort`. Slot: `{ column, sort, toggleSort }`.                                              |
+| `DataTableSortButton`                   | Toggles a column's sort; Shift adds it to the sort.                                                                |
+| `DataTableBody`                         | Body rows. Slots: `default` with `{ rows }`, `empty`.                                                              |
+| `DataTableRow`                          | A row with `aria-selected`. Slot: `{ row, selected, columns }`.                                                    |
+| `DataTableCell`                         | A cell. Slot: `{ row, column, value, display }`.                                                                   |
+| `DataTableEmpty`                        | Renders its slot only when no row matches.                                                                         |
+| `DataTableSelectAll`                    | The select-all checkbox, indeterminate when partial. Slot: `{ state, toggle }`.                                    |
+| `DataTableSelectRow`                    | A row's checkbox. Slot: `{ selected, toggle }`.                                                                    |
+| `DataTableSearch`                       | The search input. Prop: `debounce` in milliseconds.                                                                |
+| `DataTablePagination`                   | Page buttons with `aria-current`. Slot: `{ page, pageCount, items, … }`.                                           |
+| `DataTablePageSize`                     | The page size `<select>`.                                                                                          |
+| `DataTableColumnVisibility`             | A checkbox per column. Slot: `{ columns, toggle }`.                                                                |
+| `DataTableStatus`                       | A polite live region. Slot: `{ start, end, rowCount, … }`.                                                         |
+| `DataTableLoadMore`                     | A keyboard-accessible cursor load-more or source retry button.                                                     |
+| `DataTableExpandToggle`                 | Disclosure button. Props: `row`, optional `controls`, `expand-label`, `collapse-label`. Slot: `{ row, expanded }`. |
+| `DataTableDetailRow`                    | Deferred full-width detail. Props: `row`, `colspan`, optional `keep-alive`. Slot: `{ row }`.                       |
+| `DataTableTreeCell`                     | Indentation, disclosure and child-load recovery. Props: `row`, `as`. Slots: `default`, `toggle` with `{ row }`.    |
+| `DataGridRoot`                          | A `role="grid"` spreadsheet with keyboard and clipboard handling.                                                  |
+| `DataGridBody`                          | Grid rows. Slots: `cell`, `rowHeader`.                                                                             |
+| `DataGridCell`                          | A grid cell with selection, editing, and `aria-selected`. Slots: `default`, `editor`.                              |
 
 ## Composables
+
+Roots (`DataTableRoot`, `DataGridRoot`, `VtTable`, `VtGrid`) accept `tree-column` and
+`keep-alive-detail`. `DataTableBody` adds `row` and `detail` slots with `{ row, rowIndex }`;
+`DataGridBody` adds `detail` with the same props. `DataTableCell` / `DataGridCell` accept
+`:tree="false"` for manually wrapped tree content. `DataTableSelectRow` adds `indeterminate` to
+its slot, reflecting loaded-subtree coverage. Status slots add `loadingChildrenCount` and
+`childErrorCount`; custom status content owns its progress/failure announcements.
+
+Styled equivalents are `VtExpandToggle`, `VtDetailRow`, `VtTreeCell`. Styled roots forward their
+`expanded` slot, and `VtBody` exposes `row` / `detail` slots. All disclosure IDs are instance-scoped
+and stable across SSR hydration. `--vt-tree-indent` controls the logical indentation step.
 
 | Function                      | Returns                                                  |
 | ----------------------------- | -------------------------------------------------------- |
@@ -193,3 +215,7 @@ Controls outside `<VtTable>` need the table provided above them, which is what
 `onStateChange`, `onDataChange`, and `onEditIssues` are read once.
 
 `data` defaults to an empty array. `source` and `loadMore` accept values or refs. A source factory tracks its synchronous reactive reads and restarts on changes. `streamOptions`, `scheduleFrame` and `endThreshold` are creation options. The binding adds `loadingMode`, `canLoadMore`, `loadError`, `loadNext()` and `retry()`; see [streaming](/guide/streaming).
+
+`useDataGrid(table, { treeColumn: () => 'name' })` chooses the column that handles tree keys.
+The optional callback stays reactive. `table.tree` indicates configured hierarchy independently
+of whether any rows exist. Tree callbacks and modes are creation options on `useDataTable` too.

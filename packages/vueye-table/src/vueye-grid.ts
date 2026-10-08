@@ -1,5 +1,9 @@
-import type { CellChange, ColumnDef, TableIssue, TableState } from "@vueye-table/core";
-import type { GridCellSlotProps, TableStatusSlotProps } from "@vueye-table/headless";
+import type { CellChange, ColumnDef, TableIssue, TableState, TableRow } from "@vueye-table/core";
+import type {
+  GridCellSlotProps,
+  TableStatusSlotProps,
+  DetailSlotProps,
+} from "@vueye-table/headless";
 import {
   VtGrid,
   VtPageSize,
@@ -18,6 +22,9 @@ import {
   createColumnResolver,
   emitStateChanges,
   stateEmits,
+  expansionOptions,
+  emitExpansionChanges,
+  CellContent,
 } from "./shared";
 
 /**
@@ -32,6 +39,7 @@ export const VueyeGrid = defineComponent({
     { [key: `cell.${string}`]: GridCellSlotProps & { readonly item: unknown } } & {
       default?: (props: Record<string, unknown>) => VNode[];
       status?: (props: TableStatusSlotProps) => VNode[];
+      expanded?: (props: DetailSlotProps) => VNode[];
     }
   >,
   props: {
@@ -56,12 +64,16 @@ export const VueyeGrid = defineComponent({
     edit: (_changes: readonly CellChange<unknown>[]) => true,
     "edit-error": (_issues: readonly TableIssue[]) => true,
     export: (_csv: string) => true,
+    expand: (_item: unknown, _row: TableRow<unknown>) => true,
+    collapse: (_item: unknown, _row: TableRow<unknown>) => true,
   } as { [K in (typeof stateEmits)[number]]: null } & {
     "state-change": (state: TableState) => boolean;
     "update:data": (data: readonly unknown[]) => boolean;
     edit: (changes: readonly CellChange<unknown>[]) => boolean;
     "edit-error": (issues: readonly TableIssue[]) => boolean;
     export: (csv: string) => boolean;
+    expand: (item: unknown, row: TableRow<unknown>) => boolean;
+    collapse: (item: unknown, row: TableRow<unknown>) => boolean;
   },
   setup(props, { emit, slots, expose, attrs }) {
     const resolveColumns = createColumnResolver();
@@ -81,6 +93,7 @@ export const VueyeGrid = defineComponent({
     };
     let binding: DataTableBinding<unknown> | undefined;
     const table = useDataTable<unknown>({
+      ...expansionOptions(props, !!slots.expanded),
       data: () => props.data,
       source: computed(() => props.source),
       loadMore: computed(() => props.loadMore),
@@ -114,6 +127,7 @@ export const VueyeGrid = defineComponent({
       },
       onStateChange(state, previous) {
         emitStateChanges(emit as never, state, previous);
+        emitExpansionChanges(emit, state, previous, binding?.table.getSnapshot());
         emit("state-change", state);
       },
     });
@@ -124,13 +138,14 @@ export const VueyeGrid = defineComponent({
     // `cell.<id>` slots also receive the row's data as `item`, as they do on `<VueyeTable>`.
     const gridSlots = (): Record<string, unknown> => {
       const forwarded: Record<string, unknown> = {};
+      if (slots.expanded) forwarded["expanded"] = slots.expanded;
       for (const [name, slot] of Object.entries(slots)) {
         if (name === "default" && slot) {
           forwarded[name] = slot;
         } else if (name.startsWith("cell.")) {
           const cellSlot = slots[name as `cell.${string}`];
           forwarded[name] = (cellProps: GridCellSlotProps) =>
-            cellSlot?.({ ...cellProps, item: cellProps.row.original });
+            cellSlot ? h(CellContent, { ...cellProps, render: cellSlot }) : cellProps.display;
         }
       }
       return forwarded;
@@ -176,11 +191,13 @@ export const VueyeGrid = defineComponent({
             rowHeight: props.rowHeight,
             overscan: props.overscan,
             columnWidth: props.columnWidth,
+            treeColumn: props.treeColumn,
+            keepAliveDetail: props.keepAliveDetail,
             ...(props.maxHeight ? { style: { "--vt-max-height": props.maxHeight } } : {}),
           },
           gridSlots(),
         ),
-        props.pagination || table.loadingMode || slots.status
+        props.pagination || table.loadingMode || slots.status || table.tree
           ? h(VtToolbar, { class: "vt-footer" }, () => [
               h(
                 VtStatus,

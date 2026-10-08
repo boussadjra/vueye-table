@@ -34,6 +34,7 @@ export {
   type GridCommand,
   type GridDirection,
   type GridKey,
+  type GridTreeContext,
   type GridSelection,
   type MoveOptions,
 } from "./grid";

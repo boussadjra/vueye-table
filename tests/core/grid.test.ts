@@ -60,6 +60,36 @@ describe("grid selection", () => {
 });
 
 describe("gridCommand", () => {
+  it("maps hierarchy keys only in an explicitly supplied tree context", () => {
+    expect(gridCommand({ key: "ArrowRight" }, { canExpand: true, expanded: false })).toEqual({
+      type: "tree",
+      action: "expand",
+    });
+    expect(gridCommand({ key: "ArrowRight" }, { canExpand: true, expanded: true })).toEqual({
+      type: "tree",
+      action: "child",
+    });
+    expect(gridCommand({ key: "ArrowLeft" }, { canExpand: true, expanded: true })).toEqual({
+      type: "tree",
+      action: "collapse",
+    });
+    expect(gridCommand({ key: "ArrowLeft" }, { canExpand: false, expanded: false })).toEqual({
+      type: "tree",
+      action: "parent",
+    });
+    expect(gridCommand({ key: "*", shiftKey: true }, { canExpand: true, expanded: false })).toEqual(
+      { type: "tree", action: "siblings" },
+    );
+    expect(
+      gridCommand({ key: "ArrowRight", shiftKey: true }, { canExpand: true, expanded: false }),
+    ).toMatchObject({ type: "move", options: { extend: true } });
+    expect(
+      gridCommand({ key: "ArrowLeft", ctrlKey: true }, { canExpand: true, expanded: false }),
+    ).toMatchObject({ type: "move", options: { toEdge: true } });
+    expect(gridCommand({ key: "ArrowRight" }, { canExpand: false, expanded: false })).toMatchObject(
+      { type: "move" },
+    );
+  });
   it("maps keys spreadsheet style", () => {
     expect(gridCommand({ key: "ArrowDown", shiftKey: true })).toEqual({
       type: "move",

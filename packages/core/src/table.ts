@@ -130,6 +130,8 @@ export interface SortInfo {
  * frozen and replaced on each change, so comparing snapshots by identity detects a change.
  */
 export interface TableSnapshot<TRow> {
+  /** True when hierarchy options are configured, including an empty tree. */
+  readonly tree: boolean;
   readonly loadState: LoadState;
   readonly loadedRowCount: number;
   readonly expectedRowCount: number | undefined;
@@ -413,6 +415,17 @@ export function createTable<TRow, TSignal extends TreeLoadSignal = TreeLoadSigna
     options.getChildren || options.getParentKey || options.hasChildren || options.loadChildren,
   );
   const rootPagination = treeEnabled && (manual || (options.paginateBy ?? "root") === "root");
+  const projectedRows = new WeakMap<TableRow<TRow>, TableRow<TRow>>();
+  function shareRow(base: TableRow<TRow>, next: TableRow<TRow>): TableRow<TRow> {
+    const previous = projectedRows.get(base);
+    if (
+      previous &&
+      (Object.keys(next) as (keyof TableRow<TRow>)[]).every((key) => previous[key] === next[key])
+    )
+      return previous;
+    projectedRows.set(base, next);
+    return next;
+  }
   let lazyVersion = 0;
   const lazyChildren = new Map<RowKey, readonly TRow[]>();
   const childStatuses = new Map<RowKey, ChildStatus>();
@@ -740,11 +753,14 @@ export function createTable<TRow, TSignal extends TreeLoadSignal = TreeLoadSigna
       const rows = mapList(indexed.rows, (row) => {
         const isExpanded = row.canExpand && (expanded === true || (keys?.has(row.key) ?? false));
         return isExpanded || selected.has(row.key)
-          ? Object.freeze({
-              ...row,
-              isExpanded,
-              selection: selected.has(row.key) ? ("all" as const) : ("none" as const),
-            })
+          ? shareRow(
+              row,
+              Object.freeze({
+                ...row,
+                isExpanded,
+                selection: selected.has(row.key) ? ("all" as const) : ("none" as const),
+              }),
+            )
           : row;
       });
       const byKey = {
@@ -859,23 +875,26 @@ export function createTable<TRow, TSignal extends TreeLoadSignal = TreeLoadSigna
           node.children.length > 0 ||
           status !== "loaded" ||
           (options.getRowCanExpand?.(node.row.original) ?? false);
-        const result = Object.freeze({
-          ...node.row,
-          isDirty: dirty.has(key),
-          cellIssues: cellProblems.get(key),
-          depth: node.depth,
-          parentKey: node.parent?.row.key,
-          childCount: status === "loaded" ? node.children.length : undefined,
-          childStatus: status,
-          canExpand,
-          isExpanded:
-            canExpand &&
-            (expandedState === true ||
-              (keys?.has(key) ?? false) ||
-              ancestors.has(key) ||
-              processed.autoExpanded.has(key)),
-          selection: coverage(count.selected, count.total),
-        });
+        const result = shareRow(
+          node.row,
+          Object.freeze({
+            ...node.row,
+            isDirty: dirty.has(key),
+            cellIssues: cellProblems.get(key),
+            depth: node.depth,
+            parentKey: node.parent?.row.key,
+            childCount: status === "loaded" ? node.children.length : undefined,
+            childStatus: status,
+            canExpand,
+            isExpanded:
+              canExpand &&
+              (expandedState === true ||
+                (keys?.has(key) ?? false) ||
+                ancestors.has(key) ||
+                processed.autoExpanded.has(key)),
+            selection: coverage(count.selected, count.total),
+          }),
+        );
         projected.set(key, result);
         return result;
       };
@@ -962,6 +981,7 @@ export function createTable<TRow, TSignal extends TreeLoadSignal = TreeLoadSigna
     );
 
     return Object.freeze({
+      tree: treeEnabled,
       loadState,
       loadedRowCount: indexed.rows.length,
       expectedRowCount,

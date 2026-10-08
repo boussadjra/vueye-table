@@ -61,19 +61,20 @@ export const DataTableSelectAll = defineComponent({
 export const DataTableSelectRow = defineComponent({
   name: "DataTableSelectRow",
   slots: Object as SlotsType<{
-    default?: (props: { selected: boolean; toggle: () => void }) => VNode[];
+    default?: (props: { selected: boolean; indeterminate: boolean; toggle: () => void }) => VNode[];
   }>,
   props: { row: rowProp, label: { type: String, default: "Select row" } },
   setup(props, { slots }) {
     const table = injectDataTable("<DataTableSelectRow>");
     return () => {
-      const selected = table.isSelected(props.row.key);
+      const selected = table.tree ? props.row.selection === "all" : table.isSelected(props.row.key);
+      const indeterminate = table.tree && props.row.selection === "some";
       const toggle = (): void => table.toggleRow(props.row.key);
       return (
-        slots.default?.({ selected, toggle }) ??
+        slots.default?.({ selected, indeterminate, toggle }) ??
         checkbox({
           checked: selected,
-          indeterminate: false,
+          indeterminate,
           label: props.label,
           disabled: table.selectionMode === "none",
           onChange: toggle,
@@ -278,6 +279,8 @@ export interface TableStatusSlotProps {
   readonly canLoadMore: boolean;
   readonly retry: () => void;
   readonly loadNext: () => Promise<void>;
+  readonly loadingChildrenCount: number;
+  readonly childErrorCount: number;
 }
 export const DataTableStatus = defineComponent({
   name: "DataTableStatus",
@@ -300,6 +303,12 @@ export const DataTableStatus = defineComponent({
         canLoadMore: table.canLoadMore,
         retry: () => table.retry(),
         loadNext: () => table.loadNext(),
+        loadingChildrenCount: table.tree
+          ? table.processedRows.filter((row) => row.childStatus === "loading").length
+          : 0,
+        childErrorCount: table.tree
+          ? table.processedRows.filter((row) => row.childStatus === "error").length
+          : 0,
       };
       const count = `Loaded ${table.loadedRowCount.toLocaleString()} ${table.loadedRowCount === 1 ? "row" : "rows"}`;
       const text = table.loadingMode
@@ -317,7 +326,12 @@ export const DataTableStatus = defineComponent({
       return h(
         props.as,
         { role: "status", "aria-live": "polite" },
-        slots.default?.(slotProps) ?? text,
+        slots.default?.(slotProps) ??
+          text +
+            (slotProps.loadingChildrenCount ? " Loading children…" : "") +
+            (slotProps.childErrorCount
+              ? " Could not load children. Retry children in the affected row."
+              : ""),
       );
     };
   },

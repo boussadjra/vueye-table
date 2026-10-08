@@ -9,6 +9,16 @@ export {
   DataTableStatus,
 } from "./controls";
 export { DataTableLoadMore } from "./loading";
+export {
+  DataTableExpandToggle,
+  DataTableDetailRow,
+  DataTableTreeCell,
+  hierarchyProps,
+  expandToggleProps,
+  treeCellProps,
+  resolveTreeColumn,
+  type DetailSlotProps,
+} from "./hierarchy";
 export { cellId, DataGridBody, DataGridCell, DataGridRoot, type GridCellSlotProps } from "./grid";
 export {
   columnStyle,
