@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, shallowRef } from "vue";
+import { ref, shallowRef, type VNode } from "vue";
 import {
   VueyeTable,
   VueyeGrid,
@@ -99,6 +99,9 @@ const tabEditor = (event: KeyboardEvent, editor: CellEditorSlotProps): void => {
   event.preventDefault();
   editor.finish(event.shiftKey ? "left" : "right");
 };
+const focusStatus = (vnode: VNode): void => {
+  if (mode.value !== "row") (vnode.el as HTMLSelectElement | null)?.focus();
+};
 </script>
 
 <template>
@@ -172,6 +175,7 @@ const tabEditor = (event: KeyboardEvent, editor: CellEditorSlotProps): void => {
           :disabled="editor.pending"
           aria-label="Custom status"
           data-editor
+          @vue:mounted="focusStatus"
           @change="editor.commit(($event.target as HTMLSelectElement).value)"
           @keydown.enter.prevent="editor.finish()"
           @keydown.esc.prevent="editor.cancel()"

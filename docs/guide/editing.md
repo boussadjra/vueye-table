@@ -86,6 +86,7 @@ Both full components and `VtGrid` accept `editor.<column id>` slots:
       :disabled="editor.pending"
       aria-label="Edit quantity"
       inputmode="decimal"
+      @vue:mounted="($event.el as HTMLInputElement).focus()"
       @input="editor.input(($event.target as HTMLInputElement).value)"
       @keydown.enter.prevent="editor.finish('down')"
       @keydown.esc.prevent="editor.cancel()"
@@ -108,6 +109,8 @@ types. Both routes enforce editability, constraints, validators, stale-row guard
 Use `input(text)` when a parser should interpret a custom field's output. The earlier headless
 `commit(direction)` spelling is replaced by `finish(direction)`; a string passed to `commit`
 is now a value. Custom editors own their keyboard, focus, and plain-text paste handling.
+Focus the field on mount in cell/grid mode. In row mode, let the first editable field receive
+focus so later fields do not steal it.
 
 Native fields and cells associate inline messages through `aria-invalid` and
 `aria-describedby`; pending fields/cells expose `aria-busy`. Validation messages and edited
