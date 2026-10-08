@@ -1,5 +1,17 @@
 # @vueye-table/vue
 
+## 3.0.0-alpha.8
+
+### Minor Changes
+
+- 26b01b1: Add cancellable reactive sources and cursor loading to Vue bindings and table/grid components,
+  with frame-coalesced Vue snapshots, mount-deferred SSR startup, virtual-end loading, live status,
+  retry controls and loading sentinels. Initial data is optional for managed sources.
+
+### Patch Changes
+
+- @vueye-table/core@3.0.0-alpha.8
+
 ## 3.0.0-alpha.7
 
 ### Minor Changes

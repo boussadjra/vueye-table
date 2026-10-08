@@ -1,6 +1,6 @@
 {
   "name": "@vueye-table/vue",
-  "version": "3.0.0-alpha.7",
+  "version": "3.0.0-alpha.8",
   "description": "Vue composables that bind the vueye-table engine to reactive state.",
   "keywords": [
     "composables",

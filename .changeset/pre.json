@@ -24,6 +24,7 @@
     "grid-slots-and-fixes",
     "tree-data",
     "vue-row-drafts",
+    "vue-streaming-components",
     "vue-virtual-bindings"
   ]
 }

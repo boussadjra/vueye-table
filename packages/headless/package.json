@@ -1,6 +1,6 @@
 {
   "name": "@vueye-table/headless",
-  "version": "3.0.0-alpha.7",
+  "version": "3.0.0-alpha.8",
   "description": "Unstyled, accessible Vue components for vueye-table: tables, controls, and spreadsheet grids.",
   "keywords": [
     "data-table",
