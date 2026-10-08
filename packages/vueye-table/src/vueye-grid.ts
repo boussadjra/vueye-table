@@ -1,8 +1,16 @@
-import type { CellChange, ColumnDef, TableIssue, TableState, TableRow } from "@vueye-table/core";
+import type {
+  CellChange,
+  ColumnDef,
+  TableIssue,
+  TableState,
+  TableRow,
+  EditResult,
+} from "@vueye-table/core";
 import type {
   GridCellSlotProps,
   TableStatusSlotProps,
   DetailSlotProps,
+  CellEditorSlotProps,
 } from "@vueye-table/headless";
 import {
   VtGrid,
@@ -25,6 +33,8 @@ import {
   expansionOptions,
   emitExpansionChanges,
   CellContent,
+  editingOptions,
+  editingEmits,
 } from "./shared";
 
 /**
@@ -36,7 +46,10 @@ import {
 export const VueyeGrid = defineComponent({
   name: "VueyeGrid",
   slots: Object as SlotsType<
-    { [key: `cell.${string}`]: GridCellSlotProps & { readonly item: unknown } } & {
+    {
+      [key: `cell.${string}`]: GridCellSlotProps & { readonly item: unknown };
+      [key: `editor.${string}`]: CellEditorSlotProps;
+    } & {
       default?: (props: Record<string, unknown>) => VNode[];
       status?: (props: TableStatusSlotProps) => VNode[];
       expanded?: (props: DetailSlotProps) => VNode[];
@@ -58,6 +71,7 @@ export const VueyeGrid = defineComponent({
     toolbar: { type: Boolean, default: true },
   },
   emits: {
+    ...editingEmits,
     ...Object.fromEntries(stateEmits.map((name) => [name, null])),
     "state-change": (_state: TableState) => true,
     "update:data": (_data: readonly unknown[]) => true,
@@ -66,26 +80,34 @@ export const VueyeGrid = defineComponent({
     export: (_csv: string) => true,
     expand: (_item: unknown, _row: TableRow<unknown>) => true,
     collapse: (_item: unknown, _row: TableRow<unknown>) => true,
-  } as { [K in (typeof stateEmits)[number]]: null } & {
-    "state-change": (state: TableState) => boolean;
-    "update:data": (data: readonly unknown[]) => boolean;
-    edit: (changes: readonly CellChange<unknown>[]) => boolean;
-    "edit-error": (issues: readonly TableIssue[]) => boolean;
-    export: (csv: string) => boolean;
-    expand: (item: unknown, row: TableRow<unknown>) => boolean;
-    collapse: (item: unknown, row: TableRow<unknown>) => boolean;
-  },
+  } as { [K in (typeof stateEmits)[number]]: null } & typeof editingEmits & {
+      "state-change": (state: TableState) => boolean;
+      "update:data": (data: readonly unknown[]) => boolean;
+      edit: (changes: readonly CellChange<unknown>[]) => boolean;
+      "edit-error": (issues: readonly TableIssue[]) => boolean;
+      export: (csv: string) => boolean;
+      expand: (item: unknown, row: TableRow<unknown>) => boolean;
+      collapse: (item: unknown, row: TableRow<unknown>) => boolean;
+    },
   setup(props, { emit, slots, expose, attrs }) {
     const resolveColumns = createColumnResolver();
-    const columns = computed(() =>
-      resolveColumns(props.columns, props.data).map(
+    let previousColumns:
+      | { source: readonly unknown[]; editable: boolean; columns: readonly ColumnDef<unknown>[] }
+      | undefined;
+    const columns = computed(() => {
+      const source = resolveColumns(props.columns, props.data);
+      if (previousColumns?.source === source && previousColumns.editable === props.editable)
+        return previousColumns.columns;
+      const resolved = source.map(
         (column) =>
           ({
             ...column,
             editable: props.editable ? (column.editable ?? true) : false,
           }) as ColumnDef<unknown>,
-      ),
-    );
+      );
+      previousColumns = { source, editable: props.editable, columns: resolved };
+      return resolved;
+    });
     const everyRow = (): number => Math.max(1, props.data.length);
     const initialPagination = {
       page: props.page ?? 1,
@@ -94,6 +116,7 @@ export const VueyeGrid = defineComponent({
     let binding: DataTableBinding<unknown> | undefined;
     const table = useDataTable<unknown>({
       ...expansionOptions(props, !!slots.expanded),
+      ...editingOptions(props),
       data: () => props.data,
       source: computed(() => props.source),
       loadMore: computed(() => props.loadMore),
@@ -120,6 +143,7 @@ export const VueyeGrid = defineComponent({
       },
       onEditIssues(issues) {
         emit("edit-error", issues);
+        emit("edit-issues", issues);
       },
       onDataChange(data, changes) {
         emit("update:data", data);
@@ -146,6 +170,8 @@ export const VueyeGrid = defineComponent({
           const cellSlot = slots[name as `cell.${string}`];
           forwarded[name] = (cellProps: GridCellSlotProps) =>
             cellSlot ? h(CellContent, { ...cellProps, render: cellSlot }) : cellProps.display;
+        } else if (name.startsWith("editor.")) {
+          forwarded[name] = slot;
         }
       }
       return forwarded;
@@ -156,9 +182,14 @@ export const VueyeGrid = defineComponent({
 
     return () =>
       h("div", { class: "vt-theme vueye-grid", "data-vt-theme": props.theme }, [
-        props.toolbar || props.searchable
+        props.toolbar || props.searchable || props.addRow
           ? h(VtToolbar, () => [
               props.searchable ? h(VtSearch, { placeholder: props.searchPlaceholder }) : null,
+              props.addRow
+                ? button("Add row", false, () => {
+                    table.insertRows();
+                  })
+                : null,
               h("div", { class: "vt-toolbar-spacer" }),
               props.toolbar
                 ? [
@@ -176,6 +207,10 @@ export const VueyeGrid = defineComponent({
             label: props.label,
             "aria-describedby": attrs["aria-describedby"],
             rowNumbers: props.rowNumbers,
+            rowActions: props.editable || props.removeRows,
+            removable: props.removeRows,
+            onSave: (result: unknown) => emit("save", result as EditResult<unknown>),
+            onCancel: (key: unknown) => emit("cancel", key as string | number),
             columnLetters: props.columnLetters,
             density: props.density,
             striped: props.striped,

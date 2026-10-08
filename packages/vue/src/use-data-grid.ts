@@ -1,5 +1,6 @@
 import {
   clampPosition,
+  formatValue,
   gridCommand,
   moveSelection,
   rangeContains,
@@ -19,6 +20,7 @@ import {
   type TableRow,
   type EditorSpec,
   type RowKey,
+  type CellEdit,
 } from "@vueye-table/core";
 import { computed, shallowRef, watch, type ComputedRef } from "vue";
 
@@ -57,6 +59,12 @@ export interface DataGridBinding<TRow> {
   updateDraft(draft: string): void;
   /** Write the draft through the table, then move the focus if asked. */
   commitEdit(then?: GridDirection): EditResult<TRow> | undefined;
+  /** Submit through core validation; retain a refused/pending editor for correction. */
+  submitEdit(
+    edit?: { readonly input: string } | { readonly value: unknown },
+    then?: GridDirection,
+  ): EditResult<TRow> | undefined;
+  toggleCheckbox(): boolean;
   cancelEdit(): void;
   /** The selected range as tab-separated text. */
   copy(options?: CopyOptions): string;
@@ -84,6 +92,8 @@ export function useDataGrid<TRow>(
     | undefined;
   let resultToken: object | undefined;
   const invalidEditors = new WeakSet<object>();
+  const editorSpecs = new WeakMap<object, EditorSpec>();
+  let submitting: object | undefined;
   const record = (result: EditResult<TRow>): EditResult<TRow> => {
     const token = {};
     resultToken = token;
@@ -126,7 +136,7 @@ export function useDataGrid<TRow>(
         if (
           row < 0 ||
           column < 0 ||
-          table.getRow(active.key)?.original !== active.original ||
+          (!submitting && table.getRow(active.key)?.original !== active.original) ||
           table.getColumn(active.column.id)?.definition !== active.column.definition
         ) {
           editor.value = undefined;
@@ -180,6 +190,8 @@ export function useDataGrid<TRow>(
       const cell = cellAt(position);
       if (!cell || !cell.column.isEditable(cell.row.original)) return undefined;
       const spec = cell.column.definition.editor;
+      const cached = editorSpecs.get(cell.column.definition);
+      if (cached) return cached;
       if (
         spec &&
         ["text", "number", "select", "checkbox", "date"].includes(spec.kind) &&
@@ -189,7 +201,7 @@ export function useDataGrid<TRow>(
               (value) => value === null || ["string", "number", "boolean"].includes(typeof value),
             )))
       ) {
-        return Object.freeze({
+        const resolved = Object.freeze({
           kind: spec.kind,
           ...(spec.options ? { options: Object.freeze([...spec.options]) } : {}),
           ...(spec.min !== undefined ? { min: spec.min } : {}),
@@ -197,6 +209,8 @@ export function useDataGrid<TRow>(
           ...(spec.maxLength !== undefined ? { maxLength: spec.maxLength } : {}),
           ...(spec.pattern !== undefined ? { pattern: spec.pattern } : {}),
         });
+        editorSpecs.set(cell.column.definition, resolved);
+        return resolved;
       }
       if (spec) {
         if (!invalidEditors.has(cell.column.definition)) {
@@ -228,6 +242,7 @@ export function useDataGrid<TRow>(
     isSelected: (position) => (range.value ? rangeContains(range.value, position) : false),
     isEditing: (position) => same(editor.value?.position, position),
     focusCell(position, { extend = false } = {}) {
+      if (submitting) return;
       const target = clampPosition(position, bounds.value);
       if (editor.value && !same(editor.value.position, target)) {
         grid.commitEdit();
@@ -252,12 +267,25 @@ export function useDataGrid<TRow>(
       }
     },
     startEdit(initial) {
+      if (submitting) return false;
       const focus = ensureSelection()?.focus;
       const cell = focus ? cellAt(focus) : undefined;
       if (!focus || !cell || !cell.column.isEditable(cell.row.original)) {
         return false;
       }
-      editor.value = { position: focus, draft: initial ?? cell.row.getDisplay(cell.column.id) };
+      const value = cell.row.getValue(cell.column.id);
+      const kind = grid.editorFor(focus)?.kind;
+      const text =
+        kind === "date" && value instanceof Date
+          ? Number.isFinite(value.getTime())
+            ? value.toISOString().slice(0, 10)
+            : ""
+          : kind && kind !== "text"
+            ? value === null || value === undefined
+              ? ""
+              : formatValue(value)
+            : cell.row.getDisplay(cell.column.id);
+      editor.value = { position: focus, draft: initial ?? text };
       editing = { key: cell.row.key, column: cell.column, original: cell.row.original };
       return true;
     },
@@ -292,9 +320,59 @@ export function useDataGrid<TRow>(
       }
       return result;
     },
+    submitEdit(edit, then) {
+      const current = editor.value;
+      const active = editing;
+      if (!current || !active || submitting) return undefined;
+      const token = {};
+      submitting = token;
+      const cell: CellEdit = {
+        rowKey: active.key,
+        column: active.column.id,
+        ...(edit ?? { input: current.draft }),
+      };
+      const result = record(
+        table.edit(cell, { expectedRows: new Map([[active.key, active.original]]) }),
+      );
+      const settle = (final: EditResult<TRow>): void => {
+        if (submitting !== token) return;
+        submitting = undefined;
+        if (editing !== active) return;
+        if (
+          final.status !== "rejected" ||
+          final.issues.some((problem) => problem.code === "stale_draft")
+        ) {
+          editor.value = undefined;
+          editing = undefined;
+          if (then) grid.move(then);
+        } else {
+          editing = { ...active, original: table.getRow(active.key)?.original ?? active.original };
+        }
+      };
+      if (result.completion) void result.completion.then(settle);
+      else settle(result);
+      return result;
+    },
     cancelEdit() {
       editor.value = undefined;
       editing = undefined;
+      submitting = undefined;
+    },
+    toggleCheckbox() {
+      const focus = ensureSelection()?.focus;
+      const cell = focus ? cellAt(focus) : undefined;
+      if (!focus || !cell || grid.editorFor(focus)?.kind !== "checkbox") return false;
+      record(
+        table.edit(
+          {
+            rowKey: cell.row.key,
+            column: cell.column.id,
+            value: cell.row.getValue(cell.column.id) !== true,
+          },
+          { expectedRows: new Map([[cell.row.key, cell.row.original]]) },
+        ),
+      );
+      return true;
     },
     copy(options) {
       return range.value ? table.copy(range.value, options) : "";

@@ -536,6 +536,109 @@
   outline: none;
 }
 
+.vt-table [data-edit-cell][data-editable] {
+  cursor: text;
+}
+.vt-table [data-edit-cell]:focus-visible {
+  outline: 2px solid var(--vt-focus);
+  outline-offset: -2px;
+}
+.vt-table [data-dirty] {
+  background-color: color-mix(in srgb, var(--vt-accent) 6%, var(--vt-bg));
+}
+.vt-table [data-editing] [data-editor],
+.vt-cell-editor,
+.vt-table [data-select-editor] input,
+.vt-table [data-select-editor] select {
+  box-sizing: border-box;
+  min-width: 6rem;
+  max-width: 100%;
+  width: 100%;
+  padding: 0.5rem;
+  color: var(--vt-fg);
+  font: inherit;
+  background: var(--vt-bg);
+  border: 1px solid var(--vt-border);
+  border-radius: 4px;
+  accent-color: var(--vt-accent);
+  caret-color: var(--vt-accent);
+}
+.vt-table [data-editor][type="checkbox"] {
+  width: 1.1rem;
+  min-width: 1.1rem;
+  height: 1.1rem;
+  margin: 0.5rem;
+}
+.vt-table [data-editor]:focus-visible,
+.vt-table [data-select-editor] input:focus-visible {
+  outline: 2px solid var(--vt-focus);
+  outline-offset: -2px;
+}
+.vt-table [aria-invalid="true"] [data-editor],
+.vt-table [data-editor][aria-invalid="true"] {
+  border-color: var(--vt-danger);
+}
+.vt-table [data-edit-issues] {
+  display: block;
+  padding: 0.4rem 0.5rem;
+  color: var(--vt-danger);
+  font-size: 0.85em;
+  white-space: normal;
+}
+.vt-table [aria-busy="true"] [data-edit-issues] {
+  color: var(--vt-muted);
+}
+.vt-table [data-select-editor] {
+  min-width: 10rem;
+  padding: 0.4rem;
+}
+.vt-table [data-editor-hint] {
+  display: block;
+  padding-top: 0.35rem;
+  font-size: 0.8em;
+  color: var(--vt-muted);
+}
+.vt-row-controls {
+  width: 1%;
+}
+.vt-row-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  min-width: 5rem;
+}
+.vt-row-actions button,
+.vt-row-actions summary {
+  padding: 0.3rem 0.5rem;
+  border: 1px solid var(--vt-border);
+  border-radius: 4px;
+  color: var(--vt-fg);
+  background: var(--vt-bg);
+  font: inherit;
+  font-size: 0.85em;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.vt-row-actions button:disabled {
+  color: var(--vt-muted);
+  cursor: default;
+}
+.vt-row-actions button:enabled:hover,
+.vt-row-actions summary:hover {
+  background: var(--vt-header-bg);
+}
+.vt-row-actions button:focus-visible,
+.vt-row-actions summary:focus-visible {
+  outline: 2px solid var(--vt-focus);
+  outline-offset: 2px;
+}
+.vt-row-actions [data-row-menu] {
+  display: flex;
+  gap: 0.35rem;
+  margin-top: 0.35rem;
+}
+
 .vt-grid .vt-row-number {
   width: 1%;
   padding-inline: 0.5rem;

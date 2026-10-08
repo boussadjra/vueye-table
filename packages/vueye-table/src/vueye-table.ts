@@ -1,4 +1,4 @@
-import type { ColumnDef, RowKey, TableRow, TableState } from "@vueye-table/core";
+import type { ColumnDef, RowKey, TableRow, TableState, EditResult } from "@vueye-table/core";
 import {
   DataTableBody,
   DataTableCaption,
@@ -11,6 +11,9 @@ import {
   type TableStatusSlotProps,
   type DetailSlotProps,
   resolveTreeColumn,
+  DataTableEditRoot,
+  DataTableEditCell,
+  type CellEditorSlotProps,
 } from "@vueye-table/headless";
 import {
   VtColumnVisibility,
@@ -24,9 +27,18 @@ import {
   VtToolbar,
   VtExpandToggle,
   VtTreeCell,
+  VtRowActions,
 } from "@vueye-table/styled";
 import { provideDataTable, useDataTable, type DataTableBinding } from "@vueye-table/vue";
-import { computed, defineComponent, h, type PropType, type SlotsType, type VNodeChild } from "vue";
+import {
+  computed,
+  defineComponent,
+  h,
+  mergeProps,
+  type PropType,
+  type SlotsType,
+  type VNodeChild,
+} from "vue";
 
 import {
   commonProps,
@@ -37,6 +49,8 @@ import {
   expansionOptions,
   emitExpansionChanges,
   CellContent,
+  editingEmits,
+  editingOptions,
 } from "./shared";
 
 /** Slot props of `cell.<column id>` and `cell`. */
@@ -58,9 +72,11 @@ export type StatusSlotProps = TableStatusSlotProps;
  */
 export const VueyeTable = defineComponent({
   name: "VueyeTable",
+  inheritAttrs: false,
   props: {
     data: { type: Array as PropType<readonly unknown[]>, default: () => [] },
     ...commonProps,
+    editMode: { type: String as PropType<"cell" | "row" | undefined>, default: undefined },
     /** `true` or `"multiple"` for checkboxes, `"single"` for one row at a time. */
     selectable: {
       type: [Boolean, String] as PropType<boolean | "single" | "multiple">,
@@ -72,6 +88,7 @@ export const VueyeTable = defineComponent({
     loadingText: { type: String, default: "Loading…" },
   },
   emits: {
+    ...editingEmits,
     ...Object.fromEntries(stateEmits.map((name) => [name, null])),
     "state-change": (_state: TableState) => true,
     "row-click": (_item: unknown, _row: TableRow<unknown>) => true,
@@ -79,15 +96,16 @@ export const VueyeTable = defineComponent({
     collapse: (_item: unknown, _row: TableRow<unknown>) => true,
   } as {
     [K in (typeof stateEmits)[number]]: null;
-  } & {
-    "state-change": (state: TableState) => boolean;
-    "row-click": (item: unknown, row: TableRow<unknown>) => boolean;
-    expand: (item: unknown, row: TableRow<unknown>) => boolean;
-    collapse: (item: unknown, row: TableRow<unknown>) => boolean;
-  },
+  } & typeof editingEmits & {
+      "state-change": (state: TableState) => boolean;
+      "row-click": (item: unknown, row: TableRow<unknown>) => boolean;
+      expand: (item: unknown, row: TableRow<unknown>) => boolean;
+      collapse: (item: unknown, row: TableRow<unknown>) => boolean;
+    },
   slots: Object as SlotsType<
     {
       [key: `cell.${string}`]: CellSlotProps;
+      [key: `editor.${string}`]: CellEditorSlotProps;
       [key: `header.${string}`]: { column: { id: string; header: string } };
     } & {
       toolbar: { table: unknown };
@@ -98,7 +116,7 @@ export const VueyeTable = defineComponent({
       expanded: DetailSlotProps;
     }
   >,
-  setup(props, { emit, slots, expose }) {
+  setup(props, { emit, slots, expose, attrs }) {
     const selectionMode = computed(() =>
       props.selectable === false ? "none" : props.selectable === "single" ? "single" : "multiple",
     );
@@ -110,6 +128,7 @@ export const VueyeTable = defineComponent({
     let binding: DataTableBinding<unknown> | undefined;
     const table = useDataTable<unknown>({
       ...expansionOptions(props, !!slots.expanded),
+      ...editingOptions(props),
       data: () => props.data,
       source: computed(() => props.source),
       loadMore: computed(() => props.loadMore),
@@ -122,6 +141,14 @@ export const VueyeTable = defineComponent({
       selectionMode: selectionMode.value,
       selectScope: props.selectScope,
       initialState: { pagination: initialPagination },
+      onDataChange(data, changes) {
+        emit("update:data", data);
+        emit("edit", changes);
+      },
+      onEditIssues(issues) {
+        emit("edit-issues", issues);
+        emit("edit-error", issues);
+      },
       state: () =>
         controlledState(props, binding?.table.getState().pagination ?? initialPagination),
       onStateChange(state, previous) {
@@ -138,13 +165,30 @@ export const VueyeTable = defineComponent({
 
     const selectable = (): boolean => selectionMode.value !== "none";
 
-    const cell = (row: TableRow<unknown>, column: (typeof table.columns)[number]): VNodeChild => {
+    const cell = (
+      row: TableRow<unknown>,
+      column: (typeof table.columns)[number],
+      rowIndex: number,
+    ): VNodeChild => {
       const slot = slots[`cell.${column.id}`];
       const treeCell = table.tree && column.id === resolveTreeColumn(table, props.treeColumn);
       return h(
-        DataTableCell,
-        { key: column.id, row, column, tree: false },
+        props.editMode ? DataTableEditCell : DataTableCell,
         {
+          key: column.id,
+          row,
+          column,
+          tree: false,
+          ...(props.editMode
+            ? {
+                rowIndex,
+                onSave: (result: EditResult<unknown>) => emit("save", result),
+                onCancel: (key: RowKey) => emit("cancel", key),
+              }
+            : {}),
+        },
+        {
+          editor: slots[`editor.${column.id}`],
           default: ({ value, display }: { value: unknown; display: string }) => {
             const content = () =>
               slot ? h(CellContent, { row, column, value, display, render: slot }) : display;
@@ -156,8 +200,12 @@ export const VueyeTable = defineComponent({
     };
 
     const hasDetails = (): boolean => !!slots.expanded && !table.tree;
+    const hasActions = (): boolean => !!props.editMode || props.removeRows;
     const width = (): number =>
-      table.columns.length + (selectable() ? 1 : 0) + (hasDetails() ? 1 : 0);
+      table.columns.length +
+      (selectable() ? 1 : 0) +
+      (hasDetails() ? 1 : 0) +
+      (hasActions() ? 1 : 0);
     const emptyBody = (): VNodeChild => {
       if (table.rows.length === 0) {
         // While the first page is loading there is nothing to match yet, so say that instead.
@@ -174,8 +222,21 @@ export const VueyeTable = defineComponent({
       }
       return null;
     };
-    const cells = (row: TableRow<unknown>): VNodeChild[] => {
+    const cells = (row: TableRow<unknown>, rowIndex: number): VNodeChild[] => {
       const result = [
+        hasActions()
+          ? h(
+              "td",
+              { class: "vt-row-controls", onClick: (event: Event) => event.stopPropagation() },
+              [
+                h(VtRowActions, {
+                  row,
+                  editable: props.editMode === "row",
+                  removable: props.removeRows,
+                }),
+              ],
+            )
+          : null,
         hasDetails() ? h("td", { class: "vt-expansion-cell" }, [h(VtExpandToggle, { row })]) : null,
         selectable()
           ? h(
@@ -184,7 +245,7 @@ export const VueyeTable = defineComponent({
               [h(DataTableSelectRow, { row })],
             )
           : null,
-        ...table.columns.map((column) => cell(row, column)),
+        ...table.columns.map((column) => cell(row, column, rowIndex)),
       ];
       return result;
     };
@@ -192,7 +253,7 @@ export const VueyeTable = defineComponent({
       h(
         DataTableRow,
         { key: row.key, row, rowIndex, onClick: () => emit("row-click", row.original, row) },
-        { default: () => cells(row), $stable: true },
+        { default: () => cells(row, rowIndex), $stable: true },
       );
 
     const headerSlots = () => {
@@ -206,6 +267,7 @@ export const VueyeTable = defineComponent({
       return {
         ...forwarded,
         before: () => [
+          hasActions() ? h("th", { class: "vt-row-controls", scope: "col" }, "Row actions") : null,
           hasDetails()
             ? h("th", { class: "vt-expansion-cell", scope: "col", "aria-label": "Details" })
             : null,
@@ -277,10 +339,10 @@ export const VueyeTable = defineComponent({
           ]);
     };
 
-    return () =>
+    const surface = () =>
       h(
         "div",
-        {
+        mergeProps(attrs, {
           class: "vt-surface vueye-table",
           "data-density": props.density,
           "data-striped": props.striped ? "" : undefined,
@@ -292,12 +354,19 @@ export const VueyeTable = defineComponent({
           "data-vt-theme": props.theme,
           "aria-busy": props.loading ? "true" : undefined,
           style: props.maxHeight ? { "--vt-max-height": props.maxHeight } : undefined,
-        },
+        }),
         [
           h("div", { class: "vt-root" }, [
-            props.searchable || props.columnToggle || slots.toolbar
+            props.searchable || props.columnToggle || slots.toolbar || props.addRow
               ? h(VtToolbar, () => [
                   props.searchable ? h(VtSearch, { placeholder: props.searchPlaceholder }) : null,
+                  props.addRow
+                    ? h(
+                        "button",
+                        { type: "button", class: "vt-button", onClick: () => table.insertRows() },
+                        "Add row",
+                      )
+                    : null,
                   h("div", { class: "vt-toolbar-spacer" }),
                   slots.toolbar?.({ table }),
                   props.columnToggle ? h(VtColumnVisibility) : null,
@@ -333,5 +402,18 @@ export const VueyeTable = defineComponent({
           ]),
         ],
       );
+    return () =>
+      props.editMode
+        ? h(
+            DataTableEditRoot,
+            {
+              table,
+              mode: props.editMode,
+              onSave: (result) => emit("save", result),
+              onCancel: (key) => emit("cancel", key),
+            },
+            surface,
+          )
+        : surface();
   },
 });

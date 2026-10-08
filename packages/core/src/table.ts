@@ -564,6 +564,9 @@ export function createTable<TRow, TSignal extends TreeLoadSignal = TreeLoadSigna
         result: IndexedRows<TRow>;
       }
     | undefined;
+  let reusableRows:
+    | { columns: ReadonlyMap<string, TableColumn<TRow>>; rows: ReadonlyMap<RowKey, TableRow<TRow>> }
+    | undefined;
   const indexRows = memo(
     (rows: readonly TRow[], byId: ReadonlyMap<string, TableColumn<TRow>>): IndexedRows<TRow> => {
       if (primedIndex?.data === rows && primedIndex.columns === byId) return primedIndex.result;
@@ -581,17 +584,16 @@ export function createTable<TRow, TSignal extends TreeLoadSignal = TreeLoadSigna
           );
           key = `${String(key)}#${index}`;
         }
-        const row = createRow(
-          original,
-          key,
-          index,
-          byId,
-          options.getRowCanExpand?.(original) ?? false,
-        );
+        const previous = reusableRows?.columns === byId ? reusableRows.rows.get(key) : undefined;
+        const row =
+          previous?.original === original && previous.index === index
+            ? previous
+            : createRow(original, key, index, byId, options.getRowCanExpand?.(original) ?? false);
         byKey.set(key, row);
         return row;
       });
       stableSource.set(rows, stableRows(rows));
+      reusableRows = { columns: byId, rows: byKey };
       return { rows: indexed, byKey, issues };
     },
   );
@@ -812,11 +814,14 @@ export function createTable<TRow, TSignal extends TreeLoadSignal = TreeLoadSigna
     const dirty = new Set(pendingChanges.entries.keys());
     const metadata = (row: TableRow<TRow>): TableRow<TRow> =>
       dirty.has(row.key) || cellProblems.has(row.key)
-        ? Object.freeze({
-            ...row,
-            isDirty: dirty.has(row.key),
-            cellIssues: cellProblems.get(row.key),
-          })
+        ? shareRow(
+            row,
+            Object.freeze({
+              ...row,
+              isDirty: dirty.has(row.key),
+              cellIssues: cellProblems.get(row.key),
+            }),
+          )
         : row;
     const { columns, byId, issues: columnIssues } = resolveColumns(definitions);
     const model = treeEnabled ? treeStage(data, byId, lazyVersion) : undefined;

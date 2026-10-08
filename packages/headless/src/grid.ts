@@ -14,7 +14,6 @@ import {
   h,
   inject,
   nextTick,
-  onMounted,
   provide,
   ref,
   useId,
@@ -26,6 +25,14 @@ import {
   type VNodeChild,
 } from "vue";
 
+import {
+  DataCellEditor,
+  editorIssues,
+  editorText,
+  issueAttrs,
+  useEditorId,
+  type CellEditorSlotProps,
+} from "./editor";
 import {
   createDetails,
   DataTableTreeCell,
@@ -54,6 +61,7 @@ interface GridContext {
   readonly id: string;
   /** Return keyboard focus to the grid, after an edit ends from the keyboard. */
   focus(): void;
+  cancel(key: string | number): void;
 }
 
 const gridContextKey: InjectionKey<GridContext> = Symbol("vueye-table-grid-context");
@@ -93,7 +101,8 @@ export const DataGridRoot = defineComponent({
     /** Width reserved before data columns, for a row-number/header column. */
     gutter: { type: Number, default: 0 },
   },
-  setup(props, { slots, expose }) {
+  emits: { save: (_result: unknown) => true, cancel: (_key: string | number) => true },
+  setup(props, { slots, expose, emit }) {
     provideDataTable(props.table);
     const grid = useDataGrid(props.table, { treeColumn: () => props.treeColumn });
     provideDataGrid(grid);
@@ -103,12 +112,30 @@ export const DataGridRoot = defineComponent({
     const focus = (): void => {
       void nextTick(() => element.value?.focus());
     };
-    provide(gridContextKey, { id, focus });
+    provide(gridContextKey, { id, focus, cancel: (key) => emit("cancel", key) });
+    watch(
+      () => grid.lastResult,
+      (result) => {
+        if (result && ["applied", "partial", "unchanged"].includes(result.status))
+          emit("save", result);
+      },
+    );
     expose({ grid, focus });
     let virtual: ComponentVirtualBinding | undefined;
 
     const onKeydown = (event: KeyboardEvent): void => {
       if (event.target !== element.value) {
+        return;
+      }
+      if (
+        event.key === " " &&
+        !grid.editor &&
+        !event.ctrlKey &&
+        !event.metaKey &&
+        !event.altKey &&
+        grid.toggleCheckbox()
+      ) {
+        event.preventDefault();
         return;
       }
       if (
@@ -155,8 +182,9 @@ export const DataGridRoot = defineComponent({
       }
     };
     const onPaste = (event: ClipboardEvent): void => {
+      if (grid.editor || event.defaultPrevented) return;
       const text = event.clipboardData?.getData("text/plain");
-      if (grid.editor || text === undefined || text === "") {
+      if (text === undefined || text === "") {
         return;
       }
       event.preventDefault();
@@ -254,6 +282,7 @@ export const DataGridBody = defineComponent({
     default?: (props: { rows: readonly TableRow<unknown>[] }) => VNode[];
     rowHeader?: (props: { row: TableRow<unknown>; index: number }) => VNode[];
     cell?: (props: GridCellSlotProps) => VNodeChild;
+    editor?: (props: CellEditorSlotProps) => VNodeChild;
     detail?: (props: DetailSlotProps) => VNodeChild;
   }>,
   props: {
@@ -302,9 +331,7 @@ export const DataGridBody = defineComponent({
                   h(
                     DataGridCell,
                     { key: column.id, row, column, rowIndex, columnIndex, tree: props.treeCell },
-                    slots.cell
-                      ? { default: (cellProps: GridCellSlotProps) => slots.cell?.(cellProps) }
-                      : undefined,
+                    { default: slots.cell, editor: slots.editor, $stable: true },
                   ),
                 "td",
               );
@@ -315,6 +342,7 @@ export const DataGridBody = defineComponent({
                   role: "row",
                   "aria-rowindex": table.pageStart + rowIndex + 1,
                   "data-key": String(row.key),
+                  "data-dirty": flag(row.isDirty),
                   ...hierarchyRowAttrs(table, row, hierarchy),
                   "data-virtual-row": "",
                   ref: (target) => binding.rows.measureElement(target, item.key),
@@ -353,6 +381,7 @@ export const DataGridBody = defineComponent({
                     role: "row",
                     "aria-rowindex": rowIndex + 2,
                     "data-key": String(row.key),
+                    "data-dirty": flag(row.isDirty),
                     ...hierarchyRowAttrs(table, row, hierarchy),
                   },
                   [
@@ -368,9 +397,7 @@ export const DataGridBody = defineComponent({
                           columnIndex,
                           tree: props.treeCell,
                         },
-                        slots.cell
-                          ? { default: (cellProps: GridCellSlotProps) => slots.cell?.(cellProps) }
-                          : undefined,
+                        { default: slots.cell, editor: slots.editor, $stable: true },
                       ),
                     ),
                   ],
@@ -408,53 +435,6 @@ export const DataGridBody = defineComponent({
   },
 });
 
-/** The text box shown in a cell while it is edited. */
-const DataGridEditor = defineComponent({
-  name: "DataGridEditor",
-  props: { label: { type: String, required: true } },
-  setup(props) {
-    const { grid, context } = useGrid("<DataGridEditor>");
-    const input = ref<HTMLInputElement>();
-    onMounted(() => {
-      const element = input.value;
-      if (element) {
-        element.focus();
-        element.setSelectionRange(element.value.length, element.value.length);
-      }
-    });
-    const finish = (then?: "up" | "down" | "left" | "right"): void => {
-      grid.commitEdit(then);
-      context.focus();
-    };
-    return () =>
-      h("input", {
-        ref: input,
-        value: grid.editor?.draft ?? "",
-        "aria-label": props.label,
-        "data-editor": "",
-        onInput: (event: Event) => grid.updateDraft((event.target as HTMLInputElement).value),
-        onBlur: () => {
-          if (grid.editor) {
-            grid.commitEdit();
-          }
-        },
-        onKeydown: (event: KeyboardEvent) => {
-          if (event.key === "Enter") {
-            event.preventDefault();
-            finish(event.shiftKey ? "up" : "down");
-          } else if (event.key === "Tab") {
-            event.preventDefault();
-            finish(event.shiftKey ? "left" : "right");
-          } else if (event.key === "Escape") {
-            event.preventDefault();
-            grid.cancelEdit();
-            context.focus();
-          }
-        },
-      });
-  },
-});
-
 /**
  * A grid cell. A click selects it, Shift-click or dragging extends the range, and a double click
  * edits it. The `editor` slot replaces the default text box.
@@ -463,12 +443,7 @@ export const DataGridCell = defineComponent({
   name: "DataGridCell",
   slots: Object as SlotsType<{
     default?: (props: GridCellSlotProps) => VNodeChild;
-    editor?: (props: {
-      draft: string;
-      update: (draft: string) => void;
-      commit: (then?: GridDirection) => unknown;
-      cancel: () => void;
-    }) => VNode[];
+    editor?: (props: CellEditorSlotProps) => VNodeChild;
   }>,
   props: {
     row: rowProp,
@@ -486,6 +461,7 @@ export const DataGridCell = defineComponent({
     const virtual = injectVirtual();
     const hierarchy = injectHierarchy();
     const element = ref<HTMLElement>();
+    const issueId = useEditorId();
     const position = () => ({
       row: props.rowIndex ?? table.rows.indexOf(props.row),
       column: props.columnIndex ?? table.columns.indexOf(props.column),
@@ -507,15 +483,66 @@ export const DataGridCell = defineComponent({
       const editable = column.isEditable(row.original);
       const value = row.getValue(column.id);
       const display = row.getDisplay(column.id);
+      const issues = row.cellIssues?.get(column.id)
+        ? [row.cellIssues.get(column.id)!]
+        : (grid.lastResult?.issues.filter(
+            (problem) =>
+              problem.rowKey === row.key && (problem.column === column.id || !problem.column),
+          ) ?? []);
+      const pending = table.pendingCells.some(
+        (cell) => cell.rowKey === row.key && cell.column === column.id,
+      );
+      const finish = (
+        edit?: { input: string } | { value: unknown },
+        direction?: GridDirection,
+      ): ReturnType<typeof grid.submitEdit> => {
+        const result = grid.submitEdit(edit, direction);
+        const focus = (): void => {
+          if (!grid.editor) context.focus();
+        };
+        if (result?.completion) void result.completion.then(focus);
+        else focus();
+        return result;
+      };
       let content;
       if (editing) {
+        const editor: CellEditorSlotProps = {
+          row,
+          column,
+          value,
+          draft: grid.editor?.draft ?? "",
+          spec: grid.editorFor(at) ?? { kind: "text" },
+          finish: (direction) => {
+            finish(undefined, direction);
+          },
+          input: (text) => grid.updateDraft(text),
+          update: (text) => grid.updateDraft(text),
+          commit: (next?: unknown) =>
+            finish(
+              next === undefined
+                ? undefined
+                : typeof next === "string"
+                  ? { input: next }
+                  : { value: next },
+            ),
+          cancel: () => {
+            if (!pending) {
+              grid.cancelEdit();
+              context.cancel(row.key);
+              context.focus();
+            }
+          },
+          issues,
+          pending,
+          attrs: issueAttrs(issueId, issues, pending),
+        };
         content =
-          slots.editor?.({
-            draft: grid.editor?.draft ?? "",
-            update: (draft: string) => grid.updateDraft(draft),
-            commit: (then?: GridDirection) => grid.commitEdit(then),
-            cancel: () => grid.cancelEdit(),
-          }) ?? h(DataGridEditor, { label: `Edit ${column.header}` });
+          slots.editor?.(editor) ??
+          h(DataCellEditor, {
+            editor,
+            spec: grid.editorFor(at) ?? { kind: "text" },
+            finish: (direction?: GridDirection) => finish(undefined, direction),
+          });
       } else {
         const children = () =>
           slots.default?.({ row, column, value, display, editable }) ?? display;
@@ -539,6 +566,8 @@ export const DataGridCell = defineComponent({
           "data-selected": flag(grid.isSelected(at)),
           "data-editing": flag(editing),
           "data-readonly": flag(!editable),
+          "data-dirty": flag(row.isDirty),
+          ...issueAttrs(issueId, issues, pending),
           style: columnStyle(column),
           onMousedown: (event: MouseEvent) => {
             if (editing || event.button !== 0) {
@@ -554,10 +583,10 @@ export const DataGridCell = defineComponent({
           },
           onDblclick: () => {
             grid.focusCell(at);
-            grid.startEdit();
+            grid.startEdit(editorText(value, grid.editorFor(at)?.kind ?? "text"));
           },
         },
-        content,
+        [content, editorIssues(issueId, issues, pending)],
       );
     };
   },

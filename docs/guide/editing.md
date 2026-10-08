@@ -37,6 +37,94 @@ const columns = defineColumns<Line>([
 Cells of `<VueyeGrid>` are editable unless their column says otherwise; `:editable="false"` locks
 the whole grid. A computed column without `setValue`, such as `total`, is read-only and shows so.
 
+## Inline table editing
+
+`VueyeTable` stays read-only unless `edit-mode` is set. Mark the writable columns with
+`editable: true`, then use `edit-mode="cell"` or `edit-mode="row"`:
+
+```vue
+<VueyeTable v-model:data="lines" :columns="columns" edit-mode="cell" />
+<VueyeTable v-model:data="lines" :columns="columns" edit-mode="row" :validate-row="validateLine" />
+```
+
+Cell mode opens a field on double click or Enter. Enter commits, Escape cancels, and Tab /
+Shift+Tab commit and focus the next / previous editable cell, skipping read-only columns.
+Only the active cell mounts an editor. Rejected input stays open for correction; pending
+validation disables duplicate submission. Normal table selection and tree behavior remain available.
+
+Row mode offers Edit row, Save row and Cancel. All writable fields in that row share one draft;
+Save row or Enter submits it as one batch and one undo step. Tab follows the native row-form
+controls. Starting a different row discards the previous unsubmitted draft. A pending row cannot
+be replaced or cancelled; a submitted validation batch belongs to core. A row that leaves the
+current page loses its unsubmitted form. Row-level validation messages appear beside its controls.
+
+`save` receives the final local `EditResult`; it does not contact a server or advance the saved
+baseline. Call the exposed `table.markSaved()` after the application confirms persistence.
+`cancel` receives the abandoned row key, and `edit-issues` receives core refusals.
+
+Try the [inline and typed editors example](/examples/inline-editors).
+
+## Typed fields and custom editors
+
+`column.editor.kind` chooses `text`, `number`, `select`, `checkbox` or `date`. Missing metadata
+uses the column/value type. Number fields accept decimal text through the parser; date fields
+use native `type="date"` and ISO calendar text. Date `min`/`max` constraints are timestamps,
+as in core validation. Limits are enforced by core even for typed or pasted values.
+
+Select fields include a labeled search and mount at most 50 matching options. Refine the search
+for larger lists. Options are copied once per column definition. Grid Space toggles the focused
+checkbox through validation without opening an editor.
+
+Both full components and `VtGrid` accept `editor.<column id>` slots:
+
+```vue
+<VueyeGrid v-model:data="lines" :columns="columns">
+  <template #editor.quantity="editor">
+    <input
+      v-bind="editor.attrs"
+      :value="editor.draft"
+      :disabled="editor.pending"
+      aria-label="Edit quantity"
+      inputmode="decimal"
+      @input="editor.input(($event.target as HTMLInputElement).value)"
+      @keydown.enter.prevent="editor.finish('down')"
+      @keydown.esc.prevent="editor.cancel()"
+    />
+  </template>
+</VueyeGrid>
+```
+
+| Slot member                               | Meaning                                                                                                           |
+| ----------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| `row`, `column`, `value`, `draft`, `spec` | Cell metadata, original/row-draft value, current text and resolved inert editor spec.                             |
+| `input(text)` / `update(text)`            | Stage text for the column parser; `update` preserves the earlier headless alias.                                  |
+| `commit(value?)`                          | Submit staged text, or a supplied string/typed value. Row mode stages it until Save row.                          |
+| `finish(direction?)`                      | Commit and request grid movement; table cell mode uses left/right for editable Tab order. Row mode saves the row. |
+| `cancel()`                                | Discard the unsubmitted editor and restore focus.                                                                 |
+| `issues`, `pending`, `attrs`              | Refusals, async state, and validation ARIA attributes to bind to the custom field.                                |
+
+Strings pass through `parse`; typed values use core's typed-value path, preserving select option
+types. Both routes enforce editability, constraints, validators, stale-row guards and undo.
+Use `input(text)` when a parser should interpret a custom field's output. The earlier headless
+`commit(direction)` spelling is replaced by `finish(direction)`; a string passed to `commit`
+is now a value. Custom editors own their keyboard, focus, and plain-text paste handling.
+
+Native fields and cells associate inline messages through `aria-invalid` and
+`aria-describedby`; pending fields/cells expose `aria-busy`. Validation messages and edited
+values render as text. Native editor paste reads only `text/plain` and never inserts HTML.
+
+## Row actions and saved changes
+
+`add-row` shows Add row, using the `create-row` callback through core `insertRows()`.
+`remove-rows` adds per-row Remove row through `removeRows([key])`. Actions also offers
+Revert row for dirty rows, using `revert([key])` against the current saved baseline.
+Dirty rows/cells are styled from the engine metadata. Insert/remove/revert remain undoable
+and emit new immutable data through `update:data`. An absent/invalid row factory reports a
+`TableIssue` through `edit-issues`.
+
+`validate-row`, `async-validation`, `create-row` and `set-parent-key` are creation options;
+remount to replace them. `async-validation="held"` is the default, with `"optimistic"` available.
+
 ## Keyboard
 
 | Keys                                 | Action                                                |
@@ -46,6 +134,7 @@ the whole grid. A computed column without `setValue`, such as `total`, is read-o
 | Ctrl/Cmd + arrows, Home, End         | Jump to the edge of the grid or the row.              |
 | Tab, Shift + Tab                     | Move right or left.                                   |
 | Enter, F2, double click              | Edit the active cell with its text.                   |
+| Space on a checkbox cell             | Toggle its value through core validation.             |
 | Any character                        | Edit the active cell, starting with that character.   |
 | Enter, Shift + Enter (while editing) | Save and move down or up.                             |
 | Tab, Shift + Tab (while editing)     | Save and move right or left.                          |
@@ -177,12 +266,15 @@ edited or saved again; see [OWASP's CSV injection guidance](https://owasp.org/ww
 
 ## Events
 
-| Event         | Payload                                                    |
-| ------------- | ---------------------------------------------------------- |
-| `update:data` | The new array, after an edit, paste, clear, undo, or redo. |
-| `edit`        | The changes: `{ rowKey, column, previous, value, row }[]`. |
-| `edit-error`  | Refused-cell issues and paste truncation issues.           |
-| `export`      | CSV of every filtered row, from the toolbar button.        |
+| Event         | Payload                                                     |
+| ------------- | ----------------------------------------------------------- |
+| `update:data` | The new array, after an edit, paste, clear, undo, or redo.  |
+| `edit`        | The changes: `{ rowKey, column, previous, value, row }[]`.  |
+| `edit-error`  | Refused-cell issues and paste truncation issues.            |
+| `export`      | CSV of every filtered row, from the toolbar button.         |
+| `save`        | Final local `EditResult` after editor validation completes. |
+| `cancel`      | Row key of a discarded editor/draft.                        |
+| `edit-issues` | Core refusal issues; grid `edit-error` remains an alias.    |
 
 `edit` is the place to save changes to a server: it names exactly the cells that changed and their
 previous values, so a failed save can be rolled back.

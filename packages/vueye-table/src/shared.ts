@@ -12,6 +12,10 @@ import {
   type TreeOptions,
   type TableRow,
   type TableColumn,
+  type TableOptions,
+  type EditResult,
+  type TableIssue,
+  type CellChange,
 } from "@vueye-table/core";
 import { virtualProps } from "@vueye-table/headless";
 import { hierarchyProps } from "@vueye-table/headless";
@@ -53,6 +57,18 @@ export const CellContent = defineComponent({
 
 /** Props both full components share. */
 export const commonProps = {
+  validateRow: { type: Function as PropType<TableOptions<any>["validateRow"]>, default: undefined },
+  asyncValidation: {
+    type: String as PropType<"held" | "optimistic" | undefined>,
+    default: undefined,
+  },
+  createRow: { type: Function as PropType<(() => any) | undefined>, default: undefined },
+  setParentKey: {
+    type: Function as PropType<TableOptions<any>["setParentKey"]>,
+    default: undefined,
+  },
+  addRow: { type: Boolean, default: false },
+  removeRows: { type: Boolean, default: false },
   ...virtualProps,
   ...hierarchyProps,
   rowCanExpand: {
@@ -116,6 +132,29 @@ export const commonProps = {
   hiddenColumns: { type: Array as PropType<readonly string[]>, default: undefined },
   selectScope: { type: String as PropType<SelectScope>, default: "all" },
 } as const;
+
+export const editingEmits = {
+  "update:data": (_data: readonly unknown[]) => true,
+  edit: (_changes: readonly CellChange<unknown>[]) => true,
+  save: (_result: EditResult<unknown>) => true,
+  cancel: (_key: RowKey) => true,
+  "edit-issues": (_issues: readonly TableIssue[]) => true,
+  "edit-error": (_issues: readonly TableIssue[]) => true,
+};
+
+export function editingOptions(
+  props: Pick<
+    TableOptions<unknown>,
+    "validateRow" | "asyncValidation" | "createRow" | "setParentKey"
+  >,
+): Pick<TableOptions<unknown>, "validateRow" | "asyncValidation" | "createRow" | "setParentKey"> {
+  return {
+    validateRow: props.validateRow,
+    asyncValidation: props.asyncValidation,
+    createRow: props.createRow,
+    setParentKey: props.setParentKey,
+  };
+}
 
 export const stateEmits = [
   "update:page",
