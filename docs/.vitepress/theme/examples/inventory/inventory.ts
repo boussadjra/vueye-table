@@ -8,6 +8,7 @@ export type Warehouse = (typeof WAREHOUSES)[number];
 export type StockStatus = "In stock" | "Low" | "Out";
 
 export interface StockItem {
+  readonly id: string;
   readonly sku: string;
   readonly name: string;
   readonly category: Category;
@@ -117,27 +118,51 @@ function required(label: string): (input: string) => string {
 const RANK: Record<StockStatus, number> = { Out: 0, Low: 1, "In stock": 2 };
 
 export const columns = defineColumns<StockItem>([
-  { id: "sku", header: "SKU", editable: false, minWidth: 104 },
+  {
+    id: "sku",
+    header: "SKU",
+    minWidth: 120,
+    parse: required("SKU"),
+    editor: { kind: "text", maxLength: 24 },
+  },
   { id: "name", header: "Product", minWidth: 210, parse: required("Product name") },
-  { id: "category", minWidth: 110, parse: oneOf("Category", CATEGORIES) },
-  { id: "warehouse", minWidth: 116, parse: oneOf("Warehouse", WAREHOUSES) },
-  { id: "onHand", header: "On hand", align: "end", minWidth: 150, parse: quantity("On hand") },
+  {
+    id: "category",
+    minWidth: 110,
+    parse: oneOf("Category", CATEGORIES),
+    editor: { kind: "select", options: CATEGORIES },
+  },
+  {
+    id: "warehouse",
+    minWidth: 116,
+    parse: oneOf("Warehouse", WAREHOUSES),
+    editor: { kind: "select", options: WAREHOUSES },
+  },
+  {
+    id: "onHand",
+    header: "On hand",
+    align: "end",
+    minWidth: 150,
+    parse: quantity("On hand"),
+    editor: { kind: "number", min: 0 },
+  },
   {
     id: "reorderPoint",
     header: "Reorder at",
     align: "end",
     minWidth: 104,
     parse: quantity("Reorder point"),
+    editor: { kind: "number", min: 0 },
   },
   {
     id: "unitCost",
     header: "Unit cost",
     align: "end",
     minWidth: 108,
-    // The shown text is what the editor starts from, what copy puts on the clipboard, and what
-    // the CSV holds, so it stays a plain number; the slot adds the currency symbol.
+    // Copy and CSV use formatted text; the typed editor starts from the underlying number.
     format: (cost) => cost.toFixed(2),
     parse: parseMoney,
+    editor: { kind: "number", min: 0 },
   },
   {
     id: "value",
@@ -243,6 +268,7 @@ function createInventory(): readonly StockItem[] {
             : Math.floor(reorderPoint * (1.3 + random() * 3.2));
       items.push(
         Object.freeze({
+          id: `${category}-${index}`,
           sku: `${PREFIX[category]}-${String(1040 + index * 7).padStart(4, "0")}`,
           name,
           category,

@@ -45,3 +45,5 @@ focus on every arrow key.
 
 Formulas, merged cells, frozen columns, and fill handles. Virtualized layout is specified in
 [ADR 0005](/adr/0005-virtualization); component integration follows that contract.
+Validation, async completion, row operations and saved baselines are accepted in
+[ADR 0008](/adr/0008-validation-editors-and-persistence) and its detailed implementation decisions.

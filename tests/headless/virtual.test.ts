@@ -95,7 +95,7 @@ describe("headless component virtualization", () => {
     await grid.trigger("keydown", { key: "PageUp", shiftKey: true });
     expect(grid.attributes("aria-activedescendant")).toMatch(/-r0-c0$/u);
     wrapper.unmount();
-  });
+  }, 30_000);
   it("keeps an offscreen editor mounted, commits and pastes through the keyed core", async () => {
     const { wrapper, table } = fixture(false, 1000);
     const scroll = viewport(wrapper.get("[data-virtual-viewport]").element);

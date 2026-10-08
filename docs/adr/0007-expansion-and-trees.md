@@ -16,4 +16,10 @@ Malformed expansion state recovers to an empty array with `invalid_expanded`. Du
 
 ## Consequences
 
-Applications supply detail markup. Styled expansion controls and disclosure keyboard behavior are separate work; [ADR 0011](./0011-tree-data) adds tree traversal. Complete `TableState` literals must include `expanded`; partial initial state remains compatible. Controlled state, callbacks, reset and opt-in URL adapters can round-trip expansion as plain data. The Vue binding forwards the three core expansion operations now; the remaining Vue expansion/visibility work stays tracked by #84.
+Applications supply detail markup. [ADR 0011](./0011-tree-data) adds tree traversal, and
+[ADR 0016](./0016-hierarchy-components) specifies the shipped controls, disclosure keyboard
+behavior and virtual tree/detail rendering. Complete `TableState` literals must include
+`expanded`; partial initial state remains compatible. Controlled state, callbacks, reset and
+opt-in URL adapters round-trip expansion as plain data. The Vue binding forwards the three
+core expansion operations. Try [file explorer](/examples/file-explorer) and
+[orders](/examples/orders-dashboard) for the completed component integration.

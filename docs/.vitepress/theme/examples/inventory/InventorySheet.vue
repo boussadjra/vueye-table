@@ -5,7 +5,7 @@ import { toA1, type CellChange, type DataTableBinding, type TableIssue } from "v
 import ChangeLog from "./ChangeLog.vue";
 import {
   CATEGORIES,
-  columns,
+  columns as baseColumns,
   formatMoney,
   inventory,
   stockStatus,
@@ -19,6 +19,35 @@ import {
 type Scope = Category | "All";
 
 const rows = shallowRef<readonly StockItem[]>(inventory);
+const columns = baseColumns.map((column) =>
+  column.id === "sku"
+    ? {
+        ...column,
+        validate: async (value: string, row: StockItem) => {
+          await new Promise<void>((resolve) => setTimeout(resolve, 350));
+          const candidate = value.trim().toUpperCase();
+          return candidate === "TAKEN-001" ||
+            rows.value.some((item) => item.id !== row.id && item.sku.toUpperCase() === candidate)
+            ? "This SKU is already in use. Choose another."
+            : true;
+        },
+      }
+    : column,
+);
+const saving = ref(false);
+const saveNotice = ref("Sample data only. SKU checks and saving use simulated delays.");
+async function saveChanges(): Promise<void> {
+  const table = grid.value?.table;
+  if (!table || table.pendingCells.length || saving.value) return;
+  const submitted = rows.value;
+  saving.value = true;
+  await new Promise<void>((resolve) => setTimeout(resolve, 450));
+  if (rows.value === submitted && table.pendingCells.length === 0) {
+    table.markSaved();
+    saveNotice.value = "Changes saved locally. No server request was made.";
+  } else saveNotice.value = "Data changed while saving. Save again to include the latest edits.";
+  saving.value = false;
+}
 const category = ref<Scope>("All");
 const grid = ref<{ readonly table: DataTableBinding<unknown> } | null>(null);
 
@@ -83,8 +112,8 @@ function headerOf(columnId: string | undefined): string {
   );
 }
 
-function itemOf(sku: unknown): StockItem | undefined {
-  return rows.value.find((row) => row.sku === sku);
+function itemOf(key: unknown): StockItem | undefined {
+  return rows.value.find((row) => row.id === key);
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -96,6 +125,7 @@ interface Rejection {
   readonly column: string;
   readonly columnId: string;
   readonly sku: string;
+  readonly rowKey: string;
   readonly product: string;
   readonly message: string;
 }
@@ -108,7 +138,8 @@ function onEditError(issues: readonly TableIssue[]): void {
     reference: addressOf(issue.rowKey, issue.column),
     column: headerOf(issue.column),
     columnId: issue.column ?? "",
-    sku: String(issue.rowKey ?? ""),
+    sku: itemOf(issue.rowKey)?.sku ?? String(issue.rowKey ?? ""),
+    rowKey: String(issue.rowKey ?? ""),
     product: itemOf(issue.rowKey)?.name ?? "",
     message:
       issue.code === "read_only_cell"
@@ -134,7 +165,9 @@ function onEdit(changes: readonly CellChange<unknown>[]): void {
   total.value += changes.length;
   // A cell that now holds an accepted value is no longer in error.
   const fixed = new Set(changes.map((change) => `${String(change.rowKey)}:${change.column}`));
-  rejections.value = rejections.value.filter((item) => !fixed.has(`${item.sku}:${item.columnId}`));
+  rejections.value = rejections.value.filter(
+    (item) => !fixed.has(`${item.rowKey}:${item.columnId}`),
+  );
   const next = changes.map((change): ChangeEntry => {
     sequence += 1;
     const before = change.previous;
@@ -149,7 +182,7 @@ function onEdit(changes: readonly CellChange<unknown>[]): void {
     return {
       id: sequence,
       reference: addressOf(change.rowKey, change.column),
-      sku: String(change.rowKey),
+      sku: (change.row as StockItem).sku,
       product: (change.row as StockItem).name,
       column: headerOf(change.column),
       previous: show(change, before),
@@ -253,6 +286,25 @@ const INITIALS: Record<Category, string> = {
           </button>
         </div>
         <div class="actions">
+          <button
+            type="button"
+            class="ghost"
+            :disabled="saving || !!grid?.table.pendingCells.length"
+            @click="saveChanges"
+          >
+            {{ saving ? "Saving…" : "Save changes" }}
+          </button>
+          <button
+            type="button"
+            class="ghost"
+            :disabled="saving"
+            @click="
+              grid?.table.revert();
+              saveNotice = 'Unsaved changes reverted.';
+            "
+          >
+            Revert changes
+          </button>
           <button type="button" class="ghost" :disabled="!canUndo" @click="grid?.table.undo()">
             <svg viewBox="0 0 16 16" aria-hidden="true">
               <path d="M6 4 3 7l3 3M3.5 7H10a3 3 0 0 1 0 6H8" />
@@ -273,6 +325,8 @@ const INITIALS: Record<Category, string> = {
           </button>
         </div>
       </div>
+
+      <p role="status">{{ saveNotice }} Try TAKEN-001 to reject a reserved SKU.</p>
 
       <Transition name="issues">
         <section
@@ -310,7 +364,7 @@ const INITIALS: Record<Category, string> = {
         :columns="columns"
         :filters="filters"
         :toolbar="false"
-        row-key="sku"
+        row-key="id"
         label="Inventory"
         column-letters
         sticky-header
@@ -595,6 +649,7 @@ const INITIALS: Record<Category, string> = {
 
 .actions {
   display: flex;
+  flex-wrap: wrap;
   gap: 6px;
 }
 

@@ -48,6 +48,21 @@ and let you own the markup.
 
 ## New in 3.x
 
+### Expansion and editing
+
+The legacy branch's [ExpandRows example](https://github.com/boussadjra/vueye-table/blob/legacy/src/views/guide/ExpandRows.vue)
+used `#expand="{ item }"`. Replace it with `#expanded="{ row }"` and read `row.original`;
+use `row-can-expand` to choose expandable rows and `v-model:expanded` for controlled keys.
+`expand-mode="single"` limits open details. Hierarchies use `getChildren` or `getParentKey`;
+a detail slot is not a tree data model. See [expansion](/guide/expansion) and [trees](/guide/trees).
+
+For application-owned editable cells from 2.x, move parsing and constraints into column
+definitions. Use `VueyeTable edit-mode="cell"` / `"row"` with `editable: true` columns,
+or `VueyeGrid` for spreadsheet defaults. Bind `v-model:data` to receive immutable arrays.
+Custom controls move to `editor.<id>` slots. Local save events do not persist remotely;
+use [pending changes and acknowledged baselines](/guide/validation). No legacy edit event
+is assumed to be equivalent to the new persistence contract.
+
 Search, column filters, multi-column sorting, column visibility, server mode (`manual`), CSV and
 TSV export, a spreadsheet (`<VueyeGrid>`) with editing, clipboard, and undo, dark mode, density,
 and theming through CSS custom properties.

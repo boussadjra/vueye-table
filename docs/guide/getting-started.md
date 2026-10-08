@@ -65,6 +65,17 @@ Cells edit in place. Each edit emits a new array; the one you passed in is never
 parsed by the column's type, and a value that cannot be read is refused and reported through
 `edit-error`. Try it on the [spreadsheet example](/examples/grid).
 
+## Choose the next guide
+
+- Large inputs: [virtualization](/guide/virtualization), [streaming](/guide/streaming),
+  [live logs](/examples/live-logs), [infinite issues](/examples/infinite-issues).
+- Hierarchies: [expansion](/guide/expansion), [trees](/guide/trees),
+  [lazy files](/examples/file-explorer), [editable department tree](/examples/budget-tree).
+- Persistence: [validation and saving](/guide/validation), [row drafts](/guide/row-drafts),
+  [typed inventory edits](/examples/inventory).
+- Integration boundaries: [security](/guide/security), [performance](/guide/performance),
+  [API reference](/guide/api-reference), [upgrading from 2.x](/guide/upgrading-from-2).
+
 ## Registering globally
 
 ```ts
