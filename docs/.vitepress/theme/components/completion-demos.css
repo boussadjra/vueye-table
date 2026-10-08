@@ -1,0 +1,44 @@
+.completion-demo {
+  --completion-height: 320px;
+}
+.completion-demo .demo-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+.completion-demo .demo-controls button,
+.completion-demo .demo-controls select {
+  padding: 8px 12px;
+  color: var(--vp-c-text-1);
+  background: var(--vp-c-bg-soft);
+  border: 1px solid var(--vp-c-divider);
+  border-radius: var(--vy-radius-sm);
+  font-size: 13px;
+}
+.completion-demo .demo-controls button:disabled {
+  opacity: 0.6;
+}
+.completion-demo .demo-controls button:focus-visible,
+.completion-demo .demo-controls select:focus-visible {
+  outline: 2px solid var(--vp-c-brand-1);
+  outline-offset: 3px;
+}
+.completion-demo .demo-controls label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+}
+.completion-demo .demo-help,
+.completion-demo .demo-status {
+  margin: 12px 0;
+  color: var(--vp-c-text-2);
+  font-size: 13px;
+  line-height: 1.6;
+}
+@media (max-width: 640px) {
+  .completion-demo {
+    --completion-height: 260px;
+  }
+}

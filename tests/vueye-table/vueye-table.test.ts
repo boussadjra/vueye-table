@@ -19,6 +19,19 @@ const columns = defineColumns<Person>([
 ]);
 
 describe("VueyeTable", () => {
+  it("renders untrusted default headers and cells as text in both full surfaces", () => {
+    const text = '<img src=x onerror="alert(1)"><strong>untrusted</strong>';
+    for (const component of [VueyeTable, VueyeGrid]) {
+      const wrapper = mount(component, {
+        props: { data: [{ id: 1, text }], columns: [{ id: "text", header: text }] },
+      });
+      expect(wrapper.get("thead").text()).toContain(text);
+      expect(wrapper.get("tbody").text()).toContain(text);
+      expect(wrapper.find("img, strong").exists()).toBe(false);
+      wrapper.unmount();
+    }
+  });
+
   it("renders a full table with toolbar, status, and pagination", () => {
     const wrapper = mount(VueyeTable, { props: { data: people, columns, caption: "People" } });
     expect(wrapper.get("caption").text()).toBe("People");

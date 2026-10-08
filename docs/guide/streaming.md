@@ -1,5 +1,9 @@
 # Incremental data and streams
 
+Try [NDJSON logs](/examples/live-logs) for application-owned byte decoding and cancellation,
+or [infinite issues](/examples/infinite-issues) for a cursor adapter over the existing simulated
+server API. The [API reference](/guide/api-reference) lists the exported source types.
+
 Use `appendData` for cursor pages or new source records. Use `upsertData` to replace known keys and append new ones, and `removeData` for source deletions. These operations keep local state and undo, without treating received data as unsaved user edits.
 
 ```ts

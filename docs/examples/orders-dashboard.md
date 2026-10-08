@@ -11,7 +11,9 @@ import OrdersDashboard from "../.vitepress/theme/examples/orders-dashboard/Order
 An admin screen for a small shop's last 90 days: 240 orders, their customers, and where each one
 stands. It is one `<VueyeTable>` with custom cells and `v-model` state, surrounded by ordinary Vue:
 summary tiles that follow the filters, status chips and a date range that write column filters,
-bulk actions over the selection, and a drawer with an order's line items. Click a row to open it.
+bulk actions over the selection, inline line items and a detail drawer. Open the disclosure
+beside an order to expand its items; click the order link or row to open the drawer. These are
+generated sample orders.
 
 <DemoFrame title="OrdersDashboard.vue">
   <OrdersDashboard />

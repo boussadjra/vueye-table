@@ -72,4 +72,37 @@ Updated records include `rowKey`, `row`, `previous`, and cell changes with their
 
 `markSaved` changes the baseline and keeps undo available. Undoing after a save creates new pending changes against that saved state. Foreign `setData` clears history and pending records; the exact array from `onDataChange` preserves them through a `v-model` round trip. Save only acknowledged data; do not mark unresolved validation as saved.
 
-Try [Validated edits](/examples/grid#validated-edits) for held async validation, row drafts, insertion, removal and save/revert. The demo simulates a delayed rule and saves no data to a server. Public decisions are recorded in [ADR 0012](/adr/0012-validation-and-row-operations).
+## Connect an application save API
+
+Treat `PendingChanges<Line>` as a client proposal. An oRPC handler can authenticate the caller,
+validate a bounded input schema, authorize each row/tenant, recheck SKU uniqueness and apply
+inserts/updates/removals inside a Drizzle transaction. Return acknowledged keys only after
+commit. Those dependencies belong to your application.
+
+```ts
+import type { PendingChanges, RowKey } from "vueye-table";
+
+// Application adapter, implemented with your typed API client.
+declare function saveOnServer(changes: PendingChanges<Line>): Promise<readonly RowKey[]>;
+
+async function save(): Promise<void> {
+  if (table.pendingCells.length) return;
+  const submitted = lines.value; // caller-owned data ref from the example above
+  const acknowledged = await saveOnServer(table.getPendingChanges());
+  // Newer edits during the request must not be marked as already saved.
+  if (lines.value !== submitted || table.pendingCells.length) return;
+  table.markSaved(acknowledged);
+}
+```
+
+Serialize requests or disable Save while one is pending. On rejection keep pending records and
+show the server's plain text error. For partial success acknowledge only returned keys. If the
+server normalizes values or detects a concurrent-write conflict, reconcile deliberately before
+changing the baseline; foreign `setData` clears local history and pending records.
+
+Try [Validated edits](/examples/grid#validated-edits) for row operations,
+[inventory](/examples/inventory) for typed controls, async SKU uniqueness and guarded local
+save/revert, and [department allocations](/examples/budget-tree) for editable virtual trees.
+Examples simulate persistence. Decisions are recorded in
+[ADR 0008](/adr/0008-validation-editors-and-persistence) and
+[ADR 0012](/adr/0012-validation-and-row-operations).

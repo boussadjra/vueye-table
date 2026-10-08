@@ -1,5 +1,9 @@
 # Editing and spreadsheets
 
+For sync/async and row validation, core-enforced editor limits, pending changes and a guarded
+save API adapter, continue with [validation and saving](/guide/validation). It explains server
+revalidation/authorization before `markSaved`; row edit mode only commits local data.
+
 `<VueyeGrid>` is a spreadsheet over an array: cells edit in place, ranges select with the keyboard
 or the mouse, and copy, cut, paste, clear, undo, and redo work as they do in a spreadsheet
 application. The array you pass in is never changed. Every edit produces a new array.

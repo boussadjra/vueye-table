@@ -45,8 +45,19 @@ function quantity(label: string): (input: string) => number {
 { id: "unitCost", format: (cost) => cost.toFixed(2), parse: parseMoney }, // "$12.50", "12,50"
 ```
 
-`format` decides the text the editor starts from, what copy puts on the clipboard, and what the CSV
-holds, so it stays a plain `12.50`. The dollar sign is added by the cell slot, which only draws.
+Typed editors start from the underlying value. `format` supplies copied and exported text;
+the cell slot adds the visible currency symbol.
+
+### Typed controls and async SKU checks
+
+Category and warehouse use select editors; quantities and cost use numeric editors with core
+constraints. SKU uses delayed validation against the current rows and a simulated reserved
+value, `TAKEN-001`. A separate immutable `id` is the row key, so editing a SKU preserves identity.
+The example does not contact a uniqueness service; real applications must check again on the server.
+
+**Save changes** simulates a delayed save and calls `markSaved` only if the submitted data is
+still current and validation has settled. **Revert changes** restores unsaved values. Undo
+after saving creates new pending changes. See [validation and saving](/guide/validation).
 
 ### Computed columns with `accessor`
 
@@ -64,10 +75,10 @@ Stock value and status are not stored. An `accessor` column reads them from the 
 
 A `cell.<column id>` slot on `<VueyeGrid>` draws a cell while it is not being edited. It receives
 the row's data as `item`, the raw `value`, and the formatted `display`. Enter, F2, or typing still
-opens the editor over the slot, seeded with the formatted text.
+opens the editor over the slot, seeded with the underlying value for typed editors.
 
 ```vue
-<VueyeGrid v-model:data="rows" :columns="columns" row-key="sku" column-letters>
+<VueyeGrid v-model:data="rows" :columns="columns" row-key="id" column-letters>
   <template #cell.onHand="{ item, display }">
     <span class="on-hand" :data-tone="toneOf(item)">
       <span class="meter"><span class="meter-fill" :style="{ width: `${fill(item)}%` }" /></span>

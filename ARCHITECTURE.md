@@ -32,6 +32,9 @@ data + column definitions + state
 operations → new state → onStateChange → snapshot invalidated → subscribers
 edits → parse → setValue (copy on write) → new data → onDataChange → history
 viewport + estimates + keyed measurements → core virtualizer → render slice + offsets
+source / lazy children → keyed forest → sibling filter/sort → expanded flat render items
+expanded items + measured viewport → row/column windows → headless → styled → full components
+user edit → validation → immutable rows + pending changes → application server → markSaved
 ```
 
 Each pipeline stage is memoized on its inputs, so changing the page does not re-sort and selecting
@@ -79,3 +82,5 @@ enforced, with a stricter floor for the engine.
 - Virtual layout and pagination disabling — ADR 0005.
 - Incremental ingestion and streaming — ADR 0006.
 - Export, path, and paste boundaries — ADR 0009.
+- Expansion/detail items and trees — ADR 0007 and ADR 0011.
+- Validation, editors and persistence — ADR 0008, ADR 0012, ADR 0014 and ADR 0017.

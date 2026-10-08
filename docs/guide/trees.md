@@ -133,3 +133,9 @@ Traversal is iterative. `maxDepth` defaults to 1,000 edges; deeper rows recover 
 The hierarchy, filter and sibling-sort stages are cached separately from expansion. A single toggle inserts or removes its visible subtree; snapshot projection costs the visible sequence. Collapsed descendants are not traversed again. [Virtual rows](/guide/virtualization) consume the same flattened render items, retaining keyed measurements and scroll anchors across toggles.
 
 Run `pnpm bench:tree` for build, filter, sibling sort, expand-all/collapse and single-toggle benchmarks at 10,000 and 100,000 nodes with three or ten levels. Results are saved under `test-results/tree-bench.json`. These measurements describe this implementation; they do not establish production readiness.
+
+Try [lazy file explorer](/examples/file-explorer) for full-table loading and supplied size totals,
+or [department allocations](/examples/budget-tree) for adjacency editing, tri-state selection
+and virtual rows. [Performance](/guide/performance) compares eager, lazy and virtual costs;
+[validation](/guide/validation) covers persistence. See [expansion](/guide/expansion) for
+master-detail content and [orders](/examples/orders-dashboard) for inline line items.

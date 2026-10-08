@@ -19,10 +19,46 @@ interface Example {
 
 const examples: readonly Example[] = [
   {
+    link: "/examples/live-logs",
+    title: "Live NDJSON logs",
+    summary: "Generated log bytes decoded into a virtual table, with progress and cancellation.",
+    layer: "useDataTable + styled",
+    tags: ["NDJSON", "stream", "abort"],
+    art: "network",
+    hue: "#0c93df",
+  },
+  {
+    link: "/examples/infinite-issues",
+    title: "Infinite issue tracker",
+    summary: "Cursor loading over the existing issue API, with search, sorting and retry.",
+    layer: "VueyeTable",
+    tags: ["cursor", "virtual", "retry"],
+    art: "table",
+    hue: "#8a24c9",
+  },
+  {
+    link: "/examples/file-explorer",
+    title: "Lazy file explorer",
+    summary:
+      "Project folders load on expansion, with keyboard navigation and supplied size totals.",
+    layer: "VueyeTable",
+    tags: ["tree", "lazy children", "selection"],
+    art: "table",
+    hue: "#0f9d7a",
+  },
+  {
+    link: "/examples/budget-tree",
+    title: "Editable department tree",
+    summary: "An adjacency grid combines child edits, virtual rows and protected local changes.",
+    layer: "VueyeGrid",
+    tags: ["tree", "editing", "ingestion"],
+    art: "sheet",
+    hue: "#e1583a",
+  },
+  {
     link: "/examples/orders-dashboard",
     title: "Orders dashboard",
-    summary:
-      "An admin screen with KPIs, status chips, a date range, bulk actions, and a detail drawer.",
+    summary: "An admin screen with filters, bulk actions, inline line items and a detail drawer.",
     layer: "VueyeTable",
     tags: ["filters", "slots", "selection", "CSV"],
     art: "dashboard",

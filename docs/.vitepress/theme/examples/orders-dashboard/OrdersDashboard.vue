@@ -381,6 +381,8 @@ const subtotal = computed(() =>
       :data="orders"
       :columns="columns"
       row-key="id"
+      :row-can-expand="() => true"
+      expand-mode="single"
       caption="Orders from the last 90 days"
       selectable
       sticky-header
@@ -391,6 +393,34 @@ const subtotal = computed(() =>
       search-placeholder="Search orders or customers…"
       @row-click="openOrder"
     >
+      <template #expanded="{ row }">
+        <div class="od-line-items">
+          <table>
+            <caption>
+              Line items for
+              {{
+                (row.original as Order).id
+              }}
+            </caption>
+            <thead>
+              <tr>
+                <th scope="col">Product</th>
+                <th scope="col">Quantity</th>
+                <th scope="col">Unit price</th>
+                <th scope="col">Line total</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="line in (row.original as Order).items" :key="line.sku">
+                <td>{{ line.name }}</td>
+                <td>{{ line.quantity }}</td>
+                <td>{{ money(line.price) }}</td>
+                <td>{{ money(line.quantity * line.price) }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </template>
       <template #cell.id="{ item }">
         <button
           type="button"
@@ -557,6 +587,27 @@ const subtotal = computed(() =>
 </template>
 
 <style scoped>
+.od-line-items {
+  padding: 16px 24px;
+  overflow-x: auto;
+}
+.od-line-items table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.od-line-items caption {
+  text-align: left;
+  font-weight: 600;
+  padding-bottom: 8px;
+}
+.od-line-items th,
+.od-line-items td {
+  text-align: left;
+  padding: 8px;
+  border-bottom: 1px solid var(--vp-c-divider);
+  white-space: nowrap;
+}
 .od {
   --od-ink: var(--vp-c-text-1);
   --od-ink-2: var(--vp-c-text-2);
