@@ -1,5 +1,16 @@
 # @vueye-table/vue
 
+## 3.0.0-alpha.9
+
+### Minor Changes
+
+- 7a0c4d0: Add accessible tree disclosure and detail-row components across all UI layers, including full-component tree callbacks, controlled expansion, lazy-load recovery, retained details, keyboard navigation and virtual rendering. Preserve unrelated cell-slot renders and enforce the package HTML content boundary.
+
+### Patch Changes
+
+- Updated dependencies [7a0c4d0]
+  - @vueye-table/core@3.0.0-alpha.9
+
 ## 3.0.0-alpha.8
 
 ### Minor Changes
