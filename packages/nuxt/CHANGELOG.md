@@ -1,5 +1,11 @@
 # @vueye-table/nuxt
 
+## 3.0.0-alpha.7
+
+### Patch Changes
+
+- vueye-table@3.0.0-alpha.7
+
 ## 3.0.0-alpha.6
 
 ### Patch Changes

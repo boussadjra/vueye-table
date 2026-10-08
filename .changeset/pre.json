@@ -23,6 +23,7 @@
     "framework-rewrite",
     "grid-slots-and-fixes",
     "tree-data",
+    "vue-row-drafts",
     "vue-virtual-bindings"
   ]
 }

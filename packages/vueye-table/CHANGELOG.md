@@ -1,5 +1,15 @@
 # vueye-table
 
+## 3.0.0-alpha.7
+
+### Patch Changes
+
+- Updated dependencies [dbe98ec]
+  - @vueye-table/core@3.0.0-alpha.7
+  - @vueye-table/vue@3.0.0-alpha.7
+  - @vueye-table/headless@3.0.0-alpha.7
+  - @vueye-table/styled@3.0.0-alpha.7
+
 ## 3.0.0-alpha.6
 
 ### Minor Changes
