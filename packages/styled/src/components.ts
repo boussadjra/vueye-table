@@ -29,6 +29,10 @@ import {
   type DetailSlotProps,
   expandToggleProps,
   treeCellProps,
+  DataCellEditor,
+  cellEditorProps,
+  DataTableRowActions,
+  type CellEditorSlotProps,
 } from "@vueye-table/headless";
 import { injectDataTable, type AnyDataTableBinding, type DataTableBinding } from "@vueye-table/vue";
 import {
@@ -426,6 +430,16 @@ export const VtToolbar = defineComponent({
 });
 
 type CellSlot = (props: GridCellSlotProps) => VNodeChild;
+type EditorSlot = (props: CellEditorSlotProps) => VNodeChild;
+
+export const VtCellEditor = defineComponent({
+  name: "VtCellEditor",
+  props: cellEditorProps,
+  setup(props) {
+    return () => h(DataCellEditor, { ...props, class: "vt-cell-editor" });
+  },
+});
+export const VtRowActions = withClass(DataTableRowActions, "vt-row-actions", "VtRowActions");
 
 const GridBody = defineComponent({
   name: "VtGridBody",
@@ -441,6 +455,12 @@ const GridBody = defineComponent({
       type: Object as PropType<Readonly<Record<string, CellSlot | undefined>>>,
       default: () => ({}),
     },
+    editors: {
+      type: Object as PropType<Readonly<Record<string, EditorSlot | undefined>>>,
+      default: () => ({}),
+    },
+    rowActions: { type: Boolean, default: false },
+    removable: { type: Boolean, default: false },
   },
   setup(props) {
     const table = injectDataTable("<VtGrid>");
@@ -452,15 +472,22 @@ const GridBody = defineComponent({
         {
           class: "vt-body",
           treeCell: false,
-          colspan: table.columns.length + (props.rowNumbers || details ? 1 : 0),
+          colspan: table.columns.length + (props.rowNumbers || details || props.rowActions ? 1 : 0),
         },
         {
           detail: props.detail,
           rowHeader: ({ index }: { index: number }) =>
-            props.rowNumbers || details
+            props.rowNumbers || details || props.rowActions
               ? h("th", { class: "vt-row-number", scope: "row" }, [
                   details ? h(VtExpandToggle, { row: table.rows[index]! }) : null,
                   props.rowNumbers ? String(table.pageStart + index) : null,
+                  props.rowActions
+                    ? h(VtRowActions, {
+                        row: table.rows[index]!,
+                        editable: false,
+                        removable: props.removable,
+                      })
+                    : null,
                 ])
               : null,
           cell: (cellProps: GridCellSlotProps) => {
@@ -470,6 +497,9 @@ const GridBody = defineComponent({
               ? h(VtTreeCell, { row: cellProps.row }, { default: content })
               : content();
           },
+          editor: (editor: CellEditorSlotProps) =>
+            props.editors[editor.column.id]?.(editor) ??
+            h(VtCellEditor, { editor, spec: editor.spec, finish: editor.finish }),
         },
       );
     };
@@ -483,7 +513,10 @@ const GridBody = defineComponent({
 export const VtGrid = defineComponent({
   name: "VtGrid",
   slots: Object as SlotsType<
-    { [key: `cell.${string}`]: GridCellSlotProps } & {
+    {
+      [key: `cell.${string}`]: GridCellSlotProps;
+      [key: `editor.${string}`]: CellEditorSlotProps;
+    } & {
       default?: (props: Record<string, unknown>) => VNode[];
       expanded?: (props: DetailSlotProps) => VNodeChild;
     }
@@ -494,8 +527,11 @@ export const VtGrid = defineComponent({
     rowNumbers: { type: Boolean, default: true },
     columnLetters: { type: Boolean, default: false },
     ...surfaceProps,
+    rowActions: { type: Boolean, default: false },
+    removable: { type: Boolean, default: false },
   },
-  setup(props, { slots, attrs }) {
+  emits: { save: (_result: unknown) => true, cancel: (_key: unknown) => true },
+  setup(props, { slots, attrs, emit }) {
     const details = (): boolean => !!slots.expanded && !props.table.tree;
     const cellSlots = (): Record<string, CellSlot> => {
       const found: Record<string, CellSlot> = {};
@@ -506,14 +542,24 @@ export const VtGrid = defineComponent({
       }
       return found;
     };
+    const editorSlots = (): Record<string, EditorSlot> => {
+      const found: Record<string, EditorSlot> = {};
+      for (const name of Object.keys(slots)) {
+        if (name.startsWith("editor.")) {
+          const slot = slots[name as `editor.${string}`];
+          if (slot) found[name.slice(7)] = slot;
+        }
+      }
+      return found;
+    };
     const header = () =>
       h(VtHeader, null, {
         before: () =>
-          props.rowNumbers || details()
+          props.rowNumbers || details() || props.rowActions
             ? h("th", {
                 class: "vt-row-number",
-                "aria-hidden": details() ? undefined : "true",
-                "aria-label": details() ? "Details" : undefined,
+                "aria-hidden": details() || props.rowActions ? undefined : "true",
+                "aria-label": props.rowActions ? "Row actions" : details() ? "Details" : undefined,
               })
             : null,
         header: ({ column }: { column: TableColumn<unknown> }) =>
@@ -553,7 +599,17 @@ export const VtGrid = defineComponent({
                 rowHeight: props.rowHeight,
                 overscan: props.overscan,
                 columnWidth: props.columnWidth,
-                gutter: props.rowNumbers ? (details() ? 80 : 48) : details() ? 48 : 0,
+                gutter: props.rowActions
+                  ? 120
+                  : props.rowNumbers
+                    ? details()
+                      ? 80
+                      : 48
+                    : details()
+                      ? 48
+                      : 0,
+                onSave: (result: unknown) => emit("save", result),
+                onCancel: (key: unknown) => emit("cancel", key),
                 treeColumn: props.treeColumn,
                 keepAliveDetail: props.keepAliveDetail,
               },
@@ -564,6 +620,9 @@ export const VtGrid = defineComponent({
                     h(GridBody, {
                       rowNumbers: props.rowNumbers,
                       cells: cellSlots(),
+                      editors: editorSlots(),
+                      rowActions: props.rowActions,
+                      removable: props.removable,
                       treeColumn: props.treeColumn,
                       detail: slots.expanded,
                     }),

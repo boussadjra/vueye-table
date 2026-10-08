@@ -18,6 +18,7 @@ import {
   type VNodeChild,
 } from "vue";
 
+import { injectEditingGrid } from "./editing";
 import {
   createDetails,
   DataTableTreeCell,
@@ -63,6 +64,7 @@ export const DataTableRoot = defineComponent({
     provideDataTable(props.table);
     const hierarchy = provideHierarchy(props.table, props);
     const element = shallowRef<HTMLElement>();
+    const editingGrid = injectEditingGrid();
     const render = (virtual?: ComponentVirtualBinding) =>
       h(
         props.as,
@@ -85,6 +87,7 @@ export const DataTableRoot = defineComponent({
       props.virtual
         ? h(VirtualContent, {
             table: props.table,
+            ...(editingGrid ? { grid: editingGrid } : {}),
             options: virtualOptions(props),
             tableElement: () => element.value,
             render,
@@ -423,6 +426,7 @@ export const DataTableRow = defineComponent({
           "aria-selected": table.selectionMode === "none" ? undefined : String(selected),
           "data-selected": flag(selected),
           "data-key": String(row.key),
+          "data-dirty": flag(row.isDirty),
           ...hierarchyRowAttrs(table, row, hierarchy),
           tabindex: table.tree
             ? (hierarchy?.focusKey ?? table.rows[0]?.key) === row.key

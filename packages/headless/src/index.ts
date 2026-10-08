@@ -9,6 +9,8 @@ export {
   DataTableStatus,
 } from "./controls";
 export { DataTableLoadMore } from "./loading";
+export { DataCellEditor, cellEditorProps, type CellEditorSlotProps } from "./editor";
+export { DataTableEditRoot, DataTableEditCell, DataTableRowActions } from "./editing";
 export {
   DataTableExpandToggle,
   DataTableDetailRow,

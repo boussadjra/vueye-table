@@ -1,4 +1,6 @@
 export {
+  VtCellEditor,
+  VtRowActions,
   VtExpandToggle,
   VtDetailRow,
   VtTreeCell,

@@ -30,6 +30,10 @@ const layerComponents = [
   "DataTableBody",
   "DataTableRow",
   "DataTableCell",
+  "DataCellEditor",
+  "DataTableEditRoot",
+  "DataTableEditCell",
+  "DataTableRowActions",
   "DataTableEmpty",
   "DataTableSelectAll",
   "DataTableSelectRow",
@@ -61,6 +65,8 @@ const layerComponents = [
   "VtColumnVisibility",
   "VtSortIndicator",
   "VtGrid",
+  "VtCellEditor",
+  "VtRowActions",
 ] as const;
 
 const composables = ["useDataTable", "useDataGrid", "defineColumns"] as const;

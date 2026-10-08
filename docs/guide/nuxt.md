@@ -1,5 +1,10 @@
 # Nuxt
 
+With `layers: true`, editor primitives `DataCellEditor`, `DataTableEditRoot`,
+`DataTableEditCell`, `DataTableRowActions`, `VtCellEditor` and `VtRowActions` are also registered.
+Full-component `edit-mode` and `editor.<id>` slots work with the default component registration;
+see [editing](/guide/editing).
+
 ```bash
 pnpm add @vueye-table/nuxt
 ```
