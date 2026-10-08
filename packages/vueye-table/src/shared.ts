@@ -7,15 +7,73 @@ import {
   type SortRule,
   type TableState,
   type TableStatePatch,
+  type ExpandedState,
+  type ExpandMode,
+  type TreeOptions,
+  type TableRow,
+  type TableColumn,
 } from "@vueye-table/core";
 import { virtualProps } from "@vueye-table/headless";
+import { hierarchyProps } from "@vueye-table/headless";
 import type { Density } from "@vueye-table/styled";
 import type { TableSource, LoadMore } from "@vueye-table/vue";
-import type { PropType } from "vue";
+import { defineComponent, type PropType, type VNodeChild } from "vue";
+
+interface ContentProps {
+  readonly item: unknown;
+  readonly row: TableRow<unknown>;
+  readonly column: TableColumn<unknown>;
+  readonly value: unknown;
+  readonly display: string;
+  readonly editable: boolean;
+}
+/** Isolate application cell slots from unrelated table/grid navigation updates. */
+export const CellContent = defineComponent({
+  name: "VueyeCellContent",
+  props: {
+    row: { type: Object as PropType<TableRow<unknown>>, required: true },
+    column: { type: Object as PropType<TableColumn<unknown>>, required: true },
+    value: { type: null as unknown as PropType<unknown>, required: true },
+    display: { type: String, required: true },
+    editable: { type: Boolean, default: false },
+    render: { type: Function as PropType<(props: ContentProps) => VNodeChild>, required: true },
+  },
+  setup(props) {
+    return () =>
+      props.render({
+        item: props.row.original,
+        row: props.row,
+        column: props.column,
+        value: props.value,
+        display: props.display,
+        editable: props.editable,
+      });
+  },
+});
 
 /** Props both full components share. */
 export const commonProps = {
   ...virtualProps,
+  ...hierarchyProps,
+  rowCanExpand: {
+    type: Function as PropType<((row: any) => boolean) | undefined>,
+    default: undefined,
+  },
+  expandMode: { type: String as PropType<ExpandMode>, default: "multiple" },
+  expanded: { type: [Boolean, Array] as PropType<ExpandedState | undefined>, default: undefined },
+  getChildren: { type: Function as PropType<TreeOptions<any>["getChildren"]>, default: undefined },
+  setChildren: { type: Function as PropType<TreeOptions<any>["setChildren"]>, default: undefined },
+  getParentKey: {
+    type: Function as PropType<TreeOptions<any>["getParentKey"]>,
+    default: undefined,
+  },
+  hasChildren: { type: Function as PropType<TreeOptions<any>["hasChildren"]>, default: undefined },
+  loadChildren: {
+    type: Function as PropType<TreeOptions<any, AbortSignal>["loadChildren"]>,
+    default: undefined,
+  },
+  treeFilter: { type: String as PropType<TreeOptions<unknown>["treeFilter"]>, default: undefined },
+  paginateBy: { type: String as PropType<TreeOptions<unknown>["paginateBy"]>, default: undefined },
   source: {
     type: [Object, Function] as PropType<TableSource<unknown> | undefined>,
     default: undefined,
@@ -67,6 +125,7 @@ export const stateEmits = [
   "update:filters",
   "update:hiddenColumns",
   "update:selected",
+  "update:expanded",
 ] as const;
 
 interface ControlledProps {
@@ -77,6 +136,7 @@ interface ControlledProps {
   readonly filters: Readonly<Record<string, unknown>> | undefined;
   readonly hiddenColumns: readonly string[] | undefined;
   readonly selected?: readonly RowKey[] | undefined;
+  readonly expanded?: ExpandedState | undefined;
 }
 
 /** The state a parent controls through `v-model`, as a table state patch. */
@@ -87,6 +147,7 @@ export function controlledState(props: ControlledProps, current: PaginationState
     filters: props.filters,
     hiddenColumns: props.hiddenColumns,
     selection: props.selected,
+    expanded: props.expanded,
     pagination:
       props.page !== undefined || props.pageSize !== undefined
         ? { page: props.page ?? current.page, pageSize: props.pageSize ?? current.pageSize }
@@ -123,6 +184,61 @@ export function emitStateChanges(
   }
   if (state.selection !== previous.selection) {
     emit("update:selected", state.selection);
+  }
+  if (state.expanded !== previous.expanded) emit("update:expanded", state.expanded);
+}
+
+export function expansionOptions(
+  props: {
+    readonly rowCanExpand: ((row: any) => boolean) | undefined;
+    readonly expandMode: ExpandMode;
+  } & TreeOptions<unknown, AbortSignal>,
+  detail: boolean,
+): TreeOptions<unknown, AbortSignal> & {
+  readonly getRowCanExpand: ((row: unknown) => boolean) | undefined;
+  readonly expandMode: ExpandMode;
+} {
+  return {
+    getRowCanExpand: props.rowCanExpand ?? (detail ? () => true : undefined),
+    expandMode: props.expandMode,
+    getChildren: props.getChildren,
+    setChildren: props.setChildren,
+    getParentKey: props.getParentKey,
+    hasChildren: props.hasChildren,
+    loadChildren: props.loadChildren,
+    treeFilter: props.treeFilter,
+    paginateBy: props.paginateBy,
+  };
+}
+
+export function emitExpansionChanges(
+  emit: {
+    (event: "expand", item: unknown, row: TableRow<unknown>): void;
+    (event: "collapse", item: unknown, row: TableRow<unknown>): void;
+  },
+  state: TableState,
+  previous: TableState,
+  table:
+    | {
+        readonly processedRows: readonly TableRow<unknown>[];
+        getRow(key: RowKey): TableRow<unknown> | undefined;
+      }
+    | undefined,
+): void {
+  if (!table || state.expanded === previous.expanded) return;
+  const keys = new Set([
+    ...table.processedRows.map((row) => row.key),
+    ...(state.expanded === true ? [] : state.expanded),
+    ...(previous.expanded === true ? [] : previous.expanded),
+  ]);
+  for (const key of keys) {
+    const before = previous.expanded === true || previous.expanded.includes(key);
+    const after = state.expanded === true || state.expanded.includes(key);
+    const row = table.getRow(key);
+    if (row?.canExpand && before !== after) {
+      if (after) emit("expand", row.original, row);
+      else emit("collapse", row.original, row);
+    }
   }
 }
 

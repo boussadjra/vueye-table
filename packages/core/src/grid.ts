@@ -150,6 +150,10 @@ export interface GridKey {
 
 /** What a key press asks a grid to do while no cell is being edited. */
 export type GridCommand =
+  | {
+      readonly type: "tree";
+      readonly action: "expand" | "collapse" | "child" | "parent" | "siblings";
+    }
   | { readonly type: "move"; readonly direction: GridDirection; readonly options: MoveOptions }
   | { readonly type: "edit"; readonly initial?: string | undefined }
   | { readonly type: "clear" }
@@ -171,9 +175,22 @@ const ARROWS: Readonly<Record<string, GridDirection>> = {
  * a printable character starts editing with that character, Delete and Backspace clear, Escape
  * collapses the selection, and Ctrl or Cmd with A, Z, Y select all, undo, and redo.
  */
-export function gridCommand(event: GridKey): GridCommand | undefined {
+/** Hierarchy navigation is enabled only at the caller's designated tree column. */
+export interface GridTreeContext {
+  readonly canExpand: boolean;
+  readonly expanded: boolean;
+}
+
+export function gridCommand(event: GridKey, tree?: GridTreeContext): GridCommand | undefined {
   const mod = event.ctrlKey === true || event.metaKey === true;
   const shift = event.shiftKey === true;
+  if (tree && !mod && !event.altKey) {
+    if (event.key === "*") return { type: "tree", action: "siblings" };
+    if (!shift && event.key === "ArrowRight" && tree.canExpand)
+      return { type: "tree", action: tree.expanded ? "child" : "expand" };
+    if (!shift && event.key === "ArrowLeft")
+      return { type: "tree", action: tree.canExpand && tree.expanded ? "collapse" : "parent" };
+  }
   const direction = ARROWS[event.key];
   if (direction) {
     return { type: "move", direction, options: { extend: shift, toEdge: mod } };

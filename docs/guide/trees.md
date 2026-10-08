@@ -27,7 +27,49 @@ Every row exposes `depth`, `parentKey`, `childCount`, `childStatus`, `selection`
 
 `toggleExpanded`, `expandAll`, `collapseAll` and `state.expanded` drive branch disclosure. `true` includes subsequently loaded children. Tree branches create child data rows in `renderItems`; they do not create detail items by themselves. `getRowCanExpand` still opts a row into a separately rendered detail. Child rows count as data rows for grid coordinates, editing and selection.
 
-Use the [project-files example](/examples/tree-data) for a complete renderer. Tree keyboard navigation and styled disclosure controls are tracked separately; core provides the hierarchy, not those controls.
+Use the [project-files example](/examples/tree-data) for a custom renderer, or the
+[hierarchy components example](/examples/hierarchy-components) for full table/grid controls.
+
+## Tree components
+
+Pass `get-children` (nested data) or `get-parent-key` (adjacency data) to either full component.
+Use `tree-column="name"` to choose the disclosure/indentation column; the first visible column is
+the fallback. Tree callbacks and `expand-mode` are creation options. `v-model:expanded`,
+`expand` / `collapse` and optional `expanded` content work as in the [expansion guide](/guide/expansion).
+With a tree, an expanded slot adds detail content alongside child rows; use `row-can-expand` to
+limit which rows receive that extra content.
+
+```vue
+<VueyeTable
+  :data="entries"
+  :columns="[{ id: 'name' }]"
+  :get-children="(entry) => entry.children"
+  :set-children="(entry, children) => ({ ...entry, children })"
+  tree-column="name"
+  selectable
+/>
+```
+
+Headless roots and styled `VtTable` / `VtGrid` accept `tree-column`; cells automatically wrap that
+column in `DataTableTreeCell` / `VtTreeCell`. Custom cells can use these wrappers directly and
+set `:tree="false"` on the headless cell to prevent double wrapping. Indentation uses logical
+inline spacing, including RTL. Set `--vt-tree-indent` to change its step (default `1.25rem`).
+Tri-state row checkboxes reflect loaded descendants. Lazy branches show loading text or an inline
+**Retry children** button; include `DataTableStatus` / `VtStatus` when composing layers so its polite
+region announces progress and failures. Full components include this status automatically.
+
+Configured tree roots expose `role="treegrid"` even when empty. Rows expose `aria-level`,
+`aria-expanded` for branches, `aria-setsize`, `aria-posinset`, and logical `aria-rowindex` across
+virtual slices. In a table, focus a row and use Right to open it or enter its first child; Left
+closes it or returns to its parent. Up/Down and Home/End move through visible rows; `*` opens
+siblings. In a grid these tree commands apply in the designated tree column. Other columns,
+Shift+arrows and Ctrl/Meta+arrows retain spreadsheet movement and selection. Editors and ordinary
+embedded form controls keep their keys. This follows the tree-column interaction variant of the
+[WAI-ARIA treegrid guidance](https://www.w3.org/WAI/ARIA/apg/patterns/treegrid/).
+
+For composable-only grids, use `useDataGrid(table, { treeColumn: () => 'name' })`; omission uses the
+first visible column. `table.tree` identifies a configured hierarchy. Pure core renderers can call
+`gridCommand(event, { canExpand: row.canExpand, expanded: row.isExpanded })` and execute its tree action.
 
 `expandMode: 'single'` retains one saved key. Its ancestor path opens with it, so opening a nested branch keeps that branch reachable. Opening a branch elsewhere closes the previous path. Closing a derived ancestor closes the saved branch.
 

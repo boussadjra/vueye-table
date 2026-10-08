@@ -240,7 +240,7 @@ const table = useDataTable({
 });
 ```
 
-Import `ExpandedState` from `vueye-table`. Outside changes to the prop reach `setState`; disclosure operations emit the new expansion state. Full-component disclosure props and controls are tracked in #85.
+Import `ExpandedState` from `vueye-table`. Outside changes to the prop reach `setState`; disclosure operations emit the new expansion state. Both full components expose `v-model:expanded` directly; see [row expansion](/guide/expansion) for their disclosure props, events and slots.
 
 ## Issues
 

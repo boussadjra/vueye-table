@@ -1,4 +1,7 @@
 export {
+  VtExpandToggle,
+  VtDetailRow,
+  VtTreeCell,
   VtBody,
   VtColumnVisibility,
   VtEmpty,

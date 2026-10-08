@@ -29,6 +29,7 @@
   --vt-cell-x: 0.75rem;
   --vt-cell-y: 0.625rem;
   --vt-shadow: 0 8px 24px rgb(31 35 40 / 0.12);
+  --vt-tree-indent: 1.25rem;
 
   font-family: var(--vt-font);
   font-size: var(--vt-font-size);
@@ -566,4 +567,77 @@
 .vueye-grid > .vt-toolbar {
   padding-inline: 0;
   border: 0;
+}
+
+.vt-tree-cell {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.375rem;
+  min-width: 0;
+}
+
+.vt-tree-toggle {
+  display: inline-flex;
+  flex: 0 0 1.75rem;
+  justify-content: center;
+}
+
+.vt-expand-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  padding: 0;
+  color: var(--vt-muted);
+  background: transparent;
+  border: 0;
+  border-radius: var(--vt-control-radius);
+  cursor: pointer;
+}
+
+.vt-expand-toggle:hover {
+  color: var(--vt-fg);
+  background: var(--vt-hover);
+}
+
+.vt-expand-toggle:focus-visible,
+.vt-tree-retry:focus-visible,
+.vt-table tr[tabindex]:focus-visible {
+  outline: 2px solid var(--vt-focus);
+  outline-offset: -2px;
+}
+
+.vt-tree-loading {
+  color: var(--vt-muted);
+}
+
+.vt-tree-error {
+  color: var(--vt-danger);
+}
+
+.vt-tree-retry {
+  padding: 0.125rem 0.25rem;
+  color: inherit;
+  font: inherit;
+  background: transparent;
+  border: 1px solid currentColor;
+  border-radius: var(--vt-control-radius);
+  cursor: pointer;
+}
+
+.vt-table .vt-expansion-cell {
+  width: 2.75rem;
+  padding-inline: 0.5rem;
+}
+
+.vt-table .vt-detail-cell {
+  padding: 1rem;
+  white-space: normal;
+  background: var(--vt-header-bg);
+}
+
+.vt-table tr[hidden] {
+  display: none;
 }

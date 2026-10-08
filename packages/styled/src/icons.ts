@@ -7,6 +7,8 @@ const paths = {
   search: "M11 19a8 8 0 1 1 0-16 8 8 0 0 1 0 16zm10 2-4.35-4.35",
   columns: "M4 4h6v16H4zM14 4h6v16h-6z",
   empty: "M3 7h18M3 12h18M3 17h10",
+  expand: "M9 5l7 7-7 7",
+  collapse: "M5 9l7 7 7-7",
 } as const;
 
 export type IconName = keyof typeof paths;

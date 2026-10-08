@@ -15,6 +15,17 @@ function sources(directory: string): string[] {
 }
 
 describe("repository", () => {
+  it("rejects raw HTML paths in package renderers", async () => {
+    // @ts-expect-error The checker is a standalone ESM script, without generated declarations.
+    const { hasUnsafeHtml } = await import("../../scripts/html-boundary.mjs");
+    for (const source of [
+      '<div v-html="value" />',
+      'h("div", { innerHTML: value })',
+      'node["innerHTML"] = value',
+    ])
+      expect(hasUnsafeHtml(source)).toBe(true);
+    expect(hasUnsafeHtml('h("span", {}, display)')).toBe(false);
+  });
   it("passes the boundary checker", () => {
     const output = execFileSync("node", ["scripts/check-boundaries.mjs"], { cwd: root });
     expect(String(output)).toContain("Dependency-boundary validation passed.");

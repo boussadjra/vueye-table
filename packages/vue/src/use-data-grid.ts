@@ -67,7 +67,15 @@ export interface DataGridBinding<TRow> {
   handleKey(event: GridKey): boolean;
 }
 
-export function useDataGrid<TRow>(table: DataTableBinding<TRow>): DataGridBinding<TRow> {
+export interface DataGridOptions {
+  /** Falls back to the first visible column if the configured column is hidden. */
+  readonly treeColumn?: () => string | undefined;
+}
+
+export function useDataGrid<TRow>(
+  table: DataTableBinding<TRow>,
+  gridOptions: DataGridOptions = {},
+): DataGridBinding<TRow> {
   const selection = shallowRef<GridSelection | undefined>();
   const editor = shallowRef<GridEditor | undefined>();
   const lastResult = shallowRef<EditResult<TRow> | undefined>();
@@ -309,8 +317,35 @@ export function useDataGrid<TRow>(table: DataTableBinding<TRow>): DataGridBindin
       if (editor.value) {
         return false;
       }
-      const command = gridCommand(event);
+      const current = selection.value?.focus ?? { row: 0, column: 0 };
+      const row = table.rows[current.row];
+      const treeColumn =
+        table.columns.find((column) => column.id === gridOptions.treeColumn?.()) ??
+        table.columns[0];
+      const command = gridCommand(
+        event,
+        table.tree && row && table.columns[current.column] === treeColumn
+          ? { canExpand: row.canExpand, expanded: row.isExpanded }
+          : undefined,
+      );
       switch (command?.type) {
+        case "tree": {
+          if (!row) return false;
+          let key = row.key;
+          if (command.action === "expand" || command.action === "collapse")
+            table.toggleExpanded(key, command.action === "expand");
+          else if (command.action === "siblings") {
+            for (const sibling of table.processedRows.filter(
+              (candidate) => candidate.parentKey === row.parentKey && candidate.canExpand,
+            ))
+              table.toggleExpanded(sibling.key, true);
+          } else if (command.action === "child")
+            key = table.rows.find((candidate) => candidate.parentKey === row.key)?.key ?? key;
+          else key = row.parentKey ?? key;
+          const index = table.rows.findIndex((candidate) => candidate.key === key);
+          if (index >= 0) grid.focusCell({ row: index, column: current.column });
+          return true;
+        }
         case "move":
           grid.move(command.direction, command.options);
           return true;

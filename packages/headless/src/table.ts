@@ -15,8 +15,20 @@ import {
   type SlotsType,
   type VNode,
   type ComponentPublicInstance,
+  type VNodeChild,
 } from "vue";
 
+import {
+  createDetails,
+  DataTableTreeCell,
+  hierarchyProps,
+  hierarchyRowAttrs,
+  injectHierarchy,
+  provideHierarchy,
+  resolveTreeColumn,
+  treeKeydown,
+  type DetailSlotProps,
+} from "./hierarchy";
 import { loadSentinel } from "./loading";
 import { asProp, columnProp, flag, rowProp } from "./shared";
 import {
@@ -45,21 +57,26 @@ export const DataTableRoot = defineComponent({
     table: { type: Object as PropType<AnyDataTableBinding>, required: true },
     as: asProp("table"),
     ...virtualProps,
+    ...hierarchyProps,
   },
   setup(props, { slots }) {
     provideDataTable(props.table);
+    const hierarchy = provideHierarchy(props.table, props);
     const element = shallowRef<HTMLElement>();
     const render = (virtual?: ComponentVirtualBinding) =>
       h(
         props.as,
         {
-          "aria-rowcount": props.table.rowCount + 1,
+          role: props.table.tree ? "treegrid" : undefined,
+          "aria-rowcount":
+            (props.table.tree ? props.table.processedRows.length : props.table.rowCount) + 1,
           "aria-colcount": props.table.columns.length,
           "aria-busy":
             props.table.loadState === "loading" || props.table.loadState === "streaming"
               ? "true"
               : undefined,
           "data-empty": flag(props.table.rowCount === 0),
+          onKeydown: (event: KeyboardEvent) => treeKeydown(event, hierarchy, virtual),
           ...(virtual ? { ref: element, "data-virtual": "" } : {}),
         },
         slots.default?.({ table: props.table }) ?? [h(DataTableHeader), h(DataTableBody)],
@@ -248,6 +265,7 @@ export const DataTableBody = defineComponent({
     default?: (props: { rows: readonly TableRow<unknown>[] }) => VNode[];
     empty?: () => VNode[];
     detail?: (props: { row: TableRow<unknown>; rowIndex: number }) => VNode[];
+    row?: (props: DetailSlotProps) => VNodeChild;
   }>,
   props: {
     as: asProp("tbody"),
@@ -257,9 +275,14 @@ export const DataTableBody = defineComponent({
   setup(props, { slots }) {
     const table = injectDataTable("<DataTableBody>");
     const virtual = injectVirtual();
+    const details = createDetails(
+      table,
+      () => slots.detail,
+      () => props.colspan ?? table.columns.length,
+    );
     return () => {
       if (props.virtual && !virtual) return h(VirtualDataTableBody, props, slots);
-      if (virtual) return renderTableBody(table, virtual, props.as, props.colspan, slots);
+      if (virtual) return renderTableBody(table, virtual, props.as, props.colspan, slots, details);
       let content: VNode[] | VNode | undefined = slots.default?.({ rows: table.rows });
       if (!content) {
         content =
@@ -267,10 +290,24 @@ export const DataTableBody = defineComponent({
             ? h("tr", { "data-empty": "" }, [
                 h("td", { colspan: Math.max(1, table.columns.length) }, slots.empty()),
               ])
-            : table.rows.map((row) => h(DataTableRow, { key: row.key, row }));
+            : table.renderItems.map((item) =>
+                item.kind === "row"
+                  ? slots.row
+                    ? h(Fragment, { key: item.key }, [slots.row(item)])
+                    : h(DataTableRow, { key: item.key, row: item.row, rowIndex: item.rowIndex })
+                  : details.render(item.row, item.rowIndex),
+              );
       }
+      const visibleDetails = new Set(
+        table.renderItems.filter((item) => item.kind === "detail").map((item) => item.row.key),
+      );
+      const retained = slots.default ? [] : details.retained(visibleDetails);
       const sentinel = loadSentinel(table, props.colspan ?? table.columns.length);
-      return h(props.as, sentinel ? [content, sentinel] : content);
+      return h(props.as, [
+        ...(Array.isArray(content) ? content : content ? [content] : []),
+        ...retained,
+        ...(sentinel ? [sentinel] : []),
+      ]);
     };
   },
 });
@@ -279,6 +316,7 @@ type TableBodySlots = {
   default?: (props: { rows: readonly TableRow<unknown>[] }) => VNode[];
   empty?: () => VNode[];
   detail?: (props: { row: TableRow<unknown>; rowIndex: number }) => VNode[];
+  row?: (props: DetailSlotProps) => VNodeChild;
 };
 function renderTableBody(
   table: DataTableBinding<unknown>,
@@ -286,6 +324,7 @@ function renderTableBody(
   as: string,
   colspan: number | undefined,
   slots: TableBodySlots,
+  details: ReturnType<typeof createDetails>,
   element?: ShallowRef<HTMLElement | undefined>,
 ): VNode {
   const width = colspan ?? table.columns.length;
@@ -311,20 +350,21 @@ function renderTableBody(
   return h(as, attrs, [
     ...renderRows(virtual, width, (item) =>
       item.renderItem.kind === "row"
-        ? h(DataTableRow, {
-            key: item.key,
-            row: item.renderItem.row,
-            rowIndex: item.renderItem.rowIndex,
-          })
-        : h(
-            "tr",
-            {
+        ? slots.row
+          ? h(Fragment, { key: item.key }, [slots.row(item.renderItem)])
+          : h(DataTableRow, {
               key: item.key,
-              "data-detail": "",
-              ref: (target) => virtual.rows.measureElement(target, item.key),
-            },
-            [h("td", { colspan: Math.max(1, width) }, slots.detail?.(item.renderItem))],
-          ),
+              row: item.renderItem.row,
+              rowIndex: item.renderItem.rowIndex,
+            })
+        : details.render(item.renderItem.row, item.renderItem.rowIndex),
+    ),
+    ...details.retained(
+      new Set(
+        virtual.rowItems
+          .filter((item) => item.renderItem.kind === "detail")
+          .map((item) => item.renderItem.row.key),
+      ),
     ),
     ...(loadSentinel(table, width) ? [loadSentinel(table, width)] : []),
   ]);
@@ -343,7 +383,12 @@ const VirtualDataTableBody = defineComponent({
     const virtual = createComponentVirtual(table, virtualOptions(props), () =>
       element.value?.closest("table"),
     );
-    return () => renderTableBody(table, virtual, props.as, props.colspan, slots, element);
+    const details = createDetails(
+      table,
+      () => slots.detail,
+      () => props.colspan ?? table.columns.length,
+    );
+    return () => renderTableBody(table, virtual, props.as, props.colspan, slots, details, element);
   },
 });
 
@@ -365,6 +410,7 @@ export const DataTableRow = defineComponent({
   setup(props, { slots }) {
     const table = injectDataTable("<DataTableRow>");
     const virtual = injectVirtual();
+    const hierarchy = injectHierarchy();
     return () => {
       const { row } = props;
       const selected = table.isSelected(row.key);
@@ -377,6 +423,15 @@ export const DataTableRow = defineComponent({
           "aria-selected": table.selectionMode === "none" ? undefined : String(selected),
           "data-selected": flag(selected),
           "data-key": String(row.key),
+          ...hierarchyRowAttrs(table, row, hierarchy),
+          tabindex: table.tree
+            ? (hierarchy?.focusKey ?? table.rows[0]?.key) === row.key
+              ? 0
+              : -1
+            : undefined,
+          onFocus: () => {
+            if (hierarchy) hierarchy.focus.value = row.key;
+          },
           ...(virtual && item
             ? {
                 ref: (element: Element | ComponentPublicInstance | null) =>
@@ -403,16 +458,26 @@ export const DataTableCell = defineComponent({
       display: string;
     }) => VNode[];
   }>,
-  props: { row: rowProp, column: columnProp, as: asProp("td") },
+  props: {
+    row: rowProp,
+    column: columnProp,
+    as: asProp("td"),
+    tree: { type: Boolean, default: true },
+  },
   setup(props, { slots }) {
+    const table = injectDataTable("<DataTableCell>");
+    const hierarchy = injectHierarchy();
     return () => {
       const { row, column } = props;
       const value = row.getValue(column.id);
       const display = row.getDisplay(column.id);
+      const content = () => slots.default?.({ row, column, value, display }) ?? display;
       return h(
         props.as,
         { "data-column": column.id, "data-align": column.align },
-        slots.default?.({ row, column, value, display }) ?? display,
+        props.tree && table.tree && column.id === resolveTreeColumn(table, hierarchy?.treeColumn)
+          ? h(DataTableTreeCell, { row }, { default: content })
+          : content(),
       );
     };
   },

@@ -1,6 +1,7 @@
 import { readFile, readdir } from "node:fs/promises";
 import { dirname, extname, join, relative, resolve, sep } from "node:path";
 
+import { hasUnsafeHtml } from "./html-boundary.mjs";
 import {
   allowedInternalDependencies,
   collectImportSpecifiers,
@@ -165,6 +166,8 @@ async function validateSources(directory, manifest, root) {
 
   for (const { file, source } of sources) {
     const displayPath = relative(repositoryRoot, file);
+    if (hasUnsafeHtml(source))
+      packageFailures.push(`${displayPath}: raw HTML rendering is forbidden in package sources`);
 
     for (const specifier of collectImportSpecifiers(source)) {
       if (specifier.startsWith(".")) {
