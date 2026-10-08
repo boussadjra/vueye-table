@@ -23,6 +23,7 @@
     "framework-rewrite",
     "grid-slots-and-fixes",
     "tree-data",
+    "tree-detail-components",
     "vue-row-drafts",
     "vue-streaming-components",
     "vue-virtual-bindings"
