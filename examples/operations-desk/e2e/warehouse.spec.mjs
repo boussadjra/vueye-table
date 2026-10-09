@@ -92,12 +92,19 @@ test("an active editor retains its draft during wheel scrolling and can commit a
   const grid = page.getByRole("grid", { name: "Warehouse stock worksheet" });
   await grid.getByRole("gridcell", { name: "Field notebook", exact: true }).first().dblclick();
   const editor = page.getByRole("textbox", { name: "Edit Product", exact: true });
+  await expect(editor).toHaveValue("Field notebook");
   await editor.fill("Retained browser draft");
   const viewport = page.locator("[data-virtual-viewport]");
   await viewport.hover();
   await page.mouse.wheel(0, 1500);
+  await expect.poll(() => viewport.evaluate((element) => element.scrollTop)).toBeGreaterThan(100);
+  await page.mouse.wheel(0, 1500);
   await expect.poll(() => viewport.evaluate((element) => element.scrollTop)).toBeGreaterThan(500);
   await expect(editor).toHaveValue("Retained browser draft");
+  await expect(page.getByText("0 pending rows", { exact: true })).toBeVisible();
+  const scrolled = await viewport.evaluate((element) => element.scrollTop);
+  await page.mouse.wheel(0, -1500);
+  await expect.poll(() => viewport.evaluate((element) => element.scrollTop)).toBeLessThan(scrolled);
   await page.mouse.wheel(0, -1500);
   await expect.poll(() => viewport.evaluate((element) => element.scrollTop)).toBeLessThan(100);
   await expect(editor).toHaveValue("Retained browser draft");
@@ -122,7 +129,7 @@ test("multilingual receiving remains literal text and closes HTTP streams", asyn
     page.getByRole("status").filter({ hasText: /1.?000 of 1.?000 deliveries · done/ }),
   ).toBeVisible();
   await page.getByRole("button", { name: "Stop receiving", exact: true }).click();
-  await page.getByLabel("Deliveries", { exact: true }).selectOption("10000");
+  await page.getByRole("combobox", { name: "Deliveries", exact: true }).selectOption("10000");
   await page.getByRole("button", { name: "Start receiving", exact: true }).click();
   await expect(
     page.getByText("استلام شحنة · Étiquette vérifiée", { exact: true }).first(),
