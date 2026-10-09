@@ -1,5 +1,11 @@
 # @vueye-table/core
 
+## 3.0.0-alpha.11
+
+### Patch Changes
+
+- ff20492: Apply treeFilter changes after mounting VueyeTable and VueyeGrid without replacing the engine or clearing loaded children, edits, selection or expansion. Core exposes setTreeFilter(mode), and useDataTable accepts a ref or getter for treeFilter.
+
 ## 3.0.0-alpha.10
 
 ### Minor Changes

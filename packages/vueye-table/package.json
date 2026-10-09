@@ -1,6 +1,6 @@
 {
   "name": "vueye-table",
-  "version": "3.0.0-alpha.10",
+  "version": "3.0.0-alpha.11",
   "description": "A Vue framework for data tables and spreadsheets: a complete, themeable data table and grid, plus every layer beneath them.",
   "keywords": [
     "data-grid",

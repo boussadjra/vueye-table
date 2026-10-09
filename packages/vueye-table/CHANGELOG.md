@@ -1,5 +1,19 @@
 # vueye-table
 
+## 3.0.0-alpha.11
+
+### Patch Changes
+
+- ff20492: Apply treeFilter changes after mounting VueyeTable and VueyeGrid without replacing the engine or clearing loaded children, edits, selection or expansion. Core exposes setTreeFilter(mode), and useDataTable accepts a ref or getter for treeFilter.
+- 28b5650: Include leading selection, details and row-action cells in accessible column counts and indices. Keep data editing coordinates unchanged, including hidden, reordered and horizontally virtualized columns. Custom headless roots and VtTable accept leadingColumns for caller-rendered utility cells.
+- Updated dependencies [ff20492]
+- Updated dependencies [28b5650]
+- Updated dependencies [00f99c5]
+  - @vueye-table/core@3.0.0-alpha.11
+  - @vueye-table/vue@3.0.0-alpha.11
+  - @vueye-table/headless@3.0.0-alpha.11
+  - @vueye-table/styled@3.0.0-alpha.11
+
 ## 3.0.0-alpha.10
 
 ### Minor Changes
