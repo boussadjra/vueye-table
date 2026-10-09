@@ -103,7 +103,13 @@ not replace the recorded npm alpha.10 run above or the required published-alpha 
   ArrowLeft focused its parent, and ArrowRight focused the open parent's first child.
 - No captured Chromium console errors occurred during these candidate interactions.
 
-Release target: **3.0.0-beta.1**. Still pending: pushes and PR merges (GitHub connections time
-out), corrected published-alpha pins/retest, hosted Windows/Linux CI, Firefox/WebKit,
+Release target: **3.0.0-beta.1**. [PR #115](https://github.com/boussadjra/vueye-table/pull/115)
+contains the consumer and three fixes. Its published alpha.10 consumer workflow passed on
+both Windows and Linux at `b7d0e49`; the root CI lint failure was reproduced without generated
+Nuxt types and corrected with checked fixture lookups. The final local `pnpm check` passed
+430 tests and all build/type/export checks with patched test tooling and the vulnerable
+release-tool dependency chain removed.
+
+Still pending: PR merge, corrected published-alpha pins/retest, Firefox/WebKit,
 screen-reader acceptance and the complete keyboard-only matrix. Local candidate results
 do not mark the beta gate complete.

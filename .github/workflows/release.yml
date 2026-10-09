@@ -157,7 +157,7 @@ jobs:
         run: pnpm package:check
 
       # Pending changesets open a version pull request. After that PR merges, publish:packages
-      # writes to npm under "latest" until a stable 3.x exists, then under the prerelease id.
+      # always writes beta to "beta". Alpha uses "latest" until a stable 3.x exists.
       # Publish is skipped until NPM_TRUSTED_PUBLISHING is set, so a merge cannot fail OIDC
       # before the packages exist and trusted publishers are attached.
       - name: Create a release pull request or publish

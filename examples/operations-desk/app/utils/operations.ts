@@ -35,14 +35,19 @@ export interface ReceivingEvent {
   readonly quantity: number;
   readonly message: string;
 }
+function cycle<T>(values: readonly T[], index: number): T {
+  const value = values[index % values.length];
+  if (value === undefined) throw new RangeError("Synthetic row index must be nonnegative");
+  return value;
+}
 export function orderAt(index: number): Order {
   const names = ["Atlas Lab", "Éditions du Port", "مكتبة الأفق", "Northern Supply", "Maison Réseau"];
   return {
     id: index + 1,
     reference: `SO-${String(index + 1).padStart(6, "0")}`,
-    customer: names[index % names.length]!,
-    status: ["Queued", "Picking", "Shipped", "Held"][index % 4]!,
-    warehouse: warehouses[index % 3]!,
+    customer: cycle(names, index),
+    status: cycle(["Queued", "Picking", "Shipped", "Held"], index),
+    warehouse: cycle(warehouses, index),
     total: ((index * 7919) % 200_000) / 100,
     created: new Date(Date.UTC(2026, 0, 1) + (index % 365) * 86_400_000).toISOString().slice(0, 10),
   };
@@ -51,10 +56,11 @@ export function stockAt(index: number): Stock {
   return {
     id: `stock-${index + 1}`,
     sku: `SKU-${String(index + 1).padStart(5, "0")}`,
-    product: ["Field notebook", "USB-C dock", "Label roll", "Scanner", "Protective case"][
-      index % 5
-    ]!,
-    warehouse: warehouses[index % 3]!,
+    product: cycle(
+      ["Field notebook", "USB-C dock", "Label roll", "Scanner", "Protective case"],
+      index,
+    ),
+    warehouse: cycle(warehouses, index),
     quantity: 100 + (index % 500),
     reserved: index % 40,
     cost: 3.5 + (index % 240),
