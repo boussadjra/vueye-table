@@ -120,7 +120,9 @@ export const DataGridRoot = defineComponent({
     const element = ref<HTMLElement>();
     const id = `vt-grid-${useId()}`;
     const focus = (): void => {
-      void nextTick(() => element.value?.focus());
+      void nextTick(() => {
+        if (!grid.editor) element.value?.focus({ preventScroll: true });
+      });
     };
     provide(gridContextKey, { id, focus, cancel: (key) => emit("cancel", key) });
     watch(

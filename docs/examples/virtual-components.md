@@ -17,6 +17,10 @@ import VirtualComponents from '../.vitepress/theme/components/VirtualComponents.
 
 The grid accepts arrows, Page Up/Down, Ctrl or Command + Home/End, Enter, undo/redo and clipboard actions. Account and Amount are editable in this sample; its derived metrics are read-only. Changing a value produces a new source array.
 
+Double-click Account or Amount to edit. Pointer selection keeps the current scroll position,
+and queued grid focus does not blur a newly opened editor. Scroll away and back while typing,
+then press Enter to commit the retained draft.
+
 Virtual tables default to no pagination. Use `paginate` to virtualize a large page explicitly. `height` controls the viewport; `row-height` is the initial estimate and rendered rows are measured. See the [component contracts](/guide/virtualization#component-props), [ADR 0013](/adr/0013-component-virtualization) and the [runnable source](https://github.com/boussadjra/vueye-table/blob/main/docs/.vitepress/theme/components/VirtualComponents.vue).
 
 Run `pnpm docs:dev` and open this route to try it locally. The earlier [composable example](/examples/virtual-grid) remains available for custom layouts.

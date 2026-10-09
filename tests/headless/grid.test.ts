@@ -67,6 +67,32 @@ describe("DataGridRoot", () => {
     wrapper.unmount();
   });
 
+  it("does not let queued pointer focus steal a newly mounted editor", async () => {
+    const { wrapper, onDataChange } = mountGrid();
+    const cell = wrapper.get('[role=gridcell][data-column="age"]');
+    cell.element.dispatchEvent(new MouseEvent("mousedown", { button: 0, bubbles: true }));
+    cell.element.dispatchEvent(new MouseEvent("dblclick", { bubbles: true }));
+    await nextTick();
+    await nextTick();
+    const input = wrapper.get("input[data-editor]");
+    expect(document.activeElement).toBe(input.element);
+    expect(onDataChange).not.toHaveBeenCalled();
+    await input.setValue("37");
+    await input.trigger("keydown", { key: "Enter" });
+    expect(onDataChange).toHaveBeenCalledOnce();
+    wrapper.unmount();
+  });
+
+  it("focuses the grid without browser scrolling during pointer selection", async () => {
+    const { wrapper } = mountGrid();
+    const grid = wrapper.get("[role=grid]");
+    const focus = vi.spyOn(grid.element as HTMLElement, "focus");
+    await wrapper.get('[role=gridcell][data-column="age"]').trigger("mousedown", { button: 0 });
+    expect(document.activeElement).toBe(grid.element);
+    expect(focus).toHaveBeenCalledWith({ preventScroll: true });
+    wrapper.unmount();
+  });
+
   it("types into a cell, tabs across, and cancels with Escape", async () => {
     const { wrapper, table } = mountGrid();
     const grid = wrapper.get("[role=grid]");
