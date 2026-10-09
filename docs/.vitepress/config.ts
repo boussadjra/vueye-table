@@ -51,6 +51,7 @@ export default defineConfig({
         text: "Guide",
         items: [
           { text: "Getting started", link: "/guide/getting-started" },
+          { text: "3.0 beta contract", link: "/guide/beta" },
           { text: "Layers", link: "/guide/layers" },
           { text: "Columns", link: "/guide/columns" },
           { text: "State and v-model", link: "/guide/state" },
@@ -130,6 +131,15 @@ export default defineConfig({
           },
           { text: "0016 Hierarchy components", link: "/adr/0016-hierarchy-components" },
           { text: "0017 Inline and typed editors", link: "/adr/0017-inline-and-typed-editors" },
+          {
+            text: "0018 Reactive tree search context",
+            link: "/adr/0018-reactive-tree-search-context",
+          },
+          {
+            text: "0019 Rendered column coordinates",
+            link: "/adr/0019-rendered-column-coordinates",
+          },
+          { text: "0020 Beta API contract", link: "/adr/0020-beta-api-contract" },
         ],
       },
     ],

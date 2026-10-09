@@ -113,3 +113,48 @@ release-tool dependency chain removed.
 Still pending: PR merge, corrected published-alpha pins/retest, Firefox/WebKit,
 screen-reader acceptance and the complete keyboard-only matrix. Local candidate results
 do not mark the beta gate complete.
+
+## Published corrected alpha
+
+2026-10-09: PR #115 and the alpha.11 Version PR #116 are merged. All six packages
+`3.0.0-alpha.11` are published on npm with provenance; the GitHub prerelease is
+[v3.0.0-alpha.11](https://github.com/boussadjra/vueye-table/releases/tag/v3.0.0-alpha.11).
+Issues #111, #112 and #113 are closed. This supersedes the pending merge/publication steps above.
+
+This app now pins all six exact npm alpha.11 versions, without source aliases or packed-archive
+overrides. Its strict Nuxt types, seven engine/SQLite tests, production build and isolated HTTP
+acceptance passed on Windows. The original column-count reproducer now passes: the numbered
+grid and selectable table each report three accessible columns and render three columns.
+The repository gate passed 430 tests with coverage and all type, build, boundary and export checks.
+
+The consumer adds 36 hosted browser cases across Chromium, Firefox and WebKit: pointer row
+menus at 1280px/390px in light/dark on the first/last stock rows; dynamic tree search contexts
+with retained selection/branches and keyboard traversal; 100k × 24 virtual navigation; retained
+editors during wheel scrolling; and multilingual receiving/stream cleanup. These cases are
+prepared but their hosted result is still pending. Each browser run owns a temporary SQLite
+database and does not change an operator's stored stock.
+
+A manual screen-reader session remains unrun. Automated accessibility attributes and keyboard
+checks do not substitute for that session; retain this limitation in the beta release notes.
+
+The first hosted browser run ([37953525615](https://github.com/boussadjra/vueye-table/actions/runs/37953525615))
+passed 27/36 cases across the three browsers. All first/last-row menu combinations and 100k × 24
+navigation passed. End navigation lost focus in a virtual tree (#118); pointer grid focus could
+move the target between clicks or blur an editor (#119). Both were fixed in PR #120, with three
+regressions that failed before the fixes and a passing 433-test repository gate. The receiving
+case used an incorrect exact label selector, corrected to the visible combobox role/name. The
+editor case now checks the initial cell value and no pending save while scrolling; successive
+wheel events account for Firefox's bounded per-event motion without weakening draft retention.
+
+2026-10-09: all six alpha.12 packages and the GitHub prerelease are published. Each npm version
+has SLSA provenance metadata. The app's own lockfile resolves all six exact versions from npm,
+and their installed manifests were checked. The repository gate passed again with 433 tests.
+The alpha.12 consumer passed strict Nuxt types, seven SQLite/engine tests, production build,
+isolated HTTP acceptance and the original column-count reproducer locally on Windows.
+The [alpha.12 hosted run](https://github.com/boussadjra/vueye-table/actions/runs/37960359675)
+passed Windows/Linux application checks and 35/36 browser cases. The tree focus fixes passed in
+all three engines. Chromium retained the correct editor and draft with no pending save, but two
+return wheel events stopped at 112px instead of the test's assumed less-than-100px position.
+The test now uses a bounded sequence of actual wheel events, checking draft retention at each
+step and requiring the viewport to reach exactly zero before commit and undo. The next hosted
+result remains pending; this failed run is not counted as full acceptance.

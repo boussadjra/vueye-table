@@ -1,7 +1,7 @@
 # Operations desk
 
 A standalone Nuxt warehouse application for testing the published vueye-table packages before beta.
-It has its own dependency lockfile and installs all six packages at `3.0.0-alpha.10` from npm. It does
+It has its own dependency lockfile and installs all six packages at `3.0.0-alpha.12` from npm. It does
 not use workspace aliases or source builds.
 
 ## Run
@@ -30,6 +30,19 @@ pnpm start
 `test:http` starts its own built server on port 4311, seeds a temporary database, checks it and
 removes only that temporary database when finished. It never changes the operator's stock.
 
+For the automated browser matrix after building:
+
+```sh
+pnpm exec playwright install --with-deps chromium firefox webkit
+pnpm test:browser
+```
+
+The browser runner starts its own server on port 4312 with a fresh temporary database. It checks
+pointer row menus, accessible utility columns, lazy search contexts, keyboard traversal,
+100k-by-24 navigation and receiving stream cleanup in all three browser engines. GitHub runs this
+matrix on Linux after both Windows and Linux application checks pass, retaining failure traces
+and screenshots for seven days. These checks do not establish screen-reader or native-device acceptance.
+
 ## Workflows
 
 | Workspace        | Actual integration                                             | Difficult cases                                                                                                                      |
@@ -57,10 +70,13 @@ expected/actual result and a small regression case. Application mistakes and ups
 are recorded separately.
 
 The ordered fixes and release gates live in [tracker #114](https://github.com/boussadjra/vueye-table/issues/114).
-Alpha.10 currently reproduces [accessible column counts #111](https://github.com/boussadjra/vueye-table/issues/111),
+The acceptance log preserves alpha.10's [accessible column counts #111](https://github.com/boussadjra/vueye-table/issues/111),
 [pointer row menus #112](https://github.com/boussadjra/vueye-table/issues/112), and
 [tree-filter prop updates #113](https://github.com/boussadjra/vueye-table/issues/113).
 
-Fix the blocking reports, publish a new alpha, update these exact package pins and lockfile, and
-rerun both automated checks and browser workflows. Passing this project is one beta gate; it does
+These fixes were published together in alpha.11. Alpha.12 adds the virtual tree keyboard-focus
+and grid pointer/editor-focus fixes from [#118](https://github.com/boussadjra/vueye-table/issues/118)
+and [#119](https://github.com/boussadjra/vueye-table/issues/119). The consumer pins alpha.12, and
+`node scripts/reproduce-column-semantics.mjs` must pass during verification. Rerun both automated
+checks and browser workflows after every package-pin update. Passing this project is one beta gate; it does
 not establish production readiness. Beta also needs the API/release decisions in the tracker.

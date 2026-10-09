@@ -1,4 +1,4 @@
-export const PACKAGE_VERSION = "3.0.0-alpha.10";
+export const PACKAGE_VERSION = "3.0.0-alpha.12";
 export const ORDER_COUNT = 100_000;
 export const STOCK_COUNT = 2_000;
 export const warehouses = ["Algiers", "Lyon", "Rotterdam"] as const;
