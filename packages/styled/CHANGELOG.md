@@ -1,5 +1,18 @@
 # @vueye-table/styled
 
+## 3.0.0-alpha.11
+
+### Patch Changes
+
+- 28b5650: Include leading selection, details and row-action cells in accessible column counts and indices. Keep data editing coordinates unchanged, including hidden, reordered and horizontally virtualized columns. Custom headless roots and VtTable accept leadingColumns for caller-rendered utility cells.
+- 00f99c5: Keep row-action menus inside narrow utility columns and reveal opened controls in scrolling virtual grids. Pointer removal now reaches the same controls as keyboard removal at the first and last virtual rows.
+- Updated dependencies [ff20492]
+- Updated dependencies [28b5650]
+- Updated dependencies [00f99c5]
+  - @vueye-table/core@3.0.0-alpha.11
+  - @vueye-table/vue@3.0.0-alpha.11
+  - @vueye-table/headless@3.0.0-alpha.11
+
 ## 3.0.0-alpha.10
 
 ### Minor Changes

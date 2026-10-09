@@ -23,8 +23,11 @@
     "framework-rewrite",
     "grid-slots-and-fixes",
     "inline-typed-editors",
+    "reactive-tree-filter",
+    "rendered-column-coordinates",
     "tree-data",
     "tree-detail-components",
+    "virtual-row-action-menus",
     "vue-row-drafts",
     "vue-streaming-components",
     "vue-virtual-bindings"
