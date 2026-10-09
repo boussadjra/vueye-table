@@ -24,7 +24,7 @@ const links = [
     <main><NuxtPage /></main>
     <footer>
       Generated warehouse data. Saves persist in local SQLite. This project tests the published
-      alpha packages.
+      {{ PACKAGE_VERSION }} packages.
     </footer>
   </div>
 </template>
