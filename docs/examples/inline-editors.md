@@ -13,6 +13,10 @@ All items are generated local samples. The delayed quantity check simulates vali
 it does not contact a server. Mark saved advances the local baseline used by Revert row.
 Switching editing view creates a new table instance and therefore a new baseline.
 
+In Spreadsheet view, enable Virtual rows and open Actions on the first or last item.
+The menu stays inside its row-action column and scrolls into view when opened. Remove row
+works with a pointer or keyboard; Undo restores an unsaved removal.
+
 Read [editing and spreadsheets](/guide/editing) for the editor-slot contract and keyboard
 behavior, [row drafts](/guide/row-drafts) for batch lifetime, and
 [validation](/guide/validation) for core parsing and constraints.

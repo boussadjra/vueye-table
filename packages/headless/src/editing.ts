@@ -395,19 +395,31 @@ export const DataTableRowActions = defineComponent({
                 ]
               : [button("Edit row", () => context.start(props.row))]
             : []),
-          h("details", [
-            h("summary", { "aria-label": `Actions for row ${String(props.row.key)}` }, "Actions"),
-            h("div", { "data-row-menu": "" }, [
-              button(
-                "Revert row",
-                () => table.revert([props.row.key]),
-                !props.row.isDirty || !!draft,
-              ),
-              props.removable
-                ? button("Remove row", () => table.removeRows([props.row.key]), !!draft)
-                : null,
-            ]),
-          ]),
+          h(
+            "details",
+            {
+              onToggle: (event: Event) => {
+                const menu = event.currentTarget as HTMLDetailsElement;
+                if (menu.open)
+                  void nextTick(() =>
+                    menu.scrollIntoView?.({ block: "nearest", inline: "nearest" }),
+                  );
+              },
+            },
+            [
+              h("summary", { "aria-label": `Actions for row ${String(props.row.key)}` }, "Actions"),
+              h("div", { "data-row-menu": "" }, [
+                button(
+                  "Revert row",
+                  () => table.revert([props.row.key]),
+                  !props.row.isDirty || !!draft,
+                ),
+                props.removable
+                  ? button("Remove row", () => table.removeRows([props.row.key]), !!draft)
+                  : null,
+              ]),
+            ],
+          ),
           editorIssues(id, issues, !!draft?.pending),
         ],
       );
