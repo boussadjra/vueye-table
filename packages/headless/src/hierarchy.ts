@@ -154,15 +154,11 @@ export function treeKeydown(
     next = table.rows[event.key === "Home" ? 0 : table.rows.length - 1] ?? row;
   else return;
   event.preventDefault();
+  const root = target.closest("table");
   context.focus.value = next.key;
   virtual?.rows.scrollToKey(next.key);
   const id = itemId(context, next);
-  void nextTick(() =>
-    target
-      .closest("table")
-      ?.ownerDocument.getElementById(id ?? "")
-      ?.focus(),
-  );
+  void nextTick(() => root?.ownerDocument.getElementById(id ?? "")?.focus());
 }
 
 export const expandToggleProps = {

@@ -18,6 +18,9 @@ The first folder starts open. Subsequent folders load on demand. Detail notes be
 local input and reset on collapse unless **Keep detail notes** is enabled. Changing view or
 virtual mode creates a new table instance.
 
+In tree table mode, enable virtual rows, focus a folder row and press End, then Home. Focus
+moves to the final and first visible rows across virtual windows; continue with Up/Down.
+
 Read [row expansion](/guide/expansion) for lifetime and HTML sanitization, and
 [tree data](/guide/trees) for keyboard, selection, sorting and lazy-loading behavior.
 
