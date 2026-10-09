@@ -149,4 +149,6 @@ wheel events account for Firefox's bounded per-event motion without weakening dr
 2026-10-09: all six alpha.12 packages and the GitHub prerelease are published. Each npm version
 has SLSA provenance metadata. The app's own lockfile resolves all six exact versions from npm,
 and their installed manifests were checked. The repository gate passed again with 433 tests.
-Consumer application checks and the next hosted browser result remain pending.
+The alpha.12 consumer passed strict Nuxt types, seven SQLite/engine tests, production build,
+isolated HTTP acceptance and the original column-count reproducer locally on Windows.
+The next hosted browser result remains pending.
