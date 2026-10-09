@@ -14,6 +14,9 @@ components, and the composables alone.
 
 <ExampleGallery />
 
+For persistent saves, real HTTP loading and release acceptance, run the
+[standalone Operations desk](/examples/operations-desk) against the published npm packages.
+
 Every example keeps its data in the page and never changes the array it was given. Edits, bulk
 actions, and favorites all produce new arrays, which is what makes undo, `v-model:data`, and a
 server save straightforward.

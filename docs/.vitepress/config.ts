@@ -75,6 +75,7 @@ export default defineConfig({
         text: "Examples",
         items: [
           { text: "Gallery", link: "/examples/" },
+          { text: "Operations desk (standalone)", link: "/examples/operations-desk" },
           { text: "Full table", link: "/examples/table" },
           { text: "Spreadsheet", link: "/examples/grid" },
           { text: "Virtual layout", link: "/examples/virtual-layout" },
