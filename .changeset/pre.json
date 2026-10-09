@@ -1,15 +1,15 @@
 {
   "mode": "pre",
-  "tag": "alpha",
+  "tag": "beta",
   "initialVersions": {
     "@vueye-table/playground": "0.0.0",
     "@vueye-table/docs": "0.0.0",
-    "@vueye-table/core": "3.0.0-alpha.0",
-    "@vueye-table/headless": "3.0.0-alpha.0",
-    "@vueye-table/nuxt": "3.0.0-alpha.0",
-    "@vueye-table/styled": "3.0.0-alpha.0",
-    "@vueye-table/vue": "3.0.0-alpha.0",
-    "vueye-table": "3.0.0-alpha.0",
+    "@vueye-table/core": "3.0.0-alpha.12",
+    "@vueye-table/headless": "3.0.0-alpha.12",
+    "@vueye-table/nuxt": "3.0.0-alpha.12",
+    "@vueye-table/styled": "3.0.0-alpha.12",
+    "@vueye-table/vue": "3.0.0-alpha.12",
+    "vueye-table": "3.0.0-alpha.12",
     "@vueye-table/typescript-config": "0.0.0",
     "@vueye-table/vitest-config": "0.0.0"
   },
