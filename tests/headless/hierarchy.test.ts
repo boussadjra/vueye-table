@@ -133,6 +133,39 @@ describe("headless hierarchy", () => {
     expect(wrapper.get('tbody tr[tabindex="0"]').attributes("data-key")).toBe("1");
     wrapper.unmount();
   });
+  it("keeps row focus when Home and End replace the virtual window", async () => {
+    vi.stubGlobal("ResizeObserver", undefined);
+    const { wrapper } = mountWithTable<Row>(
+      {
+        data: Array.from({ length: 80 }, (_, id) => ({ id, name: `Location ${id}` })),
+        columns,
+        getChildren: (row) => row.children,
+        paginate: false,
+      },
+      (table) =>
+        h(DataTableViewport, { height: "120px" }, () =>
+          h(DataTableRoot, { table, virtual: true, rowHeight: 40, overscan: 0 }),
+        ),
+      document.body,
+    );
+    const viewport = wrapper.get("[data-virtual-viewport]").element;
+    Object.defineProperty(viewport, "clientHeight", { configurable: true, value: 120 });
+    viewport.dispatchEvent(new Event("scroll"));
+    await nextTick();
+    const first = wrapper.get('tr[data-key="0"]');
+    (first.element as HTMLElement).focus();
+    await first.trigger("keydown", { key: "End" });
+    expect(first.element.isConnected).toBe(false);
+    const last = wrapper.get('tr[data-key="79"]');
+    expect(document.activeElement).toBe(last.element);
+    await last.trigger("keydown", { key: "ArrowUp" });
+    expect(document.activeElement).toBe(wrapper.get('tr[data-key="78"]').element);
+    await wrapper.get('tr[data-key="78"]').trigger("keydown", { key: "Home" });
+    expect(last.element.isConnected).toBe(false);
+    expect(document.activeElement).toBe(wrapper.get('tr[data-key="0"]').element);
+    expect(wrapper.findAll("tbody tr[data-key]").length).toBeLessThan(10);
+    wrapper.unmount();
+  });
   it.each([DataTableRoot, DataGridRoot])(
     "announces lazy loading and restores focus after inline retry",
     async (Root) => {

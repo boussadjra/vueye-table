@@ -61,7 +61,8 @@ region announces progress and failures. Full components include this status auto
 Configured tree roots expose `role="treegrid"` even when empty. Rows expose `aria-level`,
 `aria-expanded` for branches, `aria-setsize`, `aria-posinset`, and logical `aria-rowindex` across
 virtual slices. In a table, focus a row and use Right to open it or enter its first child; Left
-closes it or returns to its parent. Up/Down and Home/End move through visible rows; `*` opens
+closes it or returns to its parent. Up/Down and Home/End move through visible rows and keep focus
+on the destination when virtualization replaces the rendered window; `*` opens
 siblings. In a grid these tree commands apply in the designated tree column. Other columns,
 Shift+arrows and Ctrl/Meta+arrows retain spreadsheet movement and selection. Editors and ordinary
 embedded form controls keep their keys. This follows the tree-column interaction variant of the
