@@ -1,7 +1,7 @@
 # Operations desk: a real consumer project
 
 The [standalone warehouse app](https://github.com/boussadjra/vueye-table/tree/main/examples/operations-desk)
-installs the published npm packages and runs a Nuxt server with SQLite. It exercises workflows that
+installs all six published npm packages at **3.0.0-beta.1** and runs a Nuxt server with SQLite. It exercises workflows that
 the in-page demos cannot: persistent saves, concurrent revisions, actual HTTP cancellation and SSR
 integration.
 
@@ -24,4 +24,4 @@ records the browser scenarios and known release gates. It is a local testing pro
 data, not a production warehouse service.
 
 Follow [the beta acceptance tracker](https://github.com/boussadjra/vueye-table/issues/114) for the
-confirmed defects, their fix order, the corrected-alpha retest and remaining beta release gates.
+confirmed defects, their fix order, the corrected-alpha acceptance and published-beta retest.

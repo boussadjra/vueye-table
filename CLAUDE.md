@@ -58,8 +58,8 @@ pnpm check                         # the full gate before finishing
 
 ## Status
 
-The repository is preparing `3.0.0-beta.1` after published alpha.12 warehouse acceptance.
-Check npm and GitHub for publication status. The [beta contract](./docs/guide/beta.md) records
+All six packages are published as `3.0.0-beta.1` on npm's `beta` channel, with provenance and a
+[GitHub prerelease](https://github.com/boussadjra/vueye-table/releases/tag/v3.0.0-beta.1). The [beta contract](./docs/guide/beta.md) records
 the documented API and remaining acceptance limits. Do not claim production readiness.
 
 Releases go through changesets in `beta` pre mode and `.github/workflows/release.yml`; see

@@ -1,13 +1,12 @@
 # The 3.0 beta contract
 
-The first requested beta is **3.0.0-beta.1**. Check the
-[GitHub release](https://github.com/boussadjra/vueye-table/releases) and npm before installing;
-this page describes the prepared contract and does not confirm publication. Beta is a prerelease
-for application feedback and does not establish production readiness.
+**3.0.0-beta.1 is published** for all six packages on npm's `beta` channel, with provenance and a
+[GitHub prerelease](https://github.com/boussadjra/vueye-table/releases/tag/v3.0.0-beta.1).
+Beta is a prerelease for application feedback and does not establish production readiness.
 
 ## Install and upgrade
 
-Once published, install an exact version or opt into the beta channel:
+Install an exact version or opt into the beta channel:
 
 ```sh
 pnpm add vueye-table@3.0.0-beta.1
