@@ -1,4 +1,4 @@
-import { mount } from "@vue/test-utils";
+import { flushPromises, mount } from "@vue/test-utils";
 import type { TableRow } from "@vueye-table/core";
 import { describe, expect, it, vi } from "vitest";
 import { createSSRApp, defineComponent, h, nextTick, ref } from "vue";
@@ -20,6 +20,48 @@ const data: Row[] = [
 ];
 
 describe("full hierarchy components", () => {
+  it.each([VueyeTable, VueyeGrid])(
+    "applies mounted treeFilter changes while retaining lazy children and expansion",
+    async (Component) => {
+      const input = Object.freeze([Object.freeze({ id: 1, name: "Warehouse" })]);
+      const load = vi
+        .fn<() => Promise<readonly Row[]>>()
+        .mockResolvedValue([{ id: 2, name: "Needle bin" }]);
+      const wrapper = mount(Component, {
+        props: {
+          data: input,
+          columns,
+          hasChildren: (row: Row) => row.id === 1,
+          loadChildren: load,
+          expanded: [1],
+          selected: [2],
+          selectable: true,
+          paginate: false,
+          treeFilter: "ancestors",
+          toolbar: false,
+        },
+      });
+      await flushPromises();
+      await wrapper.setProps({ search: "Needle" });
+      const renderedKeys = () =>
+        wrapper.findAll("tbody tr[data-key]").map((row) => row.attributes("data-key"));
+      expect(renderedKeys()).toEqual(["1", "2"]);
+      await wrapper.setProps({ treeFilter: "strict" });
+      expect(renderedKeys()).toEqual(["2"]);
+      await wrapper.setProps({ treeFilter: "descendants", search: "Warehouse" });
+      expect(renderedKeys()).toEqual(["1", "2"]);
+      await wrapper.setProps({ treeFilter: "ancestors" });
+      expect(renderedKeys()).toEqual(["1"]);
+      await wrapper.setProps({ search: "" });
+      expect(renderedKeys()).toEqual(["1", "2"]);
+      expect(wrapper.get('tr[data-key="2"]').attributes("aria-selected")).toBe(
+        Component === VueyeTable ? "true" : undefined,
+      );
+      expect(load).toHaveBeenCalledTimes(1);
+      expect(input).toEqual([{ id: 1, name: "Warehouse" }]);
+      wrapper.unmount();
+    },
+  );
   it.each([VueyeTable, VueyeGrid])(
     "forwards tree input, controlled expansion and expand/collapse events",
     async (Component) => {

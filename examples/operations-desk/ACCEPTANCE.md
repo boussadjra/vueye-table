@@ -76,3 +76,34 @@ it does not substitute for those remaining rendered interactions. Hosted Windows
 CI is pending the PR run.
 
 Beta remains blocked on all three confirmed defects and the remaining acceptance/release checklist.
+
+## Corrected package candidate
+
+2026-10-09, `fix/warehouse-beta-blockers`: a separate copy of this app installed six locally
+packed archives with dependency overrides for the complete group. The archives retain
+alpha.10 version metadata but contain the candidate fixes; they are **unpublished** and do
+not replace the recorded npm alpha.10 run above or the required published-alpha retest.
+
+- Root `pnpm check` passed: 427 tests with coverage, strict types, docs/playground/package
+  builds, boundaries and all six package export checks.
+- Candidate `pnpm verify` passed (strict Nuxt types, seven tests and production build).
+  `pnpm test:http` passed the full isolated HTTP/SQLite suite.
+- #112: first/last inventory row menus stayed within the 120px gutter. Pointer removal and
+  undo passed at desktop and 390px in light/dark. Hit testing selected the Remove button;
+  the final menu scrolled into view inside the virtual viewport.
+- #111: the inventory grid reported nine columns with indices 1–9; the location tree
+  reported four columns including selection. Regression tests cover all table utility
+  combinations, reordered/hidden columns, grid row numbers and horizontal virtualization.
+- #113: changing the mounted location tree from ancestors to strict hid context parents;
+  descendants restored loaded children of the matching warehouse. All modes retained
+  25 selected locations and the same two branch requests. Clearing search restored saved
+  expansion. Core and component tests cover both full surfaces and preserve edit undo.
+- An active Product draft survived actual vertical scrolling away and back, committed its
+  retained text and undid successfully. Tree ArrowLeft collapsed an aisle, another
+  ArrowLeft focused its parent, and ArrowRight focused the open parent's first child.
+- No captured Chromium console errors occurred during these candidate interactions.
+
+Release target: **3.0.0-beta.1**. Still pending: pushes and PR merges (GitHub connections time
+out), corrected published-alpha pins/retest, hosted Windows/Linux CI, Firefox/WebKit,
+screen-reader acceptance and the complete keyboard-only matrix. Local candidate results
+do not mark the beta gate complete.

@@ -1,5 +1,5 @@
 import { mount } from "@vue/test-utils";
-import { getRowItemKey } from "@vueye-table/core";
+import { getRowItemKey, type TreeFilter } from "@vueye-table/core";
 import {
   useDataTable,
   useVirtualRows,
@@ -8,7 +8,7 @@ import {
   type VirtualRowItem,
 } from "@vueye-table/vue";
 import { describe, expect, it, vi } from "vitest";
-import { defineComponent, h, nextTick, shallowRef } from "vue";
+import { defineComponent, effectScope, h, nextTick, shallowRef, ref } from "vue";
 
 interface Node {
   readonly id: number;
@@ -16,6 +16,34 @@ interface Node {
   readonly children?: readonly Node[] | undefined;
 }
 describe("Vue trees", () => {
+  it.each(["ref", "getter"])(
+    "watches treeFilter from a %s and stops watching on disposal",
+    async (source) => {
+      const mode = ref<TreeFilter | undefined>("ancestors");
+      const scope = effectScope();
+      const table = scope.run(() =>
+        useDataTable<Node>({
+          data: [{ id: 1, name: "Root", children: [{ id: 2, name: "Needle" }] }],
+          columns: [{ id: "name" }],
+          getChildren: (row) => row.children,
+          treeFilter: source === "ref" ? mode : () => mode.value,
+          initialState: { search: "Needle" },
+          paginate: false,
+        }),
+      )!;
+      expect(table.rows.map((row) => row.key)).toEqual([1, 2]);
+      mode.value = "strict";
+      await nextTick();
+      expect(table.rows.map((row) => row.key)).toEqual([2]);
+      mode.value = undefined;
+      await nextTick();
+      expect(table.rows.map((row) => row.key)).toEqual([1, 2]);
+      scope.stop();
+      mode.value = "strict";
+      await nextTick();
+      expect(table.rows.map((row) => row.key)).toEqual([1, 2]);
+    },
+  );
   it("anchors the same keyed row when an earlier subtree opens, closes, and changes height", async () => {
     const scroll = shallowRef<HTMLElement | null>(null);
     let table!: DataTableBinding<Node>;

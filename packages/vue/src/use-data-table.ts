@@ -10,6 +10,7 @@ import {
   type ExpandedState,
   type PendingChanges,
   type RowKey,
+  type TreeFilter,
 } from "@vueye-table/core";
 import {
   getCurrentScope,
@@ -27,11 +28,15 @@ import { createSource, type SourceOptions, type SourceBinding } from "./source";
 
 /** Options accepted by {@link useDataTable}. Data, columns, and state may be refs or getters. */
 export interface UseDataTableOptions<TRow, TSignal extends TreeLoadSignal = AbortSignal>
-  extends Omit<TableOptions<TRow, TSignal>, "data" | "columns" | "rowCount">, SourceOptions<TRow> {
+  extends
+    Omit<TableOptions<TRow, TSignal>, "data" | "columns" | "rowCount" | "treeFilter">,
+    SourceOptions<TRow> {
   /** Initial rows for a source, or the caller-owned array for an ordinary table. */
   readonly data?: MaybeRefOrGetter<readonly TRow[]> | undefined;
   readonly columns: MaybeRefOrGetter<readonly ColumnDef<TRow>[]>;
   readonly rowCount?: MaybeRefOrGetter<number | undefined> | undefined;
+  /** Search context can change without discarding lazy branches, edits or selection. */
+  readonly treeFilter?: MaybeRefOrGetter<TreeFilter | undefined> | undefined;
   /**
    * State owned by the caller, for example `v-model` props or URL query values. Whenever it
    * changes it is applied with `setState`; the table's own changes still reach `onStateChange`.
@@ -77,6 +82,7 @@ const OPERATIONS = [
   "setState",
   "setData",
   "setColumns",
+  "setTreeFilter",
   "setRowCount",
   "toggleSort",
   "sort",
@@ -136,6 +142,7 @@ export function useDataTable<TRow, TSignal extends TreeLoadSignal = AbortSignal>
     data: seed(),
     columns: toValue(options.columns),
     rowCount: toValue(options.rowCount),
+    treeFilter: toValue(options.treeFilter),
     initialState: { ...options.initialState, ...definedEntries(toValue(options.state)) },
     // Public overloads require custom signals to provide their matching factory.
     createChildLoadController:
@@ -152,6 +159,10 @@ export function useDataTable<TRow, TSignal extends TreeLoadSignal = AbortSignal>
   const unsubscribe = table.subscribe(source.update);
 
   const stops = [
+    watch(
+      () => toValue(options.treeFilter),
+      (mode) => table.setTreeFilter(mode),
+    ),
     watch(
       () => toValue(options.data),
       // Reactive arrays arrive as proxies; the engine works on, and compares, the raw array.

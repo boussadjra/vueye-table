@@ -233,7 +233,8 @@ export function expansionOptions(
     readonly expandMode: ExpandMode;
   } & TreeOptions<unknown, AbortSignal>,
   detail: boolean,
-): TreeOptions<unknown, AbortSignal> & {
+): Omit<TreeOptions<unknown, AbortSignal>, "treeFilter"> & {
+  readonly treeFilter: () => TreeOptions<unknown>["treeFilter"];
   readonly getRowCanExpand: ((row: unknown) => boolean) | undefined;
   readonly expandMode: ExpandMode;
 } {
@@ -245,7 +246,7 @@ export function expansionOptions(
     getParentKey: props.getParentKey,
     hasChildren: props.hasChildren,
     loadChildren: props.loadChildren,
-    treeFilter: props.treeFilter,
+    treeFilter: () => props.treeFilter,
     paginateBy: props.paginateBy,
   };
 }

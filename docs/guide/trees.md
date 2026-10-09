@@ -80,6 +80,21 @@ first visible column. `table.tree` identifies a configured hierarchy. Pure core 
 - `descendants` also includes and opens all loaded descendants of a matching parent, while preserving ancestor paths.
 - `strict` shows only matching loaded leaves as a result list, retaining their original depth and parent key. Without an active query, it behaves like the ordinary tree.
 
+Change `treeFilter` on a mounted `VueyeTable` or `VueyeGrid` to update the current search context.
+Loaded branches, saved expansion, selection and pending edits are retained. `useDataTable`
+accepts a ref or getter for this option; core callers use `table.setTreeFilter(mode)`.
+Passing `undefined` restores `ancestors`. The [runnable tree example](/examples/tree-data)
+includes a Search context selector.
+
+```ts
+import { ref } from "vue";
+import { useDataTable, type TreeFilter } from "vueye-table";
+
+const context = ref<TreeFilter>("ancestors");
+const table = useDataTable({ data, columns, getChildren, treeFilter: context });
+context.value = "strict";
+```
+
 Sorting applies independently within each sibling group. Parents always precede their visible descendants; ties preserve source order.
 
 `paginateBy` defaults to `root`: a root and all its visible descendants stay together. `rowCount`, `totalRowCount`, page positions and page size count roots. `rows.length` counts the visible data rows on that page and can exceed page size. Strict-filter results count matching leaves as their page units. Set `paginateBy: 'row'` to paginate the flattened visible sequence instead; its filtered count changes when branches open. `paginate: false` exposes every visible row.

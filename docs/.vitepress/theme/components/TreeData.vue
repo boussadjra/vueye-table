@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { useId } from "vue";
-import { useDataTable } from "vueye-table";
+import { ref, useId } from "vue";
+import { useDataTable, type TreeFilter } from "vueye-table";
 
 import DemoFrame from "./DemoFrame.vue";
 
@@ -11,7 +11,9 @@ interface FileEntry {
   readonly children?: readonly FileEntry[] | undefined;
 }
 const id = useId();
+const treeFilter = ref<TreeFilter>("ancestors");
 const table = useDataTable<FileEntry, AbortSignal>({
+  treeFilter,
   data: [
     {
       id: "design",
@@ -84,10 +86,17 @@ function rename(key: string | number, event: Event) {
       />
       <button type="button" @click="table.expandAll">Expand all</button>
       <button type="button" @click="table.collapseAll">Collapse all</button>
+      <label :for="`${id}-context`">Search context</label>
+      <select :id="`${id}-context`" v-model="treeFilter">
+        <option value="ancestors">Keep ancestors</option>
+        <option value="descendants">Include descendants</option>
+        <option value="strict">Matching leaves only</option>
+      </select>
     </div>
     <p class="help">
       Sample files. Rename a file inline, select a folder, or open Archive on the next page to load
-      its children.
+      its children. Search for Logo, then change Search context without losing your selection or
+      rename.
     </p>
     <div class="results">
       <table aria-label="Project files">
@@ -190,6 +199,7 @@ function rename(key: string | number, event: Event) {
 label,
 button,
 input,
+select,
 p {
   font-size: 13px;
 }
@@ -199,6 +209,7 @@ input[type="search"] {
   width: 100%;
 }
 button,
+select,
 input[type="search"] {
   min-height: 44px;
   padding: 8px 12px;
@@ -213,6 +224,7 @@ button:disabled {
   opacity: 0.45;
 }
 button:focus-visible,
+select:focus-visible,
 input:focus-visible {
   outline: 2px solid var(--vp-c-brand-1);
   outline-offset: 2px;
