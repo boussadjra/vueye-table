@@ -189,5 +189,8 @@ The app's own lockfile installs the exact beta group from npm; all six installed
 checked. Strict Nuxt types, seven SQLite/engine tests, the production build, isolated HTTP stress
 acceptance and the column-count reproducer passed locally on Windows. The full repository gate
 passed 433 tests with coverage, strict types, builds, boundaries and package export checks.
-Hosted Windows/Linux and
-three-browser results for this version remain pending. The manual screen-reader limitation remains unchanged.
+The [published-beta consumer run](https://github.com/boussadjra/vueye-table/actions/runs/37967992595)
+passed Windows/Linux checks and all **36/36 Chromium, Firefox and WebKit cases** at `3f49936`,
+with zero retries. The [repository CI](https://github.com/boussadjra/vueye-table/actions/runs/37967992759)
+passed at the same commit. This completes the automated consumer retest of the published beta
+group. The manual screen-reader limitation remains unchanged.

@@ -70,5 +70,7 @@ requires an ADR, migration notes and a new beta version; read the release notes 
 The [Operations desk](/examples/operations-desk) tests the published package group with SQLite,
 100k orders, editable stock, lazy trees and real HTTP streams. Its acceptance log distinguishes
 published versions, unpublished candidates, hosted browser checks and unrun manual checks.
+Beta.1 passed [Windows/Linux application checks and all 36 Chromium/Firefox/WebKit cases](https://github.com/boussadjra/vueye-table/actions/runs/37967992595)
+against the published npm group, with zero retries. The repository gate passed 433 tests.
 Automated accessibility attributes are evidence about markup; they do not prove a successful
 screen-reader session. Known limits belong in the acceptance log and release notes.
