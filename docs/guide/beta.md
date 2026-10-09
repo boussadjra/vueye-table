@@ -35,6 +35,8 @@ Applications upgrading from alpha.10 receive the warehouse fixes:
 - Changing `treeFilter` after mount updates search context without replacing the engine or
   clearing loaded branches, selected keys, expansion or edits. `useDataTable` accepts a ref or
   getter; core applications call `setTreeFilter(mode)`.
+- Virtual tree Home/End navigation retains focus on the destination row. Pointer selection in
+  grids preserves scroll position and queued grid focus leaves a newly opened editor focused.
 
 These fixes require no alpha.10 application migration unless custom accessibility markup relied
 on the former incorrect counts. See [components](/guide/components) and [trees](/guide/trees).

@@ -9,20 +9,20 @@ importers:
   .:
     dependencies:
       '@vueye-table/core':
-        specifier: 3.0.0-alpha.11
-        version: 3.0.0-alpha.11
+        specifier: 3.0.0-alpha.12
+        version: 3.0.0-alpha.12
       '@vueye-table/headless':
-        specifier: 3.0.0-alpha.11
-        version: 3.0.0-alpha.11(vue@3.5.43(typescript@6.0.3))
+        specifier: 3.0.0-alpha.12
+        version: 3.0.0-alpha.12(vue@3.5.43(typescript@6.0.3))
       '@vueye-table/nuxt':
-        specifier: 3.0.0-alpha.11
-        version: 3.0.0-alpha.11(@nuxt/schema@4.6.0)(confbox@0.3.1)(dotenv@17.4.2)(giget@3.3.1)(jiti@2.7.0)(magic-string@1.4.3)(mlly@1.8.2)(rolldown@1.2.13)(unplugin@3.4.0(esbuild@0.28.2)(rolldown@1.2.13)(rollup@4.64.3)(vite@8.3.4(@types/node@24.10.0)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)))(vue@3.5.43(typescript@6.0.3))
+        specifier: 3.0.0-alpha.12
+        version: 3.0.0-alpha.12(@nuxt/schema@4.6.0)(confbox@0.3.1)(dotenv@17.4.2)(giget@3.3.1)(jiti@2.7.0)(magic-string@1.4.3)(mlly@1.8.2)(rolldown@1.2.13)(unplugin@3.4.0(esbuild@0.28.2)(rolldown@1.2.13)(rollup@4.64.3)(vite@8.3.4(@types/node@24.10.0)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)))(vue@3.5.43(typescript@6.0.3))
       '@vueye-table/styled':
-        specifier: 3.0.0-alpha.11
-        version: 3.0.0-alpha.11(vue@3.5.43(typescript@6.0.3))
+        specifier: 3.0.0-alpha.12
+        version: 3.0.0-alpha.12(vue@3.5.43(typescript@6.0.3))
       '@vueye-table/vue':
-        specifier: 3.0.0-alpha.11
-        version: 3.0.0-alpha.11(vue@3.5.43(typescript@6.0.3))
+        specifier: 3.0.0-alpha.12
+        version: 3.0.0-alpha.12(vue@3.5.43(typescript@6.0.3))
       h3:
         specifier: 1.15.11
         version: 1.15.11
@@ -33,8 +33,8 @@ importers:
         specifier: 3.5.43
         version: 3.5.43(typescript@6.0.3)
       vueye-table:
-        specifier: 3.0.0-alpha.11
-        version: 3.0.0-alpha.11(vue@3.5.43(typescript@6.0.3))
+        specifier: 3.0.0-alpha.12
+        version: 3.0.0-alpha.12(vue@3.5.43(typescript@6.0.3))
     devDependencies:
       '@playwright/test':
         specifier: 1.64.0
@@ -1061,30 +1061,30 @@ packages:
   '@vue/shared@3.5.43':
     resolution: {integrity: sha512-uksS7YGMR5NZyr4JNq0Rp+QyLns0ueaz20KwzIPW9R0LH1Vnt4E+XUM29PNseEbf1www2gOuhuDi5AKOIXag9Q==}
 
-  '@vueye-table/core@3.0.0-alpha.11':
-    resolution: {integrity: sha512-Ky2qLyr4lfTD0LPKq8l+9X80YIAs3rjTEqvC1SWlSLfzkAvmnjbSPindeECWh54PZxoyZSA0xhfMe4WJL22BQg==}
+  '@vueye-table/core@3.0.0-alpha.12':
+    resolution: {integrity: sha512-Ed3h3Fvm+vieYoK+CM5BFq6xLHAtvn0lLh1OvgVjhZ+WVcN4Emo1mOpG9XFvY3xAnNo+jfCTr1uWBNoTUB4Sgw==}
     engines: {node: '>=22.12.0'}
 
-  '@vueye-table/headless@3.0.0-alpha.11':
-    resolution: {integrity: sha512-YOjFGspNtar098E+QWwgj7fQUB2qqb5FgY7tCBqsbNDhWJiz4Lu/SYn7wmdX2bq5EjhJ9z7oxGNxtQCcP/l2cQ==}
-    engines: {node: '>=22.12.0'}
-    peerDependencies:
-      vue: '>=3.5.0 <4'
-
-  '@vueye-table/nuxt@3.0.0-alpha.11':
-    resolution: {integrity: sha512-/3jXulyh2Hxt8aE4KxcuCcf4UmYjxIFDh+ky/ITa1eGpcQru55hOwaseNE5+mjmI/O+5Ycyn+xUF7CJEhQS99Q==}
+  '@vueye-table/headless@3.0.0-alpha.12':
+    resolution: {integrity: sha512-7scZN62P29EW2IlzRA/YewxofjmTslZL6eNmVdXv14fe3qByZS98/Pf/zuVe73ThHjL84I0QrsCum41Nd25feg==}
     engines: {node: '>=22.12.0'}
     peerDependencies:
       vue: '>=3.5.0 <4'
 
-  '@vueye-table/styled@3.0.0-alpha.11':
-    resolution: {integrity: sha512-hgOJKwNkE0fg6UyYP0xi6xTp0+rJkd0Z4dvxYBE3rFQQBhhomoYYrhvPas0o70uReOgYpI5Y2NiVqIGp3Fmd/w==}
+  '@vueye-table/nuxt@3.0.0-alpha.12':
+    resolution: {integrity: sha512-e7FATqsLnWRpMepVKp6PQOKU0f9bsLOHAGezvVF9Hc9gQIyMT3PkQeVHSQoL9QZUIR+KTGWUI/3GlVA4gy5Biw==}
     engines: {node: '>=22.12.0'}
     peerDependencies:
       vue: '>=3.5.0 <4'
 
-  '@vueye-table/vue@3.0.0-alpha.11':
-    resolution: {integrity: sha512-cciXdTjBHXvSnuHBJTTwY5RBu1ZYvFD3UnSXHzZXrSF18Vz3BZ3pXNtot/kW47FJlc3FfxGX21XleBHJu1DtnA==}
+  '@vueye-table/styled@3.0.0-alpha.12':
+    resolution: {integrity: sha512-YXDUawWG838waOcKDba/UTMnT5xhQrM9jBBNLCCvt+RKETMM1YtdHtyLDqBwFBYOj9cNK8wIhYWbOjYf/AhouA==}
+    engines: {node: '>=22.12.0'}
+    peerDependencies:
+      vue: '>=3.5.0 <4'
+
+  '@vueye-table/vue@3.0.0-alpha.12':
+    resolution: {integrity: sha512-yBn/PmW9tthA0eEGavBdP2SkxlhCeGV+OYyJZ1cwlaxhOoc4WiP1wTWFhEoGBE+DbPeBfthH/ley/Umu1pX+nA==}
     engines: {node: '>=22.12.0'}
     peerDependencies:
       vue: '>=3.5.0 <4'
@@ -3226,8 +3226,8 @@ packages:
       typescript:
         optional: true
 
-  vueye-table@3.0.0-alpha.11:
-    resolution: {integrity: sha512-i1KesV6N6s3RRS3QTG7KOgLEGTIrsYHJEJ0I4XijxMXJ5/fH2DFFJT6F+u6XATvMePx8yq+C5h68PDJ5oZfyvA==}
+  vueye-table@3.0.0-alpha.12:
+    resolution: {integrity: sha512-wvh0tCEmE2fwIS8pgAl5LjhAEQrMia4Q60Za3R61Vgd8atFDgeHeCgNQ8HVW4y92MY1P0HyDGdabSRy2F6clcQ==}
     engines: {node: '>=22.12.0'}
     peerDependencies:
       vue: '>=3.5.0 <4'
@@ -4509,19 +4509,19 @@ snapshots:
 
   '@vue/shared@3.5.43': {}
 
-  '@vueye-table/core@3.0.0-alpha.11': {}
+  '@vueye-table/core@3.0.0-alpha.12': {}
 
-  '@vueye-table/headless@3.0.0-alpha.11(vue@3.5.43(typescript@6.0.3))':
+  '@vueye-table/headless@3.0.0-alpha.12(vue@3.5.43(typescript@6.0.3))':
     dependencies:
-      '@vueye-table/core': 3.0.0-alpha.11
-      '@vueye-table/vue': 3.0.0-alpha.11(vue@3.5.43(typescript@6.0.3))
+      '@vueye-table/core': 3.0.0-alpha.12
+      '@vueye-table/vue': 3.0.0-alpha.12(vue@3.5.43(typescript@6.0.3))
       vue: 3.5.43(typescript@6.0.3)
 
-  '@vueye-table/nuxt@3.0.0-alpha.11(@nuxt/schema@4.6.0)(confbox@0.3.1)(dotenv@17.4.2)(giget@3.3.1)(jiti@2.7.0)(magic-string@1.4.3)(mlly@1.8.2)(rolldown@1.2.13)(unplugin@3.4.0(esbuild@0.28.2)(rolldown@1.2.13)(rollup@4.64.3)(vite@8.3.4(@types/node@24.10.0)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)))(vue@3.5.43(typescript@6.0.3))':
+  '@vueye-table/nuxt@3.0.0-alpha.12(@nuxt/schema@4.6.0)(confbox@0.3.1)(dotenv@17.4.2)(giget@3.3.1)(jiti@2.7.0)(magic-string@1.4.3)(mlly@1.8.2)(rolldown@1.2.13)(unplugin@3.4.0(esbuild@0.28.2)(rolldown@1.2.13)(rollup@4.64.3)(vite@8.3.4(@types/node@24.10.0)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)))(vue@3.5.43(typescript@6.0.3))':
     dependencies:
       '@nuxt/kit': 4.6.0(@nuxt/schema@4.6.0)(confbox@0.3.1)(dotenv@17.4.2)(giget@3.3.1)(jiti@2.7.0)(magic-string@1.4.3)(mlly@1.8.2)(rolldown@1.2.13)(unplugin@3.4.0(esbuild@0.28.2)(rolldown@1.2.13)(rollup@4.64.3)(vite@8.3.4(@types/node@24.10.0)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)))
       vue: 3.5.43(typescript@6.0.3)
-      vueye-table: 3.0.0-alpha.11(vue@3.5.43(typescript@6.0.3))
+      vueye-table: 3.0.0-alpha.12(vue@3.5.43(typescript@6.0.3))
     transitivePeerDependencies:
       - '@nuxt/schema'
       - confbox
@@ -4534,16 +4534,16 @@ snapshots:
       - rolldown
       - unplugin
 
-  '@vueye-table/styled@3.0.0-alpha.11(vue@3.5.43(typescript@6.0.3))':
+  '@vueye-table/styled@3.0.0-alpha.12(vue@3.5.43(typescript@6.0.3))':
     dependencies:
-      '@vueye-table/core': 3.0.0-alpha.11
-      '@vueye-table/headless': 3.0.0-alpha.11(vue@3.5.43(typescript@6.0.3))
-      '@vueye-table/vue': 3.0.0-alpha.11(vue@3.5.43(typescript@6.0.3))
+      '@vueye-table/core': 3.0.0-alpha.12
+      '@vueye-table/headless': 3.0.0-alpha.12(vue@3.5.43(typescript@6.0.3))
+      '@vueye-table/vue': 3.0.0-alpha.12(vue@3.5.43(typescript@6.0.3))
       vue: 3.5.43(typescript@6.0.3)
 
-  '@vueye-table/vue@3.0.0-alpha.11(vue@3.5.43(typescript@6.0.3))':
+  '@vueye-table/vue@3.0.0-alpha.12(vue@3.5.43(typescript@6.0.3))':
     dependencies:
-      '@vueye-table/core': 3.0.0-alpha.11
+      '@vueye-table/core': 3.0.0-alpha.12
       vue: 3.5.43(typescript@6.0.3)
 
   abbrev@3.0.1: {}
@@ -6798,12 +6798,12 @@ snapshots:
     optionalDependencies:
       typescript: 6.0.3
 
-  vueye-table@3.0.0-alpha.11(vue@3.5.43(typescript@6.0.3)):
+  vueye-table@3.0.0-alpha.12(vue@3.5.43(typescript@6.0.3)):
     dependencies:
-      '@vueye-table/core': 3.0.0-alpha.11
-      '@vueye-table/headless': 3.0.0-alpha.11(vue@3.5.43(typescript@6.0.3))
-      '@vueye-table/styled': 3.0.0-alpha.11(vue@3.5.43(typescript@6.0.3))
-      '@vueye-table/vue': 3.0.0-alpha.11(vue@3.5.43(typescript@6.0.3))
+      '@vueye-table/core': 3.0.0-alpha.12
+      '@vueye-table/headless': 3.0.0-alpha.12(vue@3.5.43(typescript@6.0.3))
+      '@vueye-table/styled': 3.0.0-alpha.12(vue@3.5.43(typescript@6.0.3))
+      '@vueye-table/vue': 3.0.0-alpha.12(vue@3.5.43(typescript@6.0.3))
       vue: 3.5.43(typescript@6.0.3)
 
   webidl-conversions@3.0.1: {}

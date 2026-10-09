@@ -136,3 +136,17 @@ database and does not change an operator's stored stock.
 
 A manual screen-reader session remains unrun. Automated accessibility attributes and keyboard
 checks do not substitute for that session; retain this limitation in the beta release notes.
+
+The first hosted browser run ([37953525615](https://github.com/boussadjra/vueye-table/actions/runs/37953525615))
+passed 27/36 cases across the three browsers. All first/last-row menu combinations and 100k × 24
+navigation passed. End navigation lost focus in a virtual tree (#118); pointer grid focus could
+move the target between clicks or blur an editor (#119). Both were fixed in PR #120, with three
+regressions that failed before the fixes and a passing 433-test repository gate. The receiving
+case used an incorrect exact label selector, corrected to the visible combobox role/name. The
+editor case now checks the initial cell value and no pending save while scrolling; successive
+wheel events account for Firefox's bounded per-event motion without weakening draft retention.
+
+2026-10-09: all six alpha.12 packages and the GitHub prerelease are published. Each npm version
+has SLSA provenance metadata. The app's own lockfile resolves all six exact versions from npm,
+and their installed manifests were checked. The repository gate passed again with 433 tests.
+Consumer application checks and the next hosted browser result remain pending.
