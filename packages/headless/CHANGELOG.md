@@ -1,5 +1,14 @@
 # @vueye-table/headless
 
+## 3.0.0-alpha.12
+
+### Patch Changes
+
+- 275e433: Prevent grid pointer focus from scrolling virtual cells between clicks or stealing focus from a newly mounted editor. Pointer selection focuses without browser scrolling and queued root focus waits until no editor owns focus.
+- 275e433: Keep keyboard focus on the destination row when Home, End or arrow navigation replaces a virtual tree window. Capture the mounted table before the former focused row is detached.
+  - @vueye-table/core@3.0.0-alpha.12
+  - @vueye-table/vue@3.0.0-alpha.12
+
 ## 3.0.0-alpha.11
 
 ### Patch Changes
