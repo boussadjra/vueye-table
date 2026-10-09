@@ -151,4 +151,10 @@ has SLSA provenance metadata. The app's own lockfile resolves all six exact vers
 and their installed manifests were checked. The repository gate passed again with 433 tests.
 The alpha.12 consumer passed strict Nuxt types, seven SQLite/engine tests, production build,
 isolated HTTP acceptance and the original column-count reproducer locally on Windows.
-The next hosted browser result remains pending.
+The [alpha.12 hosted run](https://github.com/boussadjra/vueye-table/actions/runs/37960359675)
+passed Windows/Linux application checks and 35/36 browser cases. The tree focus fixes passed in
+all three engines. Chromium retained the correct editor and draft with no pending save, but two
+return wheel events stopped at 112px instead of the test's assumed less-than-100px position.
+The test now uses a bounded sequence of actual wheel events, checking draft retention at each
+step and requiring the viewport to reach exactly zero before commit and undo. The next hosted
+result remains pending; this failed run is not counted as full acceptance.

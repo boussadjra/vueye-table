@@ -102,11 +102,17 @@ test("an active editor retains its draft during wheel scrolling and can commit a
   await expect.poll(() => viewport.evaluate((element) => element.scrollTop)).toBeGreaterThan(500);
   await expect(editor).toHaveValue("Retained browser draft");
   await expect(page.getByText("0 pending rows", { exact: true })).toBeVisible();
-  const scrolled = await viewport.evaluate((element) => element.scrollTop);
-  await page.mouse.wheel(0, -1500);
-  await expect.poll(() => viewport.evaluate((element) => element.scrollTop)).toBeLessThan(scrolled);
-  await page.mouse.wheel(0, -1500);
-  await expect.poll(() => viewport.evaluate((element) => element.scrollTop)).toBeLessThan(100);
+  // Wheel motion is asynchronous and bounded differently by each browser. Keep using real
+  // wheel input until the viewport reaches its top, checking draft retention after each step.
+  for (let attempt = 0; attempt < 6; attempt++) {
+    const before = await viewport.evaluate((element) => element.scrollTop);
+    if (before === 0) break;
+    await page.mouse.wheel(0, -1500);
+    await expect.poll(() => viewport.evaluate((element) => element.scrollTop)).toBeLessThan(before);
+    await expect(editor).toHaveValue("Retained browser draft");
+    await expect(page.getByText("0 pending rows", { exact: true })).toBeVisible();
+  }
+  await expect.poll(() => viewport.evaluate((element) => element.scrollTop)).toBe(0);
   await expect(editor).toHaveValue("Retained browser draft");
   await editor.press("Enter");
   await expect(
