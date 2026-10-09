@@ -194,6 +194,7 @@ export const VtTable = defineComponent({
   }>,
   props: {
     table: { type: Object as PropType<AnyDataTableBinding>, required: true },
+    leadingColumns: { type: Number, default: 0 },
     ...surfaceProps,
   },
   setup(props, { slots }) {
@@ -215,6 +216,7 @@ export const VtTable = defineComponent({
               {
                 table: props.table,
                 class: "vt-table",
+                leadingColumns: props.leadingColumns,
                 virtual: props.virtual,
                 rowHeight: props.rowHeight,
                 overscan: props.overscan,
@@ -478,7 +480,7 @@ const GridBody = defineComponent({
           detail: props.detail,
           rowHeader: ({ index }: { index: number }) =>
             props.rowNumbers || details || props.rowActions
-              ? h("th", { class: "vt-row-number", scope: "row" }, [
+              ? h("th", { class: "vt-row-number", scope: "row", "aria-colindex": 1 }, [
                   details ? h(VtExpandToggle, { row: table.rows[index]! }) : null,
                   props.rowNumbers ? String(table.pageStart + index) : null,
                   props.rowActions
@@ -558,8 +560,12 @@ export const VtGrid = defineComponent({
           props.rowNumbers || details() || props.rowActions
             ? h("th", {
                 class: "vt-row-number",
-                "aria-hidden": details() || props.rowActions ? undefined : "true",
-                "aria-label": props.rowActions ? "Row actions" : details() ? "Details" : undefined,
+                "aria-colindex": 1,
+                "aria-label": props.rowActions
+                  ? "Row actions"
+                  : details()
+                    ? "Details"
+                    : "Row number",
               })
             : null,
         header: ({ column }: { column: TableColumn<unknown> }) =>
@@ -592,6 +598,7 @@ export const VtGrid = defineComponent({
               {
                 table: props.table,
                 label: props.label,
+                leadingColumns: props.rowNumbers || details() || props.rowActions ? 1 : 0,
                 "aria-describedby": attrs["aria-describedby"],
                 class: "vt-table vt-grid",
                 virtual: props.virtual,

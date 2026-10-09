@@ -31,7 +31,15 @@ import {
   type DetailSlotProps,
 } from "./hierarchy";
 import { loadSentinel } from "./loading";
-import { asProp, columnProp, flag, rowProp } from "./shared";
+import {
+  asProp,
+  columnProp,
+  flag,
+  rowProp,
+  columnLayoutProps,
+  provideColumnOffset,
+  injectColumnOffset,
+} from "./shared";
 import {
   createComponentVirtual,
   injectVirtual,
@@ -59,9 +67,11 @@ export const DataTableRoot = defineComponent({
     as: asProp("table"),
     ...virtualProps,
     ...hierarchyProps,
+    ...columnLayoutProps,
   },
   setup(props, { slots }) {
     provideDataTable(props.table);
+    provideColumnOffset(() => props.leadingColumns);
     const hierarchy = provideHierarchy(props.table, props);
     const element = shallowRef<HTMLElement>();
     const editingGrid = injectEditingGrid();
@@ -72,7 +82,7 @@ export const DataTableRoot = defineComponent({
           role: props.table.tree ? "treegrid" : undefined,
           "aria-rowcount":
             (props.table.tree ? props.table.processedRows.length : props.table.rowCount) + 1,
-          "aria-colcount": props.table.columns.length,
+          "aria-colcount": props.table.columns.length + props.leadingColumns,
           "aria-busy":
             props.table.loadState === "loading" || props.table.loadState === "streaming"
               ? "true"
@@ -180,7 +190,7 @@ export const DataTableHeaderCell = defineComponent({
   props: { column: columnProp, as: asProp("th") },
   setup(props, { slots }) {
     const table = injectDataTable("<DataTableHeaderCell>");
-    const virtual = injectVirtual();
+    const columnOffset = injectColumnOffset();
     return () => {
       const { column } = props;
       const sort = table.getSort(column.id);
@@ -208,7 +218,7 @@ export const DataTableHeaderCell = defineComponent({
           "data-sortable": flag(column.sortable),
           "data-sort": sort?.direction,
           style: columnStyle(column),
-          ...(virtual?.columns ? { "aria-colindex": table.columns.indexOf(column) + 1 } : {}),
+          "aria-colindex": table.columns.indexOf(column) + columnOffset() + 1,
         },
         content,
       );
@@ -470,6 +480,7 @@ export const DataTableCell = defineComponent({
   },
   setup(props, { slots }) {
     const table = injectDataTable("<DataTableCell>");
+    const columnOffset = injectColumnOffset();
     const hierarchy = injectHierarchy();
     return () => {
       const { row, column } = props;
@@ -478,7 +489,11 @@ export const DataTableCell = defineComponent({
       const content = () => slots.default?.({ row, column, value, display }) ?? display;
       return h(
         props.as,
-        { "data-column": column.id, "data-align": column.align },
+        {
+          "data-column": column.id,
+          "data-align": column.align,
+          "aria-colindex": table.columns.indexOf(column) + columnOffset() + 1,
+        },
         props.tree && table.tree && column.id === resolveTreeColumn(table, hierarchy?.treeColumn)
           ? h(DataTableTreeCell, { row }, { default: content })
           : content(),

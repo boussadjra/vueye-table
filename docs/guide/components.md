@@ -160,6 +160,18 @@ Controls outside `<VtTable>` need the table provided above them, which is what
 
 ## Headless components
 
+Full tables and grids include selection, details and row controls in accessible column
+counts and one-based cell indices. A grid combines its row numbers and controls in one
+leading column. These positions do not change zero-based data editing coordinates.
+
+Custom compositions with leading utility cells set `leading-columns` on `DataTableRoot`,
+`DataGridRoot` or `VtTable` to the number of those cells. Index custom utility headers and
+cells from one with `aria-colindex`; data headers and cells receive the offset automatically.
+For example, one selection column and two data columns have a count of three and data
+indices two and three. Hidden columns are excluded; virtualized counts include offscreen
+visible data columns. See the [warehouse consumer](/examples/operations-desk) for a runnable
+full grid with row numbers and actions.
+
 `@vueye-table/headless` renders semantic, accessible markup with no styles. Every component takes
 `as` to change its element and passes its state to its default slot.
 

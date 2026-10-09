@@ -1,5 +1,17 @@
 import type { TableColumn, TableRow } from "@vueye-table/core";
-import type { PropType } from "vue";
+import { inject, provide, type InjectionKey, type PropType } from "vue";
+
+/** Leading native utility cells, independent of data-column coordinates. */
+export const columnLayoutProps = {
+  leadingColumns: { type: Number, default: 0 },
+} as const;
+const columnOffsetKey: InjectionKey<() => number> = Symbol("vt-leading-columns");
+export function provideColumnOffset(offset: () => number): void {
+  provide(columnOffsetKey, offset);
+}
+export function injectColumnOffset(): () => number {
+  return inject(columnOffsetKey, () => 0);
+}
 
 /** The element a component renders. Every headless component accepts `as`. */
 export const asProp = (tag: string) =>

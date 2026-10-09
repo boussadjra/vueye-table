@@ -44,7 +44,15 @@ import {
   type DetailSlotProps,
 } from "./hierarchy";
 import { loadSentinel } from "./loading";
-import { asProp, columnProp, flag, rowProp } from "./shared";
+import {
+  asProp,
+  columnProp,
+  flag,
+  rowProp,
+  columnLayoutProps,
+  provideColumnOffset,
+  injectColumnOffset,
+} from "./shared";
 import { columnStyle, DataTableHeader } from "./table";
 import {
   injectVirtual,
@@ -98,12 +106,14 @@ export const DataGridRoot = defineComponent({
     label: { type: String as PropType<string | undefined>, default: undefined },
     ...virtualProps,
     ...hierarchyProps,
+    ...columnLayoutProps,
     /** Width reserved before data columns, for a row-number/header column. */
     gutter: { type: Number, default: 0 },
   },
   emits: { save: (_result: unknown) => true, cancel: (_key: string | number) => true },
   setup(props, { slots, expose, emit }) {
     provideDataTable(props.table);
+    provideColumnOffset(() => props.leadingColumns);
     const grid = useDataGrid(props.table, { treeColumn: () => props.treeColumn });
     provideDataGrid(grid);
     provideHierarchy(props.table, props);
@@ -209,7 +219,7 @@ export const DataGridRoot = defineComponent({
               : binding
                 ? props.table.rowCount
                 : props.table.rows.length) + 1,
-          "aria-colcount": props.table.columns.length,
+          "aria-colcount": props.table.columns.length + props.leadingColumns,
           "aria-busy":
             props.table.loadState === "loading" || props.table.loadState === "streaming"
               ? "true"
@@ -457,6 +467,7 @@ export const DataGridCell = defineComponent({
   },
   setup(props, { slots }) {
     const table = injectDataTable("<DataGridCell>");
+    const columnOffset = injectColumnOffset();
     const { grid, context } = useGrid("<DataGridCell>");
     const virtual = injectVirtual();
     const hierarchy = injectHierarchy();
@@ -559,7 +570,7 @@ export const DataGridCell = defineComponent({
           role: "gridcell",
           "aria-selected": String(grid.isSelected(at)),
           "aria-readonly": editable ? undefined : "true",
-          "aria-colindex": at.column + 1,
+          "aria-colindex": at.column + columnOffset() + 1,
           "data-column": column.id,
           "data-align": column.align,
           "data-focused": flag(grid.isFocused(at)),

@@ -201,6 +201,8 @@ export const VueyeTable = defineComponent({
 
     const hasDetails = (): boolean => !!slots.expanded && !table.tree;
     const hasActions = (): boolean => !!props.editMode || props.removeRows;
+    const leadingColumns = (): number =>
+      Number(hasActions()) + Number(hasDetails()) + Number(selectable());
     const width = (): number =>
       table.columns.length +
       (selectable() ? 1 : 0) +
@@ -227,7 +229,11 @@ export const VueyeTable = defineComponent({
         hasActions()
           ? h(
               "td",
-              { class: "vt-row-controls", onClick: (event: Event) => event.stopPropagation() },
+              {
+                class: "vt-row-controls",
+                "aria-colindex": 1,
+                onClick: (event: Event) => event.stopPropagation(),
+              },
               [
                 h(VtRowActions, {
                   row,
@@ -237,11 +243,19 @@ export const VueyeTable = defineComponent({
               ],
             )
           : null,
-        hasDetails() ? h("td", { class: "vt-expansion-cell" }, [h(VtExpandToggle, { row })]) : null,
+        hasDetails()
+          ? h("td", { class: "vt-expansion-cell", "aria-colindex": Number(hasActions()) + 1 }, [
+              h(VtExpandToggle, { row }),
+            ])
+          : null,
         selectable()
           ? h(
               "td",
-              { class: "vt-selection-cell", onClick: (event: Event) => event.stopPropagation() },
+              {
+                class: "vt-selection-cell",
+                "aria-colindex": Number(hasActions()) + Number(hasDetails()) + 1,
+                onClick: (event: Event) => event.stopPropagation(),
+              },
               [h(DataTableSelectRow, { row })],
             )
           : null,
@@ -267,14 +281,25 @@ export const VueyeTable = defineComponent({
       return {
         ...forwarded,
         before: () => [
-          hasActions() ? h("th", { class: "vt-row-controls", scope: "col" }, "Row actions") : null,
+          hasActions()
+            ? h("th", { class: "vt-row-controls", scope: "col", "aria-colindex": 1 }, "Row actions")
+            : null,
           hasDetails()
-            ? h("th", { class: "vt-expansion-cell", scope: "col", "aria-label": "Details" })
+            ? h("th", {
+                class: "vt-expansion-cell",
+                scope: "col",
+                "aria-colindex": Number(hasActions()) + 1,
+                "aria-label": "Details",
+              })
             : null,
           selectable()
             ? h(
                 "th",
-                { class: "vt-selection-cell", scope: "col" },
+                {
+                  class: "vt-selection-cell",
+                  scope: "col",
+                  "aria-colindex": Number(hasActions()) + Number(hasDetails()) + 1,
+                },
                 selectionMode.value === "multiple" ? [h(DataTableSelectAll)] : [],
               )
             : null,
@@ -313,6 +338,7 @@ export const VueyeTable = defineComponent({
                   {
                     table,
                     class: "vt-table",
+                    leadingColumns: leadingColumns(),
                     virtual: props.virtual,
                     rowHeight: props.rowHeight,
                     overscan: props.overscan,
@@ -331,7 +357,7 @@ export const VueyeTable = defineComponent({
                 treeColumn: props.treeColumn,
                 keepAliveDetail: props.keepAliveDetail,
                 class: "vt-table",
-                "aria-colcount": table.columns.length,
+                leadingColumns: leadingColumns(),
                 "aria-busy": busy() ? "true" : undefined,
               },
               children,
