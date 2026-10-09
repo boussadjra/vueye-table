@@ -1,7 +1,7 @@
 # Operations desk
 
-A standalone Nuxt warehouse application for testing the published vueye-table packages before beta.
-It has its own dependency lockfile and installs all six packages at `3.0.0-alpha.12` from npm. It does
+A standalone Nuxt warehouse application for testing the published vueye-table beta packages.
+It has its own dependency lockfile and installs all six packages at `3.0.0-beta.1` from npm. It does
 not use workspace aliases or source builds.
 
 ## Run
@@ -76,7 +76,8 @@ The acceptance log preserves alpha.10's [accessible column counts #111](https://
 
 These fixes were published together in alpha.11. Alpha.12 adds the virtual tree keyboard-focus
 and grid pointer/editor-focus fixes from [#118](https://github.com/boussadjra/vueye-table/issues/118)
-and [#119](https://github.com/boussadjra/vueye-table/issues/119). The consumer pins alpha.12, and
+and [#119](https://github.com/boussadjra/vueye-table/issues/119). Beta.1 includes all five fixes. The consumer pins beta.1, and
 `node scripts/reproduce-column-semantics.mjs` must pass during verification. Rerun both automated
 checks and browser workflows after every package-pin update. Passing this project is one beta gate; it does
-not establish production readiness. Beta also needs the API/release decisions in the tracker.
+not establish production readiness. The [beta contract](../../docs/guide/beta.md) records the API and
+compatibility decisions. Manual screen-reader acceptance remains unrun.

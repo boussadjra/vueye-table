@@ -15,15 +15,15 @@
     "postinstall": "nuxt prepare"
   },
   "dependencies": {
-    "@vueye-table/core": "3.0.0-alpha.12",
-    "@vueye-table/headless": "3.0.0-alpha.12",
-    "@vueye-table/nuxt": "3.0.0-alpha.12",
-    "@vueye-table/styled": "3.0.0-alpha.12",
-    "@vueye-table/vue": "3.0.0-alpha.12",
+    "@vueye-table/core": "3.0.0-beta.1",
+    "@vueye-table/headless": "3.0.0-beta.1",
+    "@vueye-table/nuxt": "3.0.0-beta.1",
+    "@vueye-table/styled": "3.0.0-beta.1",
+    "@vueye-table/vue": "3.0.0-beta.1",
     "h3": "1.15.11",
     "nuxt": "4.6.0",
     "vue": "3.5.43",
-    "vueye-table": "3.0.0-alpha.12"
+    "vueye-table": "3.0.0-beta.1"
   },
   "devDependencies": {
     "@playwright/test": "1.64.0",

@@ -1,13 +1,12 @@
 # The 3.0 beta contract
 
-The first requested beta is **3.0.0-beta.1**. Check the
-[GitHub release](https://github.com/boussadjra/vueye-table/releases) and npm before installing;
-this page describes the prepared contract and does not confirm publication. Beta is a prerelease
-for application feedback and does not establish production readiness.
+**3.0.0-beta.1 is published** for all six packages on npm's `beta` channel, with provenance and a
+[GitHub prerelease](https://github.com/boussadjra/vueye-table/releases/tag/v3.0.0-beta.1).
+Beta is a prerelease for application feedback and does not establish production readiness.
 
 ## Install and upgrade
 
-Once published, install an exact version or opt into the beta channel:
+Install an exact version or opt into the beta channel:
 
 ```sh
 pnpm add vueye-table@3.0.0-beta.1
@@ -71,5 +70,7 @@ requires an ADR, migration notes and a new beta version; read the release notes 
 The [Operations desk](/examples/operations-desk) tests the published package group with SQLite,
 100k orders, editable stock, lazy trees and real HTTP streams. Its acceptance log distinguishes
 published versions, unpublished candidates, hosted browser checks and unrun manual checks.
+Beta.1 passed [Windows/Linux application checks and all 36 Chromium/Firefox/WebKit cases](https://github.com/boussadjra/vueye-table/actions/runs/37967992595)
+against the published npm group, with zero retries. The repository gate passed 433 tests.
 Automated accessibility attributes are evidence about markup; they do not prove a successful
 screen-reader session. Known limits belong in the acceptance log and release notes.

@@ -158,3 +158,39 @@ return wheel events stopped at 112px instead of the test's assumed less-than-100
 The test now uses a bounded sequence of actual wheel events, checking draft retention at each
 step and requiring the viewport to reach exactly zero before commit and undo. The next hosted
 result remains pending; this failed run is not counted as full acceptance.
+
+The [second alpha.12 browser run](https://github.com/boussadjra/vueye-table/actions/runs/37960976213)
+also passed 35/36: Chromium and Firefox completed editor commit/undo, while WebKit's two outward
+wheel events stopped at 273px, below the assumed 500px. Both directions now use bounded, sequential
+wheel input aimed at the viewport, require travel beyond two viewport heights and return to zero,
+and assert the unchanged draft and zero pending saves after every step. The helper passes the
+existing sequential-operation lint rules. No further framework defect is confirmed by these
+wheel-distance failures.
+
+## Corrected alpha acceptance and beta promotion
+
+The [final alpha.12 consumer run](https://github.com/boussadjra/vueye-table/actions/runs/37963069703)
+passed Windows/Linux application checks and all **36/36 Chromium, Firefox and WebKit cases**
+at `8a80995`. There were no retries. Pointer menus, lazy context/selection and tree focus,
+100k × 24 bounded navigation, correct editor identity/draft retention/commit/undo, and Unicode
+receiving with connection cleanup all passed. [Root CI](https://github.com/boussadjra/vueye-table/actions/runs/37963069960)
+passed at the same commit; the full local gate passed 433 tests with coverage, types, builds,
+boundaries and package export checks.
+
+## Published beta.1 acceptance
+
+2026-10-09: [PR #122](https://github.com/boussadjra/vueye-table/pull/122) merged the beta promotion.
+The [release workflow](https://github.com/boussadjra/vueye-table/actions/runs/37966067677) passed
+and published all six packages at **3.0.0-beta.1**, with Changesets in beta pre mode and reviewed
+changelog entries. Each exact npm version, SLSA provenance metadata, tarball download and
+`beta` dist-tag was verified; `latest` remains alpha.12. The
+[GitHub prerelease](https://github.com/boussadjra/vueye-table/releases/tag/v3.0.0-beta.1) is published.
+The app's own lockfile installs the exact beta group from npm; all six installed manifests were
+checked. Strict Nuxt types, seven SQLite/engine tests, the production build, isolated HTTP stress
+acceptance and the column-count reproducer passed locally on Windows. The full repository gate
+passed 433 tests with coverage, strict types, builds, boundaries and package export checks.
+The [published-beta consumer run](https://github.com/boussadjra/vueye-table/actions/runs/37967992595)
+passed Windows/Linux checks and all **36/36 Chromium, Firefox and WebKit cases** at `3f49936`,
+with zero retries. The [repository CI](https://github.com/boussadjra/vueye-table/actions/runs/37967992759)
+passed at the same commit. This completes the automated consumer retest of the published beta
+group. The manual screen-reader limitation remains unchanged.
