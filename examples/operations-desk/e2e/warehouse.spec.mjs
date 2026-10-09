@@ -95,23 +95,26 @@ test("an active editor retains its draft during wheel scrolling and can commit a
   await expect(editor).toHaveValue("Field notebook");
   await editor.fill("Retained browser draft");
   const viewport = page.locator("[data-virtual-viewport]");
-  await viewport.hover();
-  await page.mouse.wheel(0, 1500);
-  await expect.poll(() => viewport.evaluate((element) => element.scrollTop)).toBeGreaterThan(100);
-  await page.mouse.wheel(0, 1500);
-  await expect.poll(() => viewport.evaluate((element) => element.scrollTop)).toBeGreaterThan(500);
-  await expect(editor).toHaveValue("Retained browser draft");
-  await expect(page.getByText("0 pending rows", { exact: true })).toBeVisible();
   // Wheel motion is asynchronous and bounded differently by each browser. Keep using real
-  // wheel input until the viewport reaches its top, checking draft retention after each step.
-  for (let attempt = 0; attempt < 6; attempt++) {
+  // wheel input past two viewport heights and back to zero, checking retention at each step.
+  async function scrollWithWheel(delta, target, remaining) {
     const before = await viewport.evaluate((element) => element.scrollTop);
-    if (before === 0) break;
-    await page.mouse.wheel(0, -1500);
-    await expect.poll(() => viewport.evaluate((element) => element.scrollTop)).toBeLessThan(before);
+    if ((delta > 0 ? before >= target : before <= target) || remaining === 0) return;
+    await viewport.hover();
+    await page.mouse.wheel(0, delta);
+    const movement = expect.poll(() => viewport.evaluate((element) => element.scrollTop));
+    if (delta > 0) await movement.toBeGreaterThan(before);
+    else await movement.toBeLessThan(before);
     await expect(editor).toHaveValue("Retained browser draft");
     await expect(page.getByText("0 pending rows", { exact: true })).toBeVisible();
+    await scrollWithWheel(delta, target, remaining - 1);
   }
+  const distance = await viewport.evaluate((element) => Math.max(500, element.clientHeight * 2));
+  await scrollWithWheel(1500, distance, 12);
+  await expect
+    .poll(() => viewport.evaluate((element) => element.scrollTop))
+    .toBeGreaterThanOrEqual(distance);
+  await scrollWithWheel(-1500, 0, 12);
   await expect.poll(() => viewport.evaluate((element) => element.scrollTop)).toBe(0);
   await expect(editor).toHaveValue("Retained browser draft");
   await editor.press("Enter");
