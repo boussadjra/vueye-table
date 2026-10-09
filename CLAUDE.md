@@ -58,7 +58,9 @@ pnpm check                         # the full gate before finishing
 
 ## Status
 
-`3.0.0-alpha.0`, unreleased. The API is provisional. Do not claim production readiness.
+The repository is preparing `3.0.0-beta.1` after published alpha.12 warehouse acceptance.
+Check npm and GitHub for publication status. The [beta contract](./docs/guide/beta.md) records
+the documented API and remaining acceptance limits. Do not claim production readiness.
 
-Releases go through changesets in `alpha` pre mode and `.github/workflows/release.yml`; see
+Releases go through changesets in `beta` pre mode and `.github/workflows/release.yml`; see
 [RELEASING.md](./RELEASING.md). Publish with `pnpm publish:packages`, never `changeset publish`.

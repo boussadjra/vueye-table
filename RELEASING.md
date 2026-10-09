@@ -30,11 +30,12 @@ exists, and `pnpm release:tag --dry-run` prints the tag and notes without creati
 
 ## Prerelease line
 
-Changesets is in **pre mode** with the `alpha` tag (`.changeset/pre.json`). Version PRs continue
-the alpha sequence until the tag is changed deliberately. Without pre mode, the pending `major`
-changeset would produce a stable `3.0.0`.
+Changesets is in **pre mode** with the `beta` tag (`.changeset/pre.json`). The first beta
+candidate is `3.0.0-beta.1`; verify npm and GitHub after the Release workflow completes.
+Subsequent Version PRs continue the beta sequence until pre mode is exited deliberately.
 
-Moving to beta changes the pre-mode tag and the version together, in this order, committed as one:
+For an alpha-to-beta transition, change the pre-mode tag and version together, in this order,
+committed as one:
 
 ```sh
 pnpm changeset pre exit
@@ -42,9 +43,10 @@ pnpm changeset pre enter beta
 pnpm version:set 3.0.0-beta.1
 ```
 
-Complete the [warehouse acceptance gate](https://github.com/boussadjra/vueye-table/issues/114)
-and publish/retest the corrected alpha first, consuming its changesets through the normal
-Version PR. For the manual beta transition, also write the `3.0.0-beta.1` entry in each package
+The corrected alpha.12 group passed the [warehouse application and three-browser checks](https://github.com/boussadjra/vueye-table/actions/runs/37963069703),
+with its changesets consumed through the normal Version PR. The [tracker](https://github.com/boussadjra/vueye-table/issues/114)
+still covers beta publication and the published-beta consumer retest. For a manual transition,
+also write the `3.0.0-beta.1` entry in each package
 changelog and refresh the root lockfile. Commit pre mode, manifests, changelogs and lockfile
 together. Verify the release plan and notes before merging; do not run another Version PR
 for the same beta transition.

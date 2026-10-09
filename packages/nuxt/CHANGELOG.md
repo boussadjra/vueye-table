@@ -1,5 +1,18 @@
 # @vueye-table/nuxt
 
+## 3.0.0-beta.1
+
+### First 3.0 beta
+
+- Promote the corrected alpha.12 package group to the beta channel. All six public packages share `3.0.0-beta.1`; install the exact version or the npm `beta` tag.
+- Record the documented layered API contract for application feedback: immutable data updates, typed editing and validation, virtual table/grid surfaces, lazy trees and streaming. See the [beta contract](https://vueye-table-docs.vercel.app/guide/beta) and [migration guide](https://vueye-table-docs.vercel.app/guide/upgrading-from-2) for applications upgrading from 2.x.
+- Include the warehouse fixes for accessible utility-column coordinates, pointer row-action menus inside virtual viewports, and reactive tree search context with retained branches, selection and edits.
+- Keep keyboard focus through virtual tree Home/End navigation and prevent grid pointer focus from moving cells between clicks or blurring newly mounted editors.
+- The independent warehouse consumer exercises npm packages with SQLite, persistent server saves/conflicts, 100k rows, lazy HTTP branches and multilingual receiving streams. See its [acceptance log](https://github.com/boussadjra/vueye-table/blob/main/examples/operations-desk/ACCEPTANCE.md) for the exact tested versions and browser results.
+- Corrected npm alpha.12 passed strict application checks on Windows/Linux, the 433-test repository gate, and [all 36 Chromium/Firefox/WebKit interaction cases](https://github.com/boussadjra/vueye-table/actions/runs/37963069703). Retest the consumer against the published beta group after promotion.
+
+Beta remains a prerelease. A manual screen-reader session has not been run; automated attributes and keyboard checks do not establish assistive-technology acceptance or production readiness.
+
 ## 3.0.0-alpha.12
 
 ### Patch Changes
