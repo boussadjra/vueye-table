@@ -1,0 +1,36 @@
+{
+  "name": "vueye-operations-desk",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "nuxt dev --host 127.0.0.1 --port 4310",
+    "build": "nuxt build",
+    "start": "node .output/server/index.mjs",
+    "typecheck": "nuxt typecheck",
+    "test": "node --test tests/*.test.ts",
+    "test:http": "node scripts/http-acceptance.mjs",
+    "verify": "pnpm typecheck && pnpm test && pnpm build",
+    "postinstall": "nuxt prepare"
+  },
+  "dependencies": {
+    "@vueye-table/core": "3.0.0-alpha.10",
+    "@vueye-table/headless": "3.0.0-alpha.10",
+    "@vueye-table/nuxt": "3.0.0-alpha.10",
+    "@vueye-table/styled": "3.0.0-alpha.10",
+    "@vueye-table/vue": "3.0.0-alpha.10",
+    "h3": "1.15.11",
+    "nuxt": "4.6.0",
+    "vue": "3.5.43",
+    "vueye-table": "3.0.0-alpha.10"
+  },
+  "devDependencies": {
+    "@types/node": "24.10.0",
+    "typescript": "6.0.3",
+    "vue-tsc": "3.3.8"
+  },
+  "engines": {
+    "node": ">=24.18.0 <25"
+  },
+  "packageManager": "pnpm@11.17.0"
+}

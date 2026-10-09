@@ -1,0 +1,10 @@
+# An independent npm consumer: never resolve the repository's workspace packages.
+packages:
+  - .
+linkWorkspacePackages: false
+preferWorkspacePackages: false
+autoInstallPeers: true
+strictPeerDependencies: true
+minimumReleaseAge: 0
+allowBuilds:
+  esbuild: true

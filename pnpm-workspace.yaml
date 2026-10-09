@@ -17,10 +17,10 @@ catalogs:
     turbo: 2.10.7
     typescript: 6.0.3
   testing:
-    "@vitest/coverage-v8": 4.1.10
+    "@vitest/coverage-v8": 4.1.11
     "@vue/test-utils": 2.5.1
     happy-dom: 20.14.5
-    vitest: 4.1.10
+    vitest: 4.1.11
   node:
     "@types/node": 26.1.1
   vue:
@@ -51,6 +51,12 @@ resolvePeersFromWorkspaceRoot: false
 saveWorkspaceProtocol: true
 sharedWorkspaceLockfile: true
 strictPeerDependencies: true
+overrides:
+  # Security patches for pinned development-tool dependencies.
+  tinypool: 2.1.2
+  source-map-js: 1.2.2
+  # Preserve the synchronous YAML API while removing js-yaml 3's argparse/sprintf chain.
+  "@manypkg/get-packages>read-yaml-file": 2.1.0
 allowBuilds:
   esbuild: true
 packageExtensions:

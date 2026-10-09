@@ -72,6 +72,35 @@ function lazy(
 }
 
 describe("tree data", () => {
+  it("changes search context without losing lazy branches, edits, selection or expansion", async () => {
+    const { table, load } = lazy();
+    table.expandAll();
+    await settle();
+    table.select([7]);
+    table.edit({ rowKey: 1, column: "name", value: "Renamed lazy" });
+    const currentRoot = table.getSnapshot().getRow(1)?.original;
+    const expanded = table.getState().expanded;
+    table.search("Loaded");
+    expect(keys(table)).toEqual([1, 7]);
+    const change = vi.fn<() => void>();
+    const stop = table.subscribe(change);
+    table.setTreeFilter("strict");
+    expect(keys(table)).toEqual([7]);
+    table.setTreeFilter("strict");
+    expect(change).toHaveBeenCalledTimes(1);
+    table.setTreeFilter("descendants");
+    table.search("Renamed");
+    expect(keys(table)).toEqual([1, 7]);
+    table.setTreeFilter(undefined);
+    expect(keys(table)).toEqual([1]);
+    expect(table.getSnapshot().getRow(1)?.original).toBe(currentRoot);
+    expect(table.getState().expanded).toBe(expanded);
+    expect(table.getState().selection).toEqual([7]);
+    expect(table.undo()).toBe(true);
+    expect(table.getSnapshot().getRow(1)?.original.name).toBe("Lazy");
+    expect(load).toHaveBeenCalledTimes(1);
+    stop();
+  });
   it("presents equivalent nested and adjacency hierarchies without detail items", () => {
     const nested = make();
     const flat = make({

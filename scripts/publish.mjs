@@ -10,6 +10,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
 import { publishablePackages, repositoryRoot } from "./packages.mjs";
+import { releaseTagFor } from "./release-tags.mjs";
 import { parseVersion } from "./semver.mjs";
 
 const registry = "https://registry.npmjs.org";
@@ -22,9 +23,9 @@ Usage: pnpm publish:packages [options]
 Publishes each package in the fixed vueye-table group only when its exact
 version is not already present on npm.
 
-Until a stable release of the current major exists, every publish goes to
-"latest" so a bare install resolves the newest prerelease. Once one is on the
-registry, a prerelease is published under its own id (alpha, beta, rc).
+Beta releases always publish under "beta". Until a stable release of the
+current major exists, alpha publishes under "latest". Once one is on the
+registry, other prereleases publish under their own id (alpha, rc).
 Older majors (vueye-table 1.x and 2.x) do not count.
 
 Options:
@@ -88,26 +89,6 @@ function readManifests() {
   return manifests;
 }
 
-/**
- * A prerelease keeps its own dist-tag only once a stable release of the same major exists to hold
- * `latest`. Before that, `latest` must follow the newest prerelease, or a bare install resolves an
- * older one. The unscoped `vueye-table` carries 1.x and 2.x history, so only the current major
- * counts: a 1.x stable must not send 3.0.0 prereleases to a tag nobody installs.
- */
-function tagFor(version, publishedSets) {
-  const { major, prerelease } = parseVersion(version);
-  if (typeof prerelease?.[0] !== "string") {
-    return "latest";
-  }
-  const stableExists = publishedSets.some((published) =>
-    [...published].some((name) => {
-      const parsed = parseVersion(name);
-      return parsed !== undefined && parsed.prerelease === undefined && parsed.major === major;
-    }),
-  );
-  return stableExists ? prerelease[0] : "latest";
-}
-
 async function publishedVersions(name) {
   const response = await fetch(`${registry}/${encodeURIComponent(name)}`, {
     headers: { accept: "application/vnd.npm.install-v1+json" },
@@ -150,7 +131,7 @@ async function main() {
   // The group shares one version and one tag, decided by every package's history together.
   const tag =
     options.tag ??
-    tagFor(
+    releaseTagFor(
       version,
       plan.map(({ published }) => published),
     );

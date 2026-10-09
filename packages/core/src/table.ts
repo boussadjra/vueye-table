@@ -45,6 +45,7 @@ import {
   processTree,
   createTreeFlattener,
   type TreeOptions,
+  type TreeFilter,
   type TreeLoadSignal,
   type TreeLoadController,
   type TreeModel,
@@ -273,6 +274,8 @@ export interface DataTable<TRow> {
   /** Replace the data. The undo stack is cleared unless the data is the table's own. */
   setData(data: readonly TRow[]): void;
   setColumns(columns: readonly ColumnDef<TRow>[]): void;
+  /** Change tree search context without replacing rows or clearing loaded children. */
+  setTreeFilter(mode: TreeFilter | undefined): void;
   /** Update the total row count of a `manual` table. */
   setRowCount(rowCount: number): void;
 
@@ -411,6 +414,7 @@ export function createTable<TRow, TSignal extends TreeLoadSignal = TreeLoadSigna
   const selectionMode = options.selectionMode ?? "multiple";
   const selectScope = options.selectScope ?? "all";
   const manual = options.manual ?? false;
+  let treeFilter = options.treeFilter ?? "ancestors";
   const treeEnabled = Boolean(
     options.getChildren || options.getParentKey || options.hasChildren || options.loadChildren,
   );
@@ -630,14 +634,8 @@ export function createTable<TRow, TSignal extends TreeLoadSignal = TreeLoadSigna
       search: string,
       filters: TableState["filters"],
       sorting: TableState["sorting"],
-    ) =>
-      processTree(
-        model,
-        columns,
-        { ...state, search, filters, sorting },
-        options.treeFilter ?? "ancestors",
-        manual,
-      ),
+      mode: TreeFilter,
+    ) => processTree(model, columns, { ...state, search, filters, sorting }, mode, manual),
   );
   const flattenTree = createTreeFlattener<TRow>();
   const emptyAncestors = new Set<RowKey>();
@@ -859,6 +857,7 @@ export function createTable<TRow, TSignal extends TreeLoadSignal = TreeLoadSigna
         state.search,
         state.filters,
         state.sorting,
+        treeFilter,
       );
       const ancestors =
         expandMode === "single" ? singleTreePath(model, state.expanded) : emptyAncestors;
@@ -1254,6 +1253,7 @@ export function createTable<TRow, TSignal extends TreeLoadSignal = TreeLoadSigna
         candidate.search,
         candidate.filters,
         candidate.sorting,
+        treeFilter,
       );
       const first = tree.roots.find(
         (node) =>
@@ -2548,6 +2548,13 @@ export function createTable<TRow, TSignal extends TreeLoadSignal = TreeLoadSigna
         return;
       }
       rowCount = next;
+      notify();
+    },
+
+    setTreeFilter(next) {
+      const mode = next ?? "ancestors";
+      if (mode === treeFilter) return;
+      treeFilter = mode;
       notify();
     },
 

@@ -607,6 +607,11 @@
   flex-wrap: wrap;
   gap: 0.35rem;
   min-width: 5rem;
+  max-width: 100%;
+}
+.vt-row-actions details {
+  min-width: 0;
+  max-width: 100%;
 }
 .vt-row-actions button,
 .vt-row-actions summary {
@@ -635,8 +640,13 @@
 }
 .vt-row-actions [data-row-menu] {
   display: flex;
+  flex-wrap: wrap;
   gap: 0.35rem;
   margin-top: 0.35rem;
+}
+.vt-row-actions [data-row-menu] button {
+  max-width: 100%;
+  white-space: normal;
 }
 
 .vt-grid .vt-row-number {

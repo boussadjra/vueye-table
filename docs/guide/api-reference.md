@@ -35,17 +35,18 @@ active cells, spacers, ARIA indices, SSR estimates and disabling pagination.
 
 ## Expansion and trees
 
-| API                                                                             | Contract                                                                             |
-| ------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
-| `state.expanded`, `ExpandedState`                                               | Boolean or key list; controlled through `v-model:expanded`.                          |
-| `toggleExpanded(key)`, `expandAll()`, `collapseAll()`                           | Named expansion operations.                                                          |
-| `getChildren`, `setChildren`                                                    | Nested input and immutable inverse for nested edits.                                 |
-| `getParentKey`, `setParentKey`                                                  | Adjacency input and immutable inverse for child insertion.                           |
-| `hasChildren`, `loadChildren`, `createChildLoadController`                      | Lazy detection/loading; Vue supplies a controller.                                   |
-| `treeFilter`, `paginateBy`, `maxDepth`                                          | Ancestry filtering, root/row pagination and recovery depth.                          |
-| `row.depth`, `parentKey`, `canExpand`, `isExpanded`, `childStatus`, `selection` | Hierarchy metadata; source objects stay unchanged.                                   |
-| `renderItems`, `TableRenderItem`, `getRowItemKey`                               | Stable data/detail items. Details do not change grid addresses or pagination counts. |
-| `rowCanExpand`, `expandMode`, `keepAliveDetail`, `treeColumn`, `#expanded`      | Component presentation.                                                              |
+| API                                                                             | Contract                                                                                                                                                                 |
+| ------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `state.expanded`, `ExpandedState`                                               | Boolean or key list; controlled through `v-model:expanded`.                                                                                                              |
+| `toggleExpanded(key)`, `expandAll()`, `collapseAll()`                           | Named expansion operations.                                                                                                                                              |
+| `getChildren`, `setChildren`                                                    | Nested input and immutable inverse for nested edits.                                                                                                                     |
+| `getParentKey`, `setParentKey`                                                  | Adjacency input and immutable inverse for child insertion.                                                                                                               |
+| `hasChildren`, `loadChildren`, `createChildLoadController`                      | Lazy detection/loading; Vue supplies a controller.                                                                                                                       |
+| `treeFilter`, `paginateBy`, `maxDepth`                                          | Ancestry filtering, root/row pagination and recovery depth.                                                                                                              |
+| `setTreeFilter(mode)`                                                           | Changes search context without resetting loaded branches, expansion, selection or edits. Undefined restores `ancestors`; Vue also accepts a ref/getter for `treeFilter`. |
+| `row.depth`, `parentKey`, `canExpand`, `isExpanded`, `childStatus`, `selection` | Hierarchy metadata; source objects stay unchanged.                                                                                                                       |
+| `renderItems`, `TableRenderItem`, `getRowItemKey`                               | Stable data/detail items. Details do not change grid addresses or pagination counts.                                                                                     |
+| `rowCanExpand`, `expandMode`, `keepAliveDetail`, `treeColumn`, `#expanded`      | Component presentation.                                                                                                                                                  |
 
 Types include `TreeOptions`, `TreeFilter`, `TreePagination`, `TreeLoadSignal`,
 `TreeLoadController`, `ChildStatus`, `RowItemKind`. Helpers and slot payloads are listed in

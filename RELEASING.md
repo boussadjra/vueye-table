@@ -30,17 +30,24 @@ exists, and `pnpm release:tag --dry-run` prints the tag and notes without creati
 
 ## Prerelease line
 
-Changesets is in **pre mode** with the `alpha` tag (`.changeset/pre.json`), so the next Version PR
-produces `3.0.0-alpha.1`, then `3.0.0-alpha.2`, and so on. Without pre mode, the pending `major`
-changeset would turn `3.0.0-alpha.0` into a stable `3.0.0`.
+Changesets is in **pre mode** with the `alpha` tag (`.changeset/pre.json`). Version PRs continue
+the alpha sequence until the tag is changed deliberately. Without pre mode, the pending `major`
+changeset would produce a stable `3.0.0`.
 
 Moving to beta changes the pre-mode tag and the version together, in this order, committed as one:
 
 ```sh
 pnpm changeset pre exit
 pnpm changeset pre enter beta
-pnpm version:set 3.0.0-beta.0
+pnpm version:set 3.0.0-beta.1
 ```
+
+Complete the [warehouse acceptance gate](https://github.com/boussadjra/vueye-table/issues/114)
+and publish/retest the corrected alpha first, consuming its changesets through the normal
+Version PR. For the manual beta transition, also write the `3.0.0-beta.1` entry in each package
+changelog and refresh the root lockfile. Commit pre mode, manifests, changelogs and lockfile
+together. Verify the release plan and notes before merging; do not run another Version PR
+for the same beta transition.
 
 Running `pnpm version:set` alone leaves pre mode at `alpha`, and the next Version PR would write an
 alpha version back over the beta one. The first stable release is `pnpm changeset pre exit`
@@ -48,9 +55,11 @@ followed by a normal Version PR.
 
 ## Dist-tags
 
-- **Until a stable 3.x exists**, every publish goes to `latest`, so `pnpm add vueye-table`
-  resolves the newest 3.0 prerelease. `latest` on the unscoped `vueye-table` currently points at
-  `2.0.0-alpha.14`; the first 3.0 publish replaces it. 1.x stays installable as `vueye-table@1`.
+- **Beta always uses `beta`**, including the first `3.0.0-beta.1`. Install it explicitly with
+  `pnpm add vueye-table@beta`; applications can also pin the exact version. The publisher updates
+  this channel only when publishing a beta version.
+- **Until a stable 3.x exists**, alpha publishes to `latest`. 1.x stays installable as
+  `vueye-table@1`.
 - **Once `3.0.0` is out**, `latest` holds the stable line and a prerelease goes under its own id
   (`beta`, `rc`). Older majors never count toward this.
 

@@ -1,5 +1,5 @@
 import { mount } from "@vue/test-utils";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { nextTick } from "vue";
 import { VueyeGrid, VueyeTable } from "vueye-table";
 
@@ -10,6 +10,43 @@ function size(element: Element) {
   element.dispatchEvent(new Event("scroll"));
 }
 describe("full component virtualization", () => {
+  it.each([0, 999])(
+    "reveals row %s actions and removes the row through its controls",
+    async (key) => {
+      const input = Object.freeze(data.map((row) => Object.freeze({ ...row })));
+      const wrapper = mount(VueyeGrid, {
+        props: {
+          data: input,
+          columns,
+          virtual: true,
+          virtualColumns: true,
+          overscan: 0,
+          removeRows: true,
+          toolbar: false,
+        },
+        attachTo: document.body,
+      });
+      size(wrapper.get(".vt-scroll").element);
+      await nextTick();
+      const grid = wrapper.get("[role=grid]");
+      await grid.trigger("keydown", { key: key === 0 ? "Home" : "End", ctrlKey: true });
+      const actions = wrapper.get(`tr[data-key="${key}"] details`);
+      const reveal = vi.fn<() => void>();
+      Object.defineProperty(actions.element, "scrollIntoView", { value: reveal });
+      (actions.element as HTMLDetailsElement).open = true;
+      await actions.trigger("toggle");
+      expect(reveal).toHaveBeenCalledWith({ block: "nearest", inline: "nearest" });
+      reveal.mockClear();
+      (actions.element as HTMLDetailsElement).open = false;
+      await actions.trigger("toggle");
+      expect(reveal).not.toHaveBeenCalled();
+      await wrapper.get(`[aria-label="Remove row, row ${key}"]`).trigger("click");
+      expect(wrapper.find(`tr[data-key="${key}"]`).exists()).toBe(false);
+      expect(input).toHaveLength(1000);
+      expect(wrapper.emitted("update:data")?.at(-1)?.[0]).toHaveLength(999);
+      wrapper.unmount();
+    },
+  );
   it("defaults virtual tables to all rows, keeps selectable custom cells and hides pagination", async () => {
     const wrapper = mount(VueyeTable, {
       props: { data, columns, virtual: true, overscan: 0, selectable: true, height: "240px" },
