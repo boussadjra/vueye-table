@@ -1,5 +1,11 @@
 # @vueye-table/vue
 
+## 3.0.0-alpha.12
+
+### Patch Changes
+
+- @vueye-table/core@3.0.0-alpha.12
+
 ## 3.0.0-alpha.11
 
 ### Patch Changes

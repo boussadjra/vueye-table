@@ -27,7 +27,9 @@
     "rendered-column-coordinates",
     "tree-data",
     "tree-detail-components",
+    "virtual-grid-pointer-focus",
     "virtual-row-action-menus",
+    "virtual-tree-keyboard-focus",
     "vue-row-drafts",
     "vue-streaming-components",
     "vue-virtual-bindings"
