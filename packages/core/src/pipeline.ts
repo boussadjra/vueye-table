@@ -1,31 +1,33 @@
 import type { TableColumn } from "./column";
 import type { TableRow } from "./row";
 import type { PaginationState, SortRule } from "./state";
+import { foldText, type TextNormalizer } from "./text";
 
 /**
  * The row pipeline: filter, then sort, then paginate. Each stage is a pure function, so a table
  * recomputes only the stages whose inputs changed, and a server can run the same stages.
  */
 
-/** Split free text into lowercase terms. */
-function searchTerms(search: string): readonly string[] {
-  return search
-    .toLowerCase()
+/** Split free text into normalized terms. */
+function searchTerms(search: string, normalize: TextNormalizer): readonly string[] {
+  return normalize(search)
     .split(/\s+/u)
     .filter((term) => term.length > 0);
 }
 
 /**
  * Keep rows that pass every column filter and contain every search term in at least one
- * searchable column.
+ * searchable column. Search and cell text are both read through `normalize`, by default ignoring
+ * case, accents and Arabic letter shapes.
  */
 export function filterRows<TRow>(
   rows: readonly TableRow<TRow>[],
   columns: readonly TableColumn<TRow>[],
   search: string,
   filters: Readonly<Record<string, unknown>>,
+  normalize: TextNormalizer = foldText,
 ): readonly TableRow<TRow>[] {
-  const terms = searchTerms(search);
+  const terms = searchTerms(search, normalize);
   const byId = new Map(columns.map((column) => [column.id, column]));
   const activeFilters = Object.entries(filters).flatMap(([id, value]) => {
     const column = byId.get(id);
@@ -46,7 +48,7 @@ export function filterRows<TRow>(
     if (terms.length === 0) {
       return true;
     }
-    const haystack = searchable.map((column) => row.getDisplay(column.id).toLowerCase());
+    const haystack = searchable.map((column) => normalize(row.getDisplay(column.id)));
     return terms.every((term) => haystack.some((text) => text.includes(term)));
   });
 }
@@ -59,6 +61,15 @@ export function sortRows<TRow>(
 ): readonly TableRow<TRow>[] {
   if (!sorting.some((rule) => columns.some((column) => column.id === rule.column))) return rows;
   return rows.toSorted(compareRows(columns, sorting));
+}
+
+function isEmptyValue(value: unknown): boolean {
+  return (
+    value === null ||
+    value === undefined ||
+    value === "" ||
+    (typeof value === "number" && Number.isNaN(value))
+  );
 }
 
 export function compareRows<TRow>(
@@ -74,8 +85,8 @@ export function compareRows<TRow>(
     for (const { column, sign } of rules) {
       const leftValue = left.getValue(column.id);
       const rightValue = right.getValue(column.id);
-      const leftEmpty = leftValue === null || leftValue === undefined || leftValue === "";
-      const rightEmpty = rightValue === null || rightValue === undefined || rightValue === "";
+      const leftEmpty = isEmptyValue(leftValue);
+      const rightEmpty = isEmptyValue(rightValue);
       // Empty values stay last in both directions.
       if (leftEmpty !== rightEmpty) {
         return leftEmpty ? 1 : -1;

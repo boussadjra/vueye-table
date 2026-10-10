@@ -52,6 +52,7 @@ import {
   columnLayoutProps,
   provideColumnOffset,
   injectColumnOffset,
+  directionOf,
 } from "./shared";
 import { columnStyle, DataTableHeader } from "./table";
 import {
@@ -179,7 +180,16 @@ export const DataGridRoot = defineComponent({
         event.preventDefault();
         return;
       }
-      if (grid.handleKey(event)) {
+      if (
+        grid.handleKey({
+          key: event.key,
+          shiftKey: event.shiftKey,
+          ctrlKey: event.ctrlKey,
+          metaKey: event.metaKey,
+          altKey: event.altKey,
+          direction: directionOf(event.currentTarget as Element | null),
+        })
+      ) {
         event.preventDefault();
       }
     };

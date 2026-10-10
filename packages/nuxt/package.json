@@ -46,10 +46,10 @@
   },
   "dependencies": {
     "@nuxt/kit": "catalog:nuxt",
+    "@nuxt/schema": "catalog:nuxt",
     "vueye-table": "workspace:*"
   },
   "devDependencies": {
-    "@nuxt/schema": "catalog:nuxt",
     "@vueye-table/typescript-config": "workspace:*",
     "vue": "catalog:vue"
   },

@@ -1,16 +1,30 @@
 /*
  * vueye-table styled theme.
  *
- * Every color, size, and radius is a custom property on .vt-surface, so a theme is a handful of
- * overrides. Dark colors apply under prefers-color-scheme unless a surface is forced light, and
- * always under data-vt-theme="dark". Any element with .vt-theme carries the tokens, so controls
- * placed outside a table match it.
+ * Every color, size, and radius is a custom property. The defaults below are declared once, on the
+ * outermost themed element (a table surface, a grid, or a standalone .vt-theme control), and at
+ * zero specificity: toolbars, menus and footers inside a table inherit the table's tokens, and any
+ * host rule that sets a token wins over the default without a specificity fight.
+ *
+ * Dark colors apply under prefers-color-scheme unless a surface is forced light, and always under
+ * data-vt-theme="dark". data-vt-theme="inherit" declares no colors at all: the host sets them on
+ * an ancestor, in its own light and dark themes. Sizes keep their defaults unless the host sets
+ * them too.
  */
 
-.vt-surface,
-.vt-theme {
+:where(.vt-surface, .vt-theme):where(:not(:is(.vt-surface, .vt-theme) *)) {
   --vt-font: inherit;
   --vt-font-size: 0.875rem;
+  --vt-radius: 8px;
+  --vt-control-radius: 6px;
+  --vt-cell-x: 0.75rem;
+  --vt-cell-y: 0.625rem;
+  --vt-tree-indent: 1.25rem;
+}
+
+:where(.vt-surface, .vt-theme):where(:not(:is(.vt-surface, .vt-theme) *)):where(
+  :not([data-vt-theme="inherit"])
+) {
   --vt-bg: #ffffff;
   --vt-fg: #1f2328;
   --vt-muted: #656d76;
@@ -24,13 +38,11 @@
   --vt-range: rgb(59 91 219 / 0.1);
   --vt-focus: #3b5bdb;
   --vt-danger: #cf222e;
-  --vt-radius: 8px;
-  --vt-control-radius: 6px;
-  --vt-cell-x: 0.75rem;
-  --vt-cell-y: 0.625rem;
   --vt-shadow: 0 8px 24px rgb(31 35 40 / 0.12);
-  --vt-tree-indent: 1.25rem;
+}
 
+.vt-surface,
+.vt-theme {
   font-family: var(--vt-font);
   font-size: var(--vt-font-size);
   color: var(--vt-fg);
@@ -59,18 +71,20 @@
   border-end-end-radius: calc(var(--vt-radius) - 1px);
 }
 
-:is(.vt-surface, .vt-theme)[data-density="compact"] {
+:where(.vt-surface, .vt-theme):where([data-density="compact"]) {
   --vt-cell-x: 0.5rem;
   --vt-cell-y: 0.3rem;
 }
 
-:is(.vt-surface, .vt-theme)[data-density="spacious"] {
+:where(.vt-surface, .vt-theme):where([data-density="spacious"]) {
   --vt-cell-x: 1rem;
   --vt-cell-y: 0.9rem;
 }
 
 @media (prefers-color-scheme: dark) {
-  :is(.vt-surface, .vt-theme):not([data-vt-theme="light"]) {
+  :where(.vt-surface, .vt-theme):where(:not(:is(.vt-surface, .vt-theme) *)):where(
+    :not([data-vt-theme="light"], [data-vt-theme="inherit"])
+  ) {
     --vt-bg: #0d1117;
     --vt-fg: #e6edf3;
     --vt-muted: #8d96a0;
@@ -88,7 +102,7 @@
   }
 }
 
-:is(.vt-surface, .vt-theme)[data-vt-theme="dark"] {
+:where(.vt-surface, .vt-theme):where([data-vt-theme="dark"]) {
   --vt-bg: #0d1117;
   --vt-fg: #e6edf3;
   --vt-muted: #8d96a0;
@@ -103,6 +117,11 @@
   --vt-focus: #7b93ff;
   --vt-danger: #ff7b72;
   --vt-shadow: 0 8px 24px rgb(0 0 0 / 0.5);
+}
+
+/* Right to left, a collapsed row's chevron points into the row, at the reader's next column. */
+:where([dir="rtl"]) .vt-expand-toggle[aria-expanded="false"] .vt-icon {
+  transform: scaleX(-1);
 }
 
 .vt-scroll {
@@ -279,6 +298,13 @@
   animation: vt-progress 1.1s ease-in-out infinite;
 }
 
+/* Right to left, the bar starts at the right edge and runs toward the left. */
+:where([dir="rtl"]) .vt-surface[data-loading] .vt-progress::after {
+  inset-inline-start: 0;
+  inset-inline-end: auto;
+  --vt-progress-sign: -1;
+}
+
 .vt-surface[data-loading] .vt-body {
   opacity: 0.55;
   transition: opacity 0.15s;
@@ -286,10 +312,10 @@
 
 @keyframes vt-progress {
   from {
-    transform: translateX(-100%);
+    transform: translateX(calc(-100% * var(--vt-progress-sign, 1)));
   }
   to {
-    transform: translateX(250%);
+    transform: translateX(calc(250% * var(--vt-progress-sign, 1)));
   }
 }
 

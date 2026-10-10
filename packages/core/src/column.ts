@@ -1,5 +1,6 @@
 import { humanize } from "./humanize";
 import { getPath, isSafePath, setPath, type DeepKeys, type PathValue } from "./path";
+import { createCollator, foldText, type TextNormalizer } from "./text";
 import type { EditorSpec, Validator } from "./validation";
 
 export type ColumnAlign = "start" | "center" | "end";
@@ -125,14 +126,27 @@ export type ParseResult =
   | { readonly ok: true; readonly value: unknown }
   | { readonly ok: false; readonly message: string };
 
-const collator = new Intl.Collator(undefined, { numeric: true, sensitivity: "base" });
+const defaultCollator = createCollator();
 
+/** Empty for ordering and filtering: no value, empty text, or a number that is not one. */
 function isEmpty(value: unknown): boolean {
-  return value === null || value === undefined || value === "";
+  return (
+    value === null ||
+    value === undefined ||
+    value === "" ||
+    (typeof value === "number" && Number.isNaN(value))
+  );
 }
 
-/** Order any two values: empty last, then numbers, dates, booleans, and text naturally. */
-export function compareValues(left: unknown, right: unknown): number {
+/**
+ * Order any two values: empty last (`NaN` counts as empty), then numbers, dates, booleans, and
+ * text naturally with `collator`, the table's locale.
+ */
+export function compareValues(
+  left: unknown,
+  right: unknown,
+  collator: Intl.Collator = defaultCollator,
+): number {
   const leftEmpty = isEmpty(left);
   const rightEmpty = isEmpty(right);
   if (leftEmpty || rightEmpty) {
@@ -152,6 +166,14 @@ export function compareValues(left: unknown, right: unknown): number {
   }
   return collator.compare(formatValue(left), formatValue(right));
 }
+
+/** How a table reads text: the collator it orders with and the folding search compares. */
+export interface TextContext {
+  readonly collator: Intl.Collator;
+  readonly normalize: TextNormalizer;
+}
+
+const defaultTextContext: TextContext = { collator: defaultCollator, normalize: foldText };
 
 /**
  * Text for a value: empty for `null` and `undefined`, ISO for dates, comma-joined for arrays, and
@@ -236,10 +258,16 @@ function isRangeFilter(value: unknown): value is RangeFilter {
  * - an array keeps rows whose value is one of its items;
  * - `{ min, max }` keeps values inside the inclusive range; a bound given as text is read as a
  *   number or a date when the value is one, and an empty bound leaves that end open;
- * - text keeps rows whose shown text contains it, ignoring case;
+ * - text keeps rows whose shown text contains it, read through `normalize` (by default ignoring
+ *   case, accents and Arabic letter shapes);
  * - anything else keeps rows whose value is identical.
  */
-export function matchesFilter(value: unknown, filterValue: unknown, display: string): boolean {
+export function matchesFilter(
+  value: unknown,
+  filterValue: unknown,
+  display: string,
+  normalize: TextNormalizer = foldText,
+): boolean {
   if (isEmpty(filterValue) || (Array.isArray(filterValue) && filterValue.length === 0)) {
     return true;
   }
@@ -259,7 +287,7 @@ export function matchesFilter(value: unknown, filterValue: unknown, display: str
     return (min === undefined || comparable >= min) && (max === undefined || comparable <= max);
   }
   if (typeof filterValue === "string") {
-    return display.toLowerCase().includes(filterValue.toLowerCase());
+    return normalize(display).includes(normalize(filterValue));
   }
   return Object.is(value, filterValue);
 }
@@ -312,8 +340,11 @@ export function parseAs(input: string, type: ColumnType): ParseResult {
     : { ok: true, value };
 }
 
-/** Resolve a definition against its defaults. */
-export function resolveColumn<TRow>(definition: ColumnDef<TRow>): TableColumn<TRow> {
+/** Resolve a definition against its defaults, ordering and filtering text as `text` says. */
+export function resolveColumn<TRow>(
+  definition: ColumnDef<TRow>,
+  text: TextContext = defaultTextContext,
+): TableColumn<TRow> {
   // Both branches of the union share these members; the value type is erased at runtime.
   const def = definition as ComputedColumnDef<TRow> | PathColumnDef<TRow, string>;
   const { accessor } = def;
@@ -322,7 +353,8 @@ export function resolveColumn<TRow>(definition: ColumnDef<TRow>): TableColumn<TR
     ? (accessor ?? ((row) => getPath(row, def.id)))
     : () => undefined;
   const format = def.format ?? ((value: unknown) => formatValue(value));
-  const compare = def.compare ?? compareValues;
+  const compare =
+    def.compare ?? ((left: unknown, right: unknown) => compareValues(left, right, text.collator));
   const customFilter = def.filter;
   const customParse = def.parse;
   const editable = def.editable ?? false;
@@ -346,7 +378,7 @@ export function resolveColumn<TRow>(definition: ColumnDef<TRow>): TableColumn<TR
     matches(value: unknown, filterValue: unknown, row: TRow): boolean {
       return customFilter
         ? customFilter(value as never, filterValue, row)
-        : matchesFilter(value, filterValue, format(value as never, row));
+        : matchesFilter(value, filterValue, format(value as never, row), text.normalize);
     },
     isEditable(row: TRow): boolean {
       if (!canWrite) {

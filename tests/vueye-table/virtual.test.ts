@@ -71,7 +71,7 @@ describe("full component virtualization", () => {
     size(wrapper.get(".vt-scroll").element);
     await nextTick();
     expect(wrapper.find(".vt-pagination").exists()).toBe(true);
-    expect(wrapper.get(".vt-status").text()).toContain("1–50 of 1000");
+    expect(wrapper.get(".vt-status").text()).toContain(`1–50 of ${(1000).toLocaleString()} rows`);
     wrapper.unmount();
   });
   it("forwards grid windowing and keeps offscreen keyboard editing and data emissions", async () => {

@@ -1,4 +1,11 @@
-import type { ColumnDef, RowKey, TableRow, TableState, EditResult } from "@vueye-table/core";
+import type {
+  ColumnDef,
+  RowKey,
+  SortInfo,
+  TableRow,
+  TableState,
+  EditResult,
+} from "@vueye-table/core";
 import {
   DataTableBody,
   DataTableCaption,
@@ -29,7 +36,13 @@ import {
   VtTreeCell,
   VtRowActions,
 } from "@vueye-table/styled";
-import { provideDataTable, useDataTable, type DataTableBinding } from "@vueye-table/vue";
+import {
+  provideDataTable,
+  provideTableLocale,
+  useDataTable,
+  useTableLocale,
+  type DataTableBinding,
+} from "@vueye-table/vue";
 import {
   computed,
   defineComponent,
@@ -45,7 +58,7 @@ import {
   controlledState,
   createColumnResolver,
   emitStateChanges,
-  stateEmits,
+  stateEmitValidators,
   expansionOptions,
   emitExpansionChanges,
   CellContent,
@@ -62,8 +75,26 @@ export interface CellSlotProps {
   readonly column: { readonly id: string; readonly header: string };
 }
 
+/**
+ * What a `<VueyeTable>` exposes on its template ref: the table binding, with every snapshot field
+ * and operation. `useTemplateRef<VueyeTableExposed>("table")` reads it typed.
+ */
+export interface VueyeTableExposed {
+  readonly table: DataTableBinding<unknown>;
+}
+
 /** Slot props of `status`, the "1–10 of 57 rows" line. */
 export type StatusSlotProps = TableStatusSlotProps;
+
+/**
+ * Slot props of `header.<column id>`. The slot fills the header cell; on a sortable column it sits
+ * inside the sort button, so the header still sorts on click and shows its indicator.
+ */
+export interface HeaderSlotProps {
+  readonly column: { readonly id: string; readonly header: string };
+  readonly sort: SortInfo | undefined;
+  readonly toggleSort: (multi?: boolean) => void;
+}
 
 /**
  * A complete data table: search, column visibility, sorting, selection, pagination, a live
@@ -85,28 +116,21 @@ export const VueyeTable = defineComponent({
     selected: { type: Array as PropType<readonly RowKey[]>, default: undefined },
     /** The data is one page from a server; `rowCount` is the total. */
     /** Shown instead of the empty state while `loading` and there are no rows yet. */
-    loadingText: { type: String, default: "Loading…" },
+    loadingText: { type: String as PropType<string | undefined>, default: undefined },
   },
   emits: {
     ...editingEmits,
-    ...Object.fromEntries(stateEmits.map((name) => [name, null])),
+    ...stateEmitValidators,
     "state-change": (_state: TableState) => true,
     "row-click": (_item: unknown, _row: TableRow<unknown>) => true,
     expand: (_item: unknown, _row: TableRow<unknown>) => true,
     collapse: (_item: unknown, _row: TableRow<unknown>) => true,
-  } as {
-    [K in (typeof stateEmits)[number]]: null;
-  } & typeof editingEmits & {
-      "state-change": (state: TableState) => boolean;
-      "row-click": (item: unknown, row: TableRow<unknown>) => boolean;
-      expand: (item: unknown, row: TableRow<unknown>) => boolean;
-      collapse: (item: unknown, row: TableRow<unknown>) => boolean;
-    },
+  },
   slots: Object as SlotsType<
     {
       [key: `cell.${string}`]: CellSlotProps;
       [key: `editor.${string}`]: CellEditorSlotProps;
-      [key: `header.${string}`]: { column: { id: string; header: string } };
+      [key: `header.${string}`]: HeaderSlotProps;
     } & {
       toolbar: { table: unknown };
       empty: Record<string, never>;
@@ -117,6 +141,9 @@ export const VueyeTable = defineComponent({
     }
   >,
   setup(props, { emit, slots, expose, attrs }) {
+    const inherited = useTableLocale();
+    const locale = provideTableLocale(() => ({ locale: props.locale, messages: props.messages }));
+    const loadingText = (): string => props.loadingText ?? locale().messages.loading;
     const selectionMode = computed(() =>
       props.selectable === false ? "none" : props.selectable === "single" ? "single" : "multiple",
     );
@@ -135,6 +162,8 @@ export const VueyeTable = defineComponent({
       endThreshold: props.endThreshold,
       columns: () => resolveColumns(props.columns, props.data) as readonly ColumnDef<unknown>[],
       rowKey: props.rowKey as never,
+      locale: props.locale ?? inherited().locale,
+      normalizeText: props.normalizeText,
       manual: props.manual,
       paginate: props.paginate ?? !(props.virtual || props.source || props.loadMore),
       rowCount: () => props.rowCount,
@@ -159,7 +188,7 @@ export const VueyeTable = defineComponent({
     });
     binding = table;
     provideDataTable(table);
-    expose({ table });
+    expose({ table } satisfies VueyeTableExposed);
     const busy = (): boolean =>
       props.loading || table.loadState === "loading" || table.loadState === "streaming";
 
@@ -212,13 +241,13 @@ export const VueyeTable = defineComponent({
       if (table.rows.length === 0) {
         // While the first page is loading there is nothing to match yet, so say that instead.
         const content = busy()
-          ? (slots.loading?.({}) ?? h(VtEmpty, { text: props.loadingText }))
+          ? (slots.loading?.({}) ?? h(VtEmpty, { text: loadingText() }))
           : (slots.empty?.({}) ??
             h(VtEmpty, {
               text:
                 table.loadingMode && table.loadState === "error"
-                  ? "Could not load rows."
-                  : "No matching rows",
+                  ? locale().messages.couldNotLoadRows
+                  : locale().messages.noMatchingRows,
             }));
         return h("tr", { "data-empty": "" }, [h("td", { colspan: Math.max(1, width()) }, content)]);
       }
@@ -271,25 +300,23 @@ export const VueyeTable = defineComponent({
       );
 
     const headerSlots = () => {
-      const forwarded: Record<string, unknown> = {};
-      for (const column of table.columns) {
-        const slot = slots[`header.${column.id}`];
-        if (slot) {
-          forwarded[`header.${column.id}`] = () => slot({ column });
-        }
-      }
       return {
-        ...forwarded,
+        header: (header: HeaderSlotProps) =>
+          slots[`header.${header.column.id}`]?.(header) ?? header.column.header,
         before: () => [
           hasActions()
-            ? h("th", { class: "vt-row-controls", scope: "col", "aria-colindex": 1 }, "Row actions")
+            ? h(
+                "th",
+                { class: "vt-row-controls", scope: "col", "aria-colindex": 1 },
+                locale().messages.rowActions,
+              )
             : null,
           hasDetails()
             ? h("th", {
                 class: "vt-expansion-cell",
                 scope: "col",
                 "aria-colindex": Number(hasActions()) + 1,
-                "aria-label": "Details",
+                "aria-label": locale().messages.details,
               })
             : null,
           selectable()
@@ -385,12 +412,16 @@ export const VueyeTable = defineComponent({
           h("div", { class: "vt-root" }, [
             props.searchable || props.columnToggle || slots.toolbar || props.addRow
               ? h(VtToolbar, () => [
-                  props.searchable ? h(VtSearch, { placeholder: props.searchPlaceholder }) : null,
+                  props.searchable
+                    ? h(VtSearch, {
+                        placeholder: props.searchPlaceholder ?? locale().messages.searchPlaceholder,
+                      })
+                    : null,
                   props.addRow
                     ? h(
                         "button",
                         { type: "button", class: "vt-button", onClick: () => table.insertRows() },
-                        "Add row",
+                        locale().messages.addRow,
                       )
                     : null,
                   h("div", { class: "vt-toolbar-spacer" }),
@@ -412,7 +443,7 @@ export const VueyeTable = defineComponent({
                     slots.status
                       ? { default: (status: StatusSlotProps) => slots.status?.(status) }
                       : props.loading && table.rows.length === 0
-                        ? { default: () => props.loadingText }
+                        ? { default: () => loadingText() }
                         : undefined,
                   ),
                   ...(table.loadingMode ? [h(VtLoadMore)] : []),

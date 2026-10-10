@@ -1,13 +1,26 @@
-import { injectDataTable, type AnyDataTableBinding } from "@vueye-table/vue";
-import { defineComponent, h, type VNode } from "vue";
+import {
+  injectDataTable,
+  useTableLocale,
+  type AnyDataTableBinding,
+  type TableLocale,
+} from "@vueye-table/vue";
+import { defineComponent, h, type PropType, type VNode } from "vue";
 
 /** Keep this visual sentinel out of the live region and logical data-row count. */
-export function loadSentinel(table: AnyDataTableBinding, colspan: number): VNode | undefined {
+export function loadSentinel(
+  table: AnyDataTableBinding,
+  colspan: number,
+  locale?: TableLocale,
+): VNode | undefined {
   return table.loadingMode === "cursor" &&
     table.loadedRowCount > 0 &&
     (table.loadState === "loading" || table.loadState === "streaming")
     ? h("tr", { key: "vt-load-sentinel", "data-load-sentinel": "", "aria-hidden": "true" }, [
-        h("td", { colspan: Math.max(1, colspan), class: "vt-load-sentinel" }, "Loading more rows…"),
+        h(
+          "td",
+          { colspan: Math.max(1, colspan), class: "vt-load-sentinel" },
+          locale?.messages.loadingMoreRows ?? "Loading more rows…",
+        ),
       ])
     : undefined;
 }
@@ -16,15 +29,20 @@ export function loadSentinel(table: AnyDataTableBinding, colspan: number): VNode
 export const DataTableLoadMore = defineComponent({
   name: "DataTableLoadMore",
   props: {
-    label: { type: String, default: "Load more rows" },
-    retryLabel: { type: String, default: "Retry loading" },
-    loadingLabel: { type: String, default: "Loading rows…" },
+    label: { type: String as PropType<string | undefined>, default: undefined },
+    retryLabel: { type: String as PropType<string | undefined>, default: undefined },
+    loadingLabel: { type: String as PropType<string | undefined>, default: undefined },
   },
   setup(props) {
     const table = injectDataTable("<DataTableLoadMore>");
+    const locale = useTableLocale();
     return () =>
       table.loadState === "error"
-        ? h("button", { type: "button", onClick: () => table.retry() }, props.retryLabel)
+        ? h(
+            "button",
+            { type: "button", onClick: () => table.retry() },
+            props.retryLabel ?? locale().messages.retryLoading,
+          )
         : table.loadingMode === "cursor" && table.loadState !== "done"
           ? h(
               "button",
@@ -36,8 +54,8 @@ export const DataTableLoadMore = defineComponent({
                 },
               },
               table.loadState === "loading" || table.loadState === "streaming"
-                ? props.loadingLabel
-                : props.label,
+                ? (props.loadingLabel ?? locale().messages.loadingRows)
+                : (props.label ?? locale().messages.loadMoreRows),
             )
           : null;
   },

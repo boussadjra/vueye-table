@@ -1,5 +1,10 @@
 import { getRowItemKey, gridCommand, type RowKey, type TableRow } from "@vueye-table/core";
-import { injectDataGrid, injectDataTable, type AnyDataTableBinding } from "@vueye-table/vue";
+import {
+  injectDataGrid,
+  injectDataTable,
+  useTableLocale,
+  type AnyDataTableBinding,
+} from "@vueye-table/vue";
 import {
   defineComponent,
   computed,
@@ -17,7 +22,7 @@ import {
   type VNodeChild,
 } from "vue";
 
-import { asProp, rowProp } from "./shared";
+import { asProp, directionOf, rowProp } from "./shared";
 import { injectVirtual, type ComponentVirtualBinding } from "./virtual";
 
 export const hierarchyProps = {
@@ -135,7 +140,17 @@ export function treeKeydown(
   const index = table.rows.findIndex((row) => getRowItemKey(row.key) === key);
   const row = table.rows[index];
   if (!row) return;
-  const command = gridCommand(event, { canExpand: row.canExpand, expanded: row.isExpanded });
+  const command = gridCommand(
+    {
+      key: event.key,
+      shiftKey: event.shiftKey,
+      ctrlKey: event.ctrlKey,
+      metaKey: event.metaKey,
+      altKey: event.altKey,
+      direction: directionOf(target),
+    },
+    { canExpand: row.canExpand, expanded: row.isExpanded },
+  );
   let next = row;
   if (command?.type === "tree") {
     if (command.action === "expand" || command.action === "collapse")
@@ -164,8 +179,8 @@ export function treeKeydown(
 export const expandToggleProps = {
   row: rowProp,
   controls: { type: String as PropType<string | undefined>, default: undefined },
-  expandLabel: { type: String, default: "Expand row" },
-  collapseLabel: { type: String, default: "Collapse row" },
+  expandLabel: { type: String as PropType<string | undefined>, default: undefined },
+  collapseLabel: { type: String as PropType<string | undefined>, default: undefined },
 } as const;
 export const treeCellProps = { row: rowProp, as: asProp("div") } as const;
 export const DataTableExpandToggle = defineComponent({
@@ -178,6 +193,11 @@ export const DataTableExpandToggle = defineComponent({
     const table = injectDataTable("<DataTableExpandToggle>");
     const context = injectHierarchy();
     const grid = injectDataGrid();
+    const locale = useTableLocale();
+    const label = (): string =>
+      props.row.isExpanded
+        ? (props.collapseLabel ?? locale().messages.collapseRow)
+        : (props.expandLabel ?? locale().messages.expandRow);
     return () =>
       props.row.canExpand
         ? h(
@@ -198,7 +218,7 @@ export const DataTableExpandToggle = defineComponent({
                         .filter(Boolean)
                         .join(" ") || undefined
                     : undefined),
-              "aria-label": props.row.isExpanded ? props.collapseLabel : props.expandLabel,
+              "aria-label": label(),
               onMousedown: (event: Event) => event.stopPropagation(),
               onDblclick: (event: Event) => event.stopPropagation(),
               onClick: (event: Event) => {
@@ -218,8 +238,7 @@ export const DataTableExpandToggle = defineComponent({
                   void nextTick(() => (event.target as HTMLElement).closest("table")?.focus());
               },
             },
-            slots.default?.({ row: props.row, expanded: props.row.isExpanded }) ??
-              (props.row.isExpanded ? props.collapseLabel : props.expandLabel),
+            slots.default?.({ row: props.row, expanded: props.row.isExpanded }) ?? label(),
           )
         : null;
   },
@@ -236,6 +255,7 @@ export const DataTableTreeCell = defineComponent({
     const table = injectDataTable("<DataTableTreeCell>");
     const context = injectHierarchy();
     const grid = injectDataGrid();
+    const locale = useTableLocale();
     return () =>
       h(
         props.as,
@@ -254,11 +274,11 @@ export const DataTableTreeCell = defineComponent({
           ),
           h("span", { class: "vt-tree-label" }, [slots.default?.()]),
           props.row.childStatus === "loading"
-            ? h("span", { class: "vt-tree-loading" }, "Loading children…")
+            ? h("span", { class: "vt-tree-loading" }, locale().messages.loadingChildren)
             : null,
           props.row.childStatus === "error"
             ? h("span", { class: "vt-tree-error" }, [
-                "Could not load children. ",
+                `${locale().messages.childrenError} `,
                 h(
                   "button",
                   {
@@ -289,7 +309,7 @@ export const DataTableTreeCell = defineComponent({
                       });
                     },
                   },
-                  "Retry children",
+                  locale().messages.retryChildren,
                 ),
               ])
             : null,

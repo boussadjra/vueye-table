@@ -20,10 +20,10 @@ line, loading and empty states, and theming.
 | `manual`              | `boolean`                                  | `true` with `load-more`, otherwise `false` |
 | `row-count`           | `number`, the total for `manual`           |                                            |
 | `loading`             | `boolean`                                  | `false`                                    |
-| `loading-text`        | `string`                                   | `"Loading…"`                               |
+| `loading-text`        | `string`                                   | the messages' `loading`                    |
 | `caption`             | `string`                                   |                                            |
 | `searchable`          | `boolean`                                  | `true`                                     |
-| `search-placeholder`  | `string`                                   | `"Search…"`                                |
+| `search-placeholder`  | `string`                                   | the messages' `searchPlaceholder`          |
 | `column-toggle`       | `boolean`                                  | `true`                                     |
 | `pagination`          | `boolean`                                  | `true`                                     |
 | `page-size-options`   | `number[]`                                 | `[5, 10, 20, 50]`                          |
@@ -32,9 +32,13 @@ line, loading and empty states, and theming.
 | `hover`               | `boolean`                                  | `true`                                     |
 | `sticky-header`       | `boolean`                                  | `false`                                    |
 | `max-height`          | CSS height                                 |                                            |
-| `theme`               | `"light" \| "dark"`                        | follows the system                         |
+| `theme`               | `"light" \| "dark" \| "inherit"`           | follows the system                         |
+| `locale`              | BCP 47 locale, such as `"fr"` or `"ar-DZ"` | the plugin's, then the runtime's           |
+| `messages`            | `Partial<TableMessages>`                   | the plugin's, then English                 |
+| `normalize-text`      | `(text: string) => string`                 | `foldText`                                 |
 
-`selectable`, `select-scope`, `manual`, and `row-key` are read when the table is created.
+`selectable`, `select-scope`, `manual`, `row-key`, `locale` (for ordering) and `normalize-text` are
+read when the table is created. See [Language, locale and search](/guide/language).
 
 Both full components also accept `row-can-expand: (item) => boolean`, `expand-mode: 'single' | 'multiple'`
 (default `'multiple'`), `tree-column: string`, and `keep-alive-detail: boolean` (default false).
@@ -65,7 +69,7 @@ Choose `source` or `load-more`; both full components accept them and show loaded
 | Slot          | Props                                                                                                                    |
 | ------------- | ------------------------------------------------------------------------------------------------------------------------ |
 | `cell.<id>`   | `{ item, row, value, display, column }`                                                                                  |
-| `header.<id>` | `{ column }`                                                                                                             |
+| `header.<id>` | `{ column, sort, toggleSort }`, inside the sort button of a sortable column, so the header still sorts on click          |
 | `toolbar`     | `{ table }`, placed between the search and the column menu                                                               |
 | `footer`      | `{ table }`, placed after the status line                                                                                |
 | `empty`       | Shown when no row passes the search and filters.                                                                         |

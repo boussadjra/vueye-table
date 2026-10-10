@@ -146,6 +146,11 @@ export interface GridKey {
   readonly ctrlKey?: boolean | undefined;
   readonly metaKey?: boolean | undefined;
   readonly altKey?: boolean | undefined;
+  /**
+   * The direction the grid is laid out in. Right to left, the arrow keys follow what the reader
+   * sees: ArrowLeft moves to the next column and expands a tree row.
+   */
+  readonly direction?: "ltr" | "rtl" | undefined;
 }
 
 /** What a key press asks a grid to do while no cell is being edited. */
@@ -169,6 +174,12 @@ const ARROWS: Readonly<Record<string, GridDirection>> = {
   ArrowRight: "right",
 };
 
+const MIRRORED_ARROWS: Readonly<Record<string, GridDirection>> = {
+  ...ARROWS,
+  ArrowLeft: "right",
+  ArrowRight: "left",
+};
+
 /**
  * Map a key press to a grid command, spreadsheet style: arrows move (Shift extends, Ctrl or Cmd
  * jumps to the edge), Tab moves across, Home and End reach the row's ends, Enter or F2 edit,
@@ -184,14 +195,17 @@ export interface GridTreeContext {
 export function gridCommand(event: GridKey, tree?: GridTreeContext): GridCommand | undefined {
   const mod = event.ctrlKey === true || event.metaKey === true;
   const shift = event.shiftKey === true;
+  const mirrored = event.direction === "rtl";
+  const forward = mirrored ? "ArrowLeft" : "ArrowRight";
+  const backward = mirrored ? "ArrowRight" : "ArrowLeft";
   if (tree && !mod && !event.altKey) {
     if (event.key === "*") return { type: "tree", action: "siblings" };
-    if (!shift && event.key === "ArrowRight" && tree.canExpand)
+    if (!shift && event.key === forward && tree.canExpand)
       return { type: "tree", action: tree.expanded ? "child" : "expand" };
-    if (!shift && event.key === "ArrowLeft")
+    if (!shift && event.key === backward)
       return { type: "tree", action: tree.canExpand && tree.expanded ? "collapse" : "parent" };
   }
-  const direction = ARROWS[event.key];
+  const direction = mirrored ? MIRRORED_ARROWS[event.key] : ARROWS[event.key];
   if (direction) {
     return { type: "move", direction, options: { extend: shift, toEdge: mod } };
   }

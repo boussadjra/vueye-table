@@ -16,7 +16,19 @@ export {
   type ParseResult,
   type RangeFilter,
   type TableColumn,
+  type TextContext,
 } from "./column";
+export {
+  defaultTableMessages,
+  formatCount,
+  resolveTableMessages,
+  type Count,
+  type LoadedParts,
+  type RangeParts,
+  type SortStep,
+  type TableMessages,
+} from "./messages";
+export { createCollator, foldText, type TextNormalizer } from "./text";
 export { parseDelimited, toDelimited } from "./delimited";
 export {
   clampPosition,

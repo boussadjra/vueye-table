@@ -5,7 +5,7 @@ import type {
   LoadState,
   TableIssue,
 } from "@vueye-table/core";
-import { injectDataTable } from "@vueye-table/vue";
+import { injectDataTable, useTableLocale } from "@vueye-table/vue";
 import { defineComponent, h, onScopeDispose, type PropType, type SlotsType, type VNode } from "vue";
 
 import { asProp, flag, rowProp } from "./shared";
@@ -37,9 +37,10 @@ export const DataTableSelectAll = defineComponent({
   slots: Object as SlotsType<{
     default?: (props: { state: SelectionCoverage; toggle: () => void }) => VNode[];
   }>,
-  props: { label: { type: String, default: "Select all rows" } },
+  props: { label: { type: String as PropType<string | undefined>, default: undefined } },
   setup(props, { slots }) {
     const table = injectDataTable("<DataTableSelectAll>");
+    const locale = useTableLocale();
     return () => {
       const state = table.allSelection;
       const toggle = (): void => table.toggleAll();
@@ -48,7 +49,7 @@ export const DataTableSelectAll = defineComponent({
         checkbox({
           checked: state === "all",
           indeterminate: state === "some",
-          label: props.label,
+          label: props.label ?? locale().messages.selectAllRows,
           disabled: table.selectionMode !== "multiple" || table.rows.length === 0,
           onChange: toggle,
         })
@@ -63,9 +64,18 @@ export const DataTableSelectRow = defineComponent({
   slots: Object as SlotsType<{
     default?: (props: { selected: boolean; indeterminate: boolean; toggle: () => void }) => VNode[];
   }>,
-  props: { row: rowProp, label: { type: String, default: "Select row" } },
+  props: {
+    row: rowProp,
+    /** Defaults to the locale's "Select row 3", the row's place in the table as shown. */
+    label: { type: String as PropType<string | undefined>, default: undefined },
+  },
   setup(props, { slots }) {
     const table = injectDataTable("<DataTableSelectRow>");
+    const locale = useTableLocale();
+    const position = (): number => {
+      const index = table.rows.indexOf(props.row);
+      return index < 0 ? props.row.index + 1 : Math.max(1, table.pageStart) + index;
+    };
     return () => {
       const selected = table.tree ? props.row.selection === "all" : table.isSelected(props.row.key);
       const indeterminate = table.tree && props.row.selection === "some";
@@ -75,7 +85,8 @@ export const DataTableSelectRow = defineComponent({
         checkbox({
           checked: selected,
           indeterminate,
-          label: props.label,
+          label:
+            props.label ?? locale().messages.selectRow({ position: locale().count(position()) }),
           disabled: table.selectionMode === "none",
           onChange: toggle,
         })
@@ -92,11 +103,12 @@ export const DataTableSearch = defineComponent({
   name: "DataTableSearch",
   props: {
     debounce: { type: Number, default: 0 },
-    label: { type: String, default: "Search" },
+    label: { type: String as PropType<string | undefined>, default: undefined },
     placeholder: { type: String as PropType<string | undefined>, default: undefined },
   },
   setup(props) {
     const table = injectDataTable("<DataTableSearch>");
+    const locale = useTableLocale();
     let timer: ReturnType<typeof setTimeout> | undefined;
     onScopeDispose(() => clearTimeout(timer));
     return () =>
@@ -104,7 +116,7 @@ export const DataTableSearch = defineComponent({
         type: "search",
         value: table.state.search,
         placeholder: props.placeholder,
-        "aria-label": props.label,
+        "aria-label": props.label ?? locale().messages.search,
         onInput: (event: Event) => {
           const { value } = event.target as HTMLInputElement;
           clearTimeout(timer);
@@ -138,11 +150,13 @@ export const DataTablePagination = defineComponent({
   }>,
   props: {
     as: asProp("nav"),
-    label: { type: String, default: "Pagination" },
+    label: { type: String as PropType<string | undefined>, default: undefined },
   },
   setup(props, { slots }) {
     const table = injectDataTable("<DataTablePagination>");
+    const locale = useTableLocale();
     return () => {
+      const { messages, count } = locale();
       const slotProps = {
         page: table.page,
         pageCount: table.pageCount,
@@ -174,21 +188,21 @@ export const DataTablePagination = defineComponent({
         );
       return h(
         props.as,
-        { "aria-label": props.label },
+        { "aria-label": props.label ?? messages.pagination },
         slots.default?.(slotProps) ?? [
-          button("Previous page", "‹", !table.canPreviousPage, table.previousPage),
+          button(messages.previousPage, "‹", !table.canPreviousPage, table.previousPage),
           ...table.pageItems.map((item) =>
             item.type === "gap"
               ? h("span", { key: item.key, "aria-hidden": "true", "data-gap": "" }, "…")
               : button(
-                  `Page ${item.page}`,
-                  String(item.page),
+                  messages.page(count(item.page)),
+                  count(item.page).text,
                   false,
                   () => table.goToPage(item.page),
                   item.current,
                 ),
           ),
-          button("Next page", "›", !table.canNextPage, table.nextPage),
+          button(messages.nextPage, "›", !table.canNextPage, table.nextPage),
         ],
       );
     };
@@ -200,10 +214,11 @@ export const DataTablePageSize = defineComponent({
   name: "DataTablePageSize",
   props: {
     options: { type: Array as PropType<readonly number[]>, default: () => [5, 10, 20, 50] },
-    label: { type: String, default: "Rows per page" },
+    label: { type: String as PropType<string | undefined>, default: undefined },
   },
   setup(props) {
     const table = injectDataTable("<DataTablePageSize>");
+    const locale = useTableLocale();
     return () => {
       const sizes = props.options.includes(table.pageSize)
         ? props.options
@@ -212,12 +227,16 @@ export const DataTablePageSize = defineComponent({
         "select",
         {
           value: table.pageSize,
-          "aria-label": props.label,
+          "aria-label": props.label ?? locale().messages.rowsPerPage,
           onChange: (event: Event) =>
             table.setPageSize(Number((event.target as HTMLSelectElement).value)),
         },
         sizes.map((size) =>
-          h("option", { key: size, value: size, selected: size === table.pageSize }, String(size)),
+          h(
+            "option",
+            { key: size, value: size, selected: size === table.pageSize },
+            locale().count(size).text,
+          ),
         ),
       );
     };
@@ -233,9 +252,13 @@ export const DataTableColumnVisibility = defineComponent({
       toggle: (columnId: string, visible?: boolean) => void;
     }) => VNode[];
   }>,
-  props: { as: asProp("fieldset"), legend: { type: String, default: "Columns" } },
+  props: {
+    as: asProp("fieldset"),
+    legend: { type: String as PropType<string | undefined>, default: undefined },
+  },
   setup(props, { slots }) {
     const table = injectDataTable("<DataTableColumnVisibility>");
+    const locale = useTableLocale();
     return () => {
       const hidden = new Set(table.state.hiddenColumns);
       const columns = table.allColumns.map((column) => ({
@@ -245,7 +268,7 @@ export const DataTableColumnVisibility = defineComponent({
       return h(
         props.as,
         slots.default?.({ columns, toggle: table.toggleColumn }) ?? [
-          props.as === "fieldset" ? h("legend", props.legend) : null,
+          props.as === "fieldset" ? h("legend", props.legend ?? locale().messages.columns) : null,
           ...columns.map(({ column, visible }) =>
             h("label", { key: column.id, "data-column": column.id }, [
               h("input", {
@@ -290,7 +313,9 @@ export const DataTableStatus = defineComponent({
   props: { as: asProp("p") },
   setup(props, { slots }) {
     const table = injectDataTable("<DataTableStatus>");
+    const locale = useTableLocale();
     return () => {
+      const { messages, count } = locale();
       const slotProps = {
         start: table.pageStart,
         end: table.pageEnd,
@@ -310,28 +335,27 @@ export const DataTableStatus = defineComponent({
           ? table.processedRows.filter((row) => row.childStatus === "error").length
           : 0,
       };
-      const count = `Loaded ${table.loadedRowCount.toLocaleString()} ${table.loadedRowCount === 1 ? "row" : "rows"}`;
       const text = table.loadingMode
-        ? table.loadState === "error"
-          ? `${count}. Could not load rows. Retry loading.`
-          : table.loadState === "aborted"
-            ? `${count}. Loading stopped.`
-            : table.loadState === "loading" || table.loadState === "streaming"
-              ? `${count}…`
-              : `${count}${table.loadState === "done" ? ". All rows loaded." : "."}`
+        ? messages.loadedStatus({ loaded: count(table.loadedRowCount), state: table.loadState })
         : table.rowCount === 0
-          ? "No rows"
-          : `${table.pageStart}–${table.pageEnd} of ${table.rowCount} rows` +
-            (table.selectedCount > 0 ? `, ${table.selectedCount} selected` : "");
+          ? messages.noRows
+          : messages.rangeStatus({
+              start: count(table.pageStart),
+              end: count(table.pageEnd),
+              total: count(table.rowCount),
+              selected: count(table.selectedCount),
+            });
       return h(
         props.as,
         { role: "status", "aria-live": "polite" },
         slots.default?.(slotProps) ??
-          text +
-            (slotProps.loadingChildrenCount ? " Loading children…" : "") +
-            (slotProps.childErrorCount
-              ? " Could not load children. Retry children in the affected row."
-              : ""),
+          [
+            text,
+            slotProps.loadingChildrenCount ? messages.loadingChildren : "",
+            slotProps.childErrorCount ? messages.childrenError : "",
+          ]
+            .filter((part) => part !== "")
+            .join(" "),
       );
     };
   },

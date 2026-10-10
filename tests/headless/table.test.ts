@@ -161,7 +161,8 @@ describe("controls", () => {
     await boxes()[0]?.trigger("change");
     expect(table().selectedCount).toBe(7);
     expect(boxes()[0]?.attributes("data-state")).toBe("checked");
-    expect(boxes()[1]?.attributes("aria-label")).toBe("Select row");
+    expect(boxes()[1]?.attributes("aria-label")).toBe("Select row 1");
+    expect(boxes()[2]?.attributes("aria-label")).toBe("Select row 2");
   });
 
   it("offers custom selection slots", async () => {

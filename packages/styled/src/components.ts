@@ -34,7 +34,12 @@ import {
   DataTableRowActions,
   type CellEditorSlotProps,
 } from "@vueye-table/headless";
-import { injectDataTable, type AnyDataTableBinding, type DataTableBinding } from "@vueye-table/vue";
+import {
+  injectDataTable,
+  useTableLocale,
+  type AnyDataTableBinding,
+  type DataTableBinding,
+} from "@vueye-table/vue";
 import {
   defineComponent,
   h,
@@ -59,8 +64,11 @@ const surfaceProps = {
   hover: { type: Boolean, default: true },
   stickyHeader: { type: Boolean, default: false },
   loading: { type: Boolean, default: false },
-  /** Force a theme; by default the table follows `prefers-color-scheme`. */
-  theme: { type: String as PropType<"light" | "dark" | undefined>, default: undefined },
+  /**
+   * Force a theme; by default the table follows `prefers-color-scheme`. `"inherit"` declares no
+   * palette, so the host's `--vt-*` tokens apply.
+   */
+  theme: { type: String as PropType<"light" | "dark" | "inherit" | undefined>, default: undefined },
 } as const;
 
 function surfaceAttrs(props: {
@@ -70,7 +78,7 @@ function surfaceAttrs(props: {
   readonly hover: boolean;
   readonly stickyHeader: boolean;
   readonly loading: boolean;
-  readonly theme: "light" | "dark" | undefined;
+  readonly theme: "light" | "dark" | "inherit" | undefined;
   readonly virtual: boolean | object;
 }) {
   return {
@@ -137,11 +145,25 @@ export const VtHeader = defineComponent({
     } & {
       before?: () => VNode[];
       after?: () => VNode[];
-      header?: (props: { column: TableColumn<unknown> }) => VNodeChild;
+      /**
+       * The content of every header cell, inside the sort button of a sortable column, so a custom
+       * header keeps click-to-sort and its indicator.
+       */
+      header?: (props: {
+        column: TableColumn<unknown>;
+        sort: SortInfo | undefined;
+        toggleSort: (multi?: boolean) => void;
+      }) => VNodeChild;
     }
   >,
   setup(_props, { slots }) {
     const table = injectDataTable("<VtHeader>");
+    const content = (column: TableColumn<unknown>, sort: SortInfo | undefined): VNodeChild =>
+      slots.header?.({
+        column,
+        sort,
+        toggleSort: (multi = false) => table.toggleSort(column.id, { multi }),
+      }) ?? column.header;
     const virtual = injectVirtualRenderer();
     const headerCell = (column: TableColumn<unknown>) =>
       h(
@@ -156,13 +178,15 @@ export const VtHeader = defineComponent({
                     DataTableSortButton,
                     { column, class: "vt-sort-button" },
                     {
-                      default: () => [slots.header?.({ column }) ?? column.header],
+                      default: ({ sort }: { sort: SortInfo | undefined }) => [
+                        content(column, sort),
+                      ],
                       indicator: ({ sort }: { sort: SortInfo | undefined }) => [
                         h(VtSortIndicator, { sort }),
                       ],
                     },
                   )
-                : [slots.header?.({ column }) ?? column.header]),
+                : [content(column, undefined)]),
         },
       );
     return () =>
@@ -252,6 +276,7 @@ export const VtBody = defineComponent({
   },
   setup(props, { slots }) {
     const table = injectDataTable("<VtBody>");
+    const locale = useTableLocale();
     return () =>
       h(
         DataTableBody,
@@ -288,10 +313,10 @@ export const VtBody = defineComponent({
               h(VtEmpty, {
                 text:
                   table.loadingMode && table.loadState === "loading"
-                    ? "Loading rows…"
+                    ? locale().messages.loadingRows
                     : table.loadingMode && table.loadState === "error"
-                      ? "Could not load rows."
-                      : "No matching rows",
+                      ? locale().messages.couldNotLoadRows
+                      : locale().messages.noMatchingRows,
               })),
         },
       );
@@ -302,12 +327,13 @@ export const VtBody = defineComponent({
 export const VtEmpty = defineComponent({
   name: "VtEmpty",
   slots: Object as SlotsType<{ default?: () => VNode[] }>,
-  props: { text: { type: String, default: "No matching rows" } },
+  props: { text: { type: String as PropType<string | undefined>, default: undefined } },
   setup(props, { slots }) {
+    const locale = useTableLocale();
     return () =>
       h("div", { class: "vt-empty" }, [
         icon("empty", "vt-empty-icon"),
-        slots.default?.() ?? props.text,
+        slots.default?.() ?? props.text ?? locale().messages.noMatchingRows,
       ]);
   },
 });
@@ -326,14 +352,17 @@ export const VtPageSize = defineComponent({
   name: "VtPageSize",
   props: {
     options: { type: Array as PropType<readonly number[]>, default: () => [5, 10, 20, 50] },
-    label: { type: String, default: "Rows per page" },
+    label: { type: String as PropType<string | undefined>, default: undefined },
   },
   setup(props) {
-    return () =>
-      h("label", { class: "vt-page-size" }, [
-        h("span", props.label),
-        h(DataTablePageSize, { options: props.options, label: props.label }),
+    const locale = useTableLocale();
+    return () => {
+      const label = props.label ?? locale().messages.rowsPerPage;
+      return h("label", { class: "vt-page-size" }, [
+        h("span", label),
+        h(DataTablePageSize, { options: props.options, label }),
       ]);
+    };
   },
 });
 
@@ -343,8 +372,9 @@ export const VtPageSize = defineComponent({
  */
 export const VtColumnVisibility = defineComponent({
   name: "VtColumnVisibility",
-  props: { label: { type: String, default: "Columns" } },
+  props: { label: { type: String as PropType<string | undefined>, default: undefined } },
   setup(props) {
+    const locale = useTableLocale();
     const close = (menu: HTMLDetailsElement, refocus: boolean): void => {
       if (!menu.open) {
         return;
@@ -376,7 +406,10 @@ export const VtColumnVisibility = defineComponent({
           },
         },
         [
-          h("summary", { class: "vt-button" }, [icon("columns"), props.label]),
+          h("summary", { class: "vt-button" }, [
+            icon("columns"),
+            props.label ?? locale().messages.columns,
+          ]),
           h(DataTableColumnVisibility, { as: "div", class: "vt-menu-panel" }),
         ],
       );
@@ -534,6 +567,7 @@ export const VtGrid = defineComponent({
   },
   emits: { save: (_result: unknown) => true, cancel: (_key: unknown) => true },
   setup(props, { slots, attrs, emit }) {
+    const locale = useTableLocale();
     const details = (): boolean => !!slots.expanded && !props.table.tree;
     const cellSlots = (): Record<string, CellSlot> => {
       const found: Record<string, CellSlot> = {};
@@ -562,10 +596,10 @@ export const VtGrid = defineComponent({
                 class: "vt-row-number",
                 "aria-colindex": 1,
                 "aria-label": props.rowActions
-                  ? "Row actions"
+                  ? locale().messages.rowActions
                   : details()
-                    ? "Details"
-                    : "Row number",
+                    ? locale().messages.details
+                    : locale().messages.rowNumber,
               })
             : null,
         header: ({ column }: { column: TableColumn<unknown> }) =>

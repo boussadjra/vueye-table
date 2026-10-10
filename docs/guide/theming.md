@@ -44,19 +44,23 @@ overrides, with no build step and no JavaScript.
 Dark colors apply under `prefers-color-scheme: dark`. `theme="light"` or `theme="dark"` forces one
 on a component, which writes `data-vt-theme` on its surface.
 
-When a site has its own switch, usually a `dark` class on `<html>`, key the colors to that class
-instead of the operating system. The selectors below out-rank the theme's own rules, so a light
-page stays light on a dark system:
+The theme's own defaults sit at zero specificity, on the outermost themed element only: any rule
+of yours that sets a token wins, and toolbars, menus and footers inside a table inherit the table's
+tokens rather than declaring their own.
+
+When a site has its own switch, usually a `dark` class on `<html>`, give the table
+`theme="inherit"`: it then declares no colors at all, ignores the operating system, and takes the
+tokens the page declares, in the page's own light and dark themes:
 
 ```css
-html:not(.dark) :is(.vt-surface, .vt-theme) {
+:root {
   --vt-bg: #ffffff;
   --vt-fg: #14121c;
   --vt-border: #e7e3ef;
   --vt-accent: #8a24c9;
 }
 
-html.dark :is(.vt-surface, .vt-theme) {
+:root.dark {
   --vt-bg: #0f0e18;
   --vt-fg: #edecf6;
   --vt-border: #232132;
@@ -64,9 +68,19 @@ html.dark :is(.vt-surface, .vt-theme) {
 }
 ```
 
-This site does exactly that. Choosing the colors in CSS rather than in a prop also keeps
-server-rendered pages free of a flash or a hydration mismatch, since the server does not know the
-reader's theme.
+A design system can point the tokens at its own variables, `--vt-bg: var(--app-surface)`, so a
+table follows every palette the application offers. Sizes (`--vt-radius`, `--vt-cell-x`, …) keep
+their defaults under `inherit` unless you set them on the table, `.vt-surface { --vt-radius: 4px }`.
+
+Choosing the colors in CSS rather than in a prop also keeps server-rendered pages free of a flash
+or a hydration mismatch, since the server does not know the reader's theme.
+
+## Right to left
+
+The theme uses logical properties throughout, so `dir="rtl"` on the table or an ancestor lays it
+out right to left: the expand chevron of a collapsed row points left, the loading bar runs right
+to left, and in a spreadsheet or a tree the arrow keys follow what the reader sees (ArrowLeft moves
+to the next column and expands a row).
 
 ## Density and surface options
 
