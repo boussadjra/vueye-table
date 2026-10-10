@@ -76,7 +76,7 @@ describe("VtTable", () => {
     expect(controls.table().rowCount).toBe(1);
     expect(controls.wrapper.get(".vt-menu summary").text()).toBe("Columns");
     expect(controls.wrapper.get(".vt-page-size span").text()).toBe("Rows per page");
-    expect(controls.wrapper.get(".vt-status").text()).toBe("1–1 of 1 rows");
+    expect(controls.wrapper.get(".vt-status").text()).toBe("1–1 of 1 row");
     expect(controls.wrapper.get(".vt-pagination").element.tagName).toBe("NAV");
     expect(table().rowCount).toBe(7);
   });

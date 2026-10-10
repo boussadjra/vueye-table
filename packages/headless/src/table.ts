@@ -2,6 +2,7 @@ import type { SortInfo, TableColumn, TableRow } from "@vueye-table/core";
 import {
   injectDataTable,
   provideDataTable,
+  useTableLocale,
   type AnyDataTableBinding,
   type DataTableBinding,
 } from "@vueye-table/vue";
@@ -250,6 +251,7 @@ export const DataTableSortButton = defineComponent({
   props: { column: columnProp, as: asProp("button") },
   setup(props, { slots }) {
     const table = injectDataTable("<DataTableSortButton>");
+    const locale = useTableLocale();
     return () => {
       const sort = table.getSort(props.column.id);
       const next = !sort ? "ascending" : sort.direction === "asc" ? "descending" : "unsorted";
@@ -258,7 +260,7 @@ export const DataTableSortButton = defineComponent({
         {
           type: props.as === "button" ? "button" : undefined,
           "data-sort": sort?.direction,
-          "aria-label": `${props.column.header}, sort ${next}`,
+          "aria-label": locale().messages.sortBy(props.column.header, next),
           onClick: (event: MouseEvent) =>
             table.toggleSort(props.column.id, { multi: event.shiftKey }),
         },
@@ -287,6 +289,7 @@ export const DataTableBody = defineComponent({
   },
   setup(props, { slots }) {
     const table = injectDataTable("<DataTableBody>");
+    const locale = useTableLocale();
     const virtual = injectVirtual();
     const details = createDetails(
       table,
@@ -315,7 +318,7 @@ export const DataTableBody = defineComponent({
         table.renderItems.filter((item) => item.kind === "detail").map((item) => item.row.key),
       );
       const retained = slots.default ? [] : details.retained(visibleDetails);
-      const sentinel = loadSentinel(table, props.colspan ?? table.columns.length);
+      const sentinel = loadSentinel(table, props.colspan ?? table.columns.length, locale());
       return h(props.as, [
         ...(Array.isArray(content) ? content : content ? [content] : []),
         ...retained,

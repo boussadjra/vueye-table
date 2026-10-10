@@ -16,6 +16,8 @@ import {
   type EditResult,
   type TableIssue,
   type CellChange,
+  type TableMessages,
+  type TextNormalizer,
 } from "@vueye-table/core";
 import { virtualProps } from "@vueye-table/headless";
 import { hierarchyProps } from "@vueye-table/headless";
@@ -114,12 +116,31 @@ export const commonProps = {
   bordered: { type: Boolean, default: false },
   hover: { type: Boolean, default: true },
   stickyHeader: { type: Boolean, default: false },
-  theme: { type: String as PropType<"light" | "dark">, default: undefined },
+  /**
+   * `"light"` or `"dark"` forces a palette; by default the table follows `prefers-color-scheme`.
+   * `"inherit"` uses no built-in palette: the host declares the `--vt-*` tokens on an ancestor,
+   * in its own light and dark themes.
+   */
+  theme: { type: String as PropType<"light" | "dark" | "inherit">, default: undefined },
+  /**
+   * The BCP 47 locale numbers are written and text is ordered in, such as `"fr"` or `"ar-DZ"`.
+   * Defaults to the plugin's, then the runtime's. Ordering reads it once, when the table is
+   * created; give the table a new `key` to change it.
+   */
+  locale: { type: String as PropType<string | undefined>, default: undefined },
+  /** The host's words for what the table shows and announces, over the plugin's and English. */
+  messages: { type: Object as PropType<Partial<TableMessages> | undefined>, default: undefined },
+  /**
+   * How search and text filters read text. Defaults to `foldText`: case, accents and Arabic
+   * letter shapes ignored. Read once, when the table is created.
+   */
+  normalizeText: { type: Function as PropType<TextNormalizer | undefined>, default: undefined },
   /** A CSS height that makes the body scroll, such as `"24rem"`. */
   maxHeight: { type: String, default: undefined },
 
   searchable: { type: Boolean, default: true },
-  searchPlaceholder: { type: String, default: "Search…" },
+  /** Defaults to the messages' `searchPlaceholder`. */
+  searchPlaceholder: { type: String as PropType<string | undefined>, default: undefined },
   columnToggle: { type: Boolean, default: true },
   pagination: { type: Boolean, default: true },
   pageSizeOptions: { type: Array as PropType<readonly number[]>, default: () => [5, 10, 20, 50] },
@@ -156,16 +177,21 @@ export function editingOptions(
   };
 }
 
-export const stateEmits = [
-  "update:page",
-  "update:pageSize",
-  "update:sorting",
-  "update:search",
-  "update:filters",
-  "update:hiddenColumns",
-  "update:selected",
-  "update:expanded",
-] as const;
+/** The `v-model` events of table state, typed by the value each carries. */
+export const stateEmitValidators = {
+  "update:page": (_page: number) => true,
+  "update:pageSize": (_pageSize: number) => true,
+  "update:sorting": (_sorting: readonly SortRule[]) => true,
+  "update:search": (_search: string) => true,
+  "update:filters": (_filters: Readonly<Record<string, unknown>>) => true,
+  "update:hiddenColumns": (_hiddenColumns: readonly string[]) => true,
+  "update:selected": (_selected: readonly RowKey[]) => true,
+  "update:expanded": (_expanded: ExpandedState) => true,
+};
+
+export const stateEmits = Object.keys(
+  stateEmitValidators,
+) as readonly (keyof typeof stateEmitValidators)[];
 
 interface ControlledProps {
   readonly page: number | undefined;

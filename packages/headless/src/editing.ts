@@ -5,6 +5,7 @@ import {
   type AnyDataTableBinding,
   type DataGridBinding,
   type RowDraft,
+  useTableLocale,
 } from "@vueye-table/vue";
 import {
   computed,
@@ -341,6 +342,7 @@ export const DataTableRowActions = defineComponent({
   },
   setup(props) {
     const table = injectDataTable("<DataTableRowActions>");
+    const locale = useTableLocale();
     const context = inject(editingKey, undefined);
     const id = useEditorId();
     const element = shallowRef<HTMLElement>();
@@ -360,19 +362,26 @@ export const DataTableRowActions = defineComponent({
       },
     );
     return () => {
+      const { messages } = locale();
+      const rowName = String(props.row.key);
       const draft = context?.draft?.rowKey === props.row.key ? context.draft : undefined;
       const issues: readonly TableIssue[] = [
         ...new Map(draft?.issues.map((problem) => [problem.message, problem])).values(),
       ];
-      const button = (label: string, action: () => unknown, disabled = false) =>
+      const button = (
+        label: string,
+        action: () => unknown,
+        disabled = false,
+        role?: "edit" | "save",
+      ) =>
         h(
           "button",
           {
             type: "button",
             disabled,
-            "aria-label": `${label}, row ${String(props.row.key)}`,
-            "data-edit-row": label === "Edit row" ? "" : undefined,
-            ...(label === "Save row" ? issueAttrs(id, issues, !!draft?.pending) : {}),
+            "aria-label": messages.actionOnRow(label, rowName),
+            "data-edit-row": role === "edit" ? "" : undefined,
+            ...(role === "save" ? issueAttrs(id, issues, !!draft?.pending) : {}),
             onClick: action,
           },
           label,
@@ -383,17 +392,17 @@ export const DataTableRowActions = defineComponent({
           ref: element,
           "data-row-actions": "",
           role: "group",
-          "aria-label": `Row ${String(props.row.key)} actions`,
+          "aria-label": messages.rowActionsFor(rowName),
           "aria-busy": draft?.pending ? "true" : undefined,
         },
         [
           ...(context?.mode === "row" && props.editable
             ? draft
               ? [
-                  button("Save row", () => context.save(), draft.pending),
-                  button("Cancel", () => context.cancel(props.row.key), draft.pending),
+                  button(messages.saveRow, () => context.save(), draft.pending, "save"),
+                  button(messages.cancel, () => context.cancel(props.row.key), draft.pending),
                 ]
-              : [button("Edit row", () => context.start(props.row))]
+              : [button(messages.editRow, () => context.start(props.row), false, "edit")]
             : []),
           h(
             "details",
@@ -407,15 +416,15 @@ export const DataTableRowActions = defineComponent({
               },
             },
             [
-              h("summary", { "aria-label": `Actions for row ${String(props.row.key)}` }, "Actions"),
+              h("summary", { "aria-label": messages.actionsForRow(rowName) }, messages.actions),
               h("div", { "data-row-menu": "" }, [
                 button(
-                  "Revert row",
+                  messages.revertRow,
                   () => table.revert([props.row.key]),
                   !props.row.isDirty || !!draft,
                 ),
                 props.removable
-                  ? button("Remove row", () => table.removeRows([props.row.key]), !!draft)
+                  ? button(messages.removeRow, () => table.removeRows([props.row.key]), !!draft)
                   : null,
               ]),
             ],

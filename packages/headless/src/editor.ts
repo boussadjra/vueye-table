@@ -6,6 +6,7 @@ import {
   type TableRow,
   type EditResult,
 } from "@vueye-table/core";
+import { useTableLocale } from "@vueye-table/vue";
 import {
   computed,
   defineComponent,
@@ -66,6 +67,7 @@ export const DataCellEditor = defineComponent({
   name: "DataCellEditor",
   props: cellEditorProps,
   setup(props) {
+    const locale = useTableLocale();
     const field = ref<HTMLInputElement | HTMLSelectElement>();
     const query = ref("");
     // The caller resolves the spec at edit entry, not on every keystroke.
@@ -127,9 +129,10 @@ export const DataCellEditor = defineComponent({
     };
     return () => {
       const { editor, spec } = props;
+      const { messages, count } = locale();
       const attrs = {
         ...editor.attrs,
-        "aria-label": `Edit ${editor.column.header}`,
+        "aria-label": messages.editCell(editor.column.header),
         "data-editor": "",
         disabled: editor.pending,
         onKeydown: keydown,
@@ -149,7 +152,7 @@ export const DataCellEditor = defineComponent({
               ref: field,
               type: "search",
               value: query.value,
-              "aria-label": `Search ${editor.column.header} options`,
+              "aria-label": messages.searchOptions(editor.column.header),
               disabled: editor.pending,
               onInput: (event: Event) => {
                 query.value = (event.target as HTMLInputElement).value;
@@ -173,17 +176,21 @@ export const DataCellEditor = defineComponent({
                 },
               },
               shown.map(({ value, index }) =>
-                h("option", { key: index, value: index }, String(value ?? "(empty)")),
+                h(
+                  "option",
+                  { key: index, value: index },
+                  value === null || value === undefined ? messages.emptyOption : String(value),
+                ),
               ),
             ),
             h(
               "span",
               { role: "status", "data-editor-hint": "" },
               matches.value.length === 0
-                ? "No matching options. Change your search."
+                ? messages.noMatchingOptions
                 : matches.value.length > 50
-                  ? "Showing the first 50 matches. Refine your search."
-                  : `${matches.value.length} options`,
+                  ? messages.firstMatchesOnly(count(50))
+                  : messages.optionCount(count(matches.value.length)),
             ),
           ],
         );

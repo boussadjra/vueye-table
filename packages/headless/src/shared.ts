@@ -37,3 +37,11 @@ export const rowProp = {
 export function flag(value: boolean): "" | undefined {
   return value ? "" : undefined;
 }
+
+/**
+ * The direction an element is laid out in, read from the nearest `dir` attribute, so keyboard
+ * arrows can follow what the reader sees. Without one, left to right.
+ */
+export function directionOf(element: Element | null | undefined): "ltr" | "rtl" {
+  return element?.closest("[dir]")?.getAttribute("dir")?.toLowerCase() === "rtl" ? "rtl" : "ltr";
+}

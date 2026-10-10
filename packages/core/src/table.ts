@@ -1,4 +1,4 @@
-import { resolveColumn, type ColumnDef, type TableColumn } from "./column";
+import { resolveColumn, type ColumnDef, type TableColumn, type TextContext } from "./column";
 import { escapeFormula, readDelimited, toDelimited } from "./delimited";
 import { createEditValidation } from "./edit-validation";
 import { rangeContains, type CellPosition, type CellRange } from "./grid";
@@ -40,6 +40,7 @@ import {
   type StreamOptions,
   type StreamResult,
 } from "./stream";
+import { createCollator, foldText, type TextNormalizer } from "./text";
 import {
   buildTree,
   processTree,
@@ -95,6 +96,16 @@ export interface TableOptions<
   readonly manual?: boolean | undefined;
   /** The total number of rows across all pages, for `manual` tables. */
   readonly rowCount?: number | undefined;
+  /**
+   * The BCP 47 locale text is ordered in, such as `"fr"` or `"ar-DZ"`. Defaults to the runtime's.
+   * Read once, when the table is created.
+   */
+  readonly locale?: string | undefined;
+  /**
+   * How search and text filters read text before comparing it. Defaults to `foldText`, which
+   * ignores case, accents and Arabic letter shapes. Read once, when the table is created.
+   */
+  readonly normalizeText?: TextNormalizer | undefined;
   /** Caller-owned source hint, independent of filtering and pagination. */
   readonly expectedRowCount?: number | undefined;
   /** Called after every state change a table operation makes, not after `setState`. */
@@ -414,6 +425,10 @@ export function createTable<TRow, TSignal extends TreeLoadSignal = TreeLoadSigna
   const selectionMode = options.selectionMode ?? "multiple";
   const selectScope = options.selectScope ?? "all";
   const manual = options.manual ?? false;
+  const textContext: TextContext = {
+    collator: createCollator(options.locale),
+    normalize: options.normalizeText ?? foldText,
+  };
   let treeFilter = options.treeFilter ?? "ancestors";
   const treeEnabled = Boolean(
     options.getChildren || options.getParentKey || options.hasChildren || options.loadChildren,
@@ -556,7 +571,7 @@ export function createTable<TRow, TSignal extends TreeLoadSignal = TreeLoadSigna
         );
         return [];
       }
-      return [resolveColumn(definition)];
+      return [resolveColumn(definition, textContext)];
     });
     return { columns, byId: new Map(columns.map((column) => [column.id, column])), issues };
   });
@@ -635,7 +650,15 @@ export function createTable<TRow, TSignal extends TreeLoadSignal = TreeLoadSigna
       filters: TableState["filters"],
       sorting: TableState["sorting"],
       mode: TreeFilter,
-    ) => processTree(model, columns, { ...state, search, filters, sorting }, mode, manual),
+    ) =>
+      processTree(
+        model,
+        columns,
+        { ...state, search, filters, sorting },
+        mode,
+        manual,
+        textContext.normalize,
+      ),
   );
   const flattenTree = createTreeFlattener<TRow>();
   const emptyAncestors = new Set<RowKey>();
@@ -724,7 +747,7 @@ export function createTable<TRow, TSignal extends TreeLoadSignal = TreeLoadSigna
       primedFilter.search === search &&
       primedFilter.filters === filters
         ? primedFilter.result
-        : filterRows(rows, columns, search, filters),
+        : filterRows(rows, columns, search, filters, textContext.normalize),
   );
   const sortStage = memo(
     (
@@ -2288,7 +2311,7 @@ export function createTable<TRow, TSignal extends TreeLoadSignal = TreeLoadSigna
           : filterStage(previous.rows, columns, state.search, state.filters);
         const addedFiltered = manual
           ? indexed
-          : filterRows(indexed, columns, state.search, state.filters);
+          : filterRows(indexed, columns, state.search, state.filters, textContext.normalize);
         const allRows = appendList(previous.rows, indexed);
         const allFiltered = appendList(filtered, addedFiltered);
         const keys = membership(filtered);

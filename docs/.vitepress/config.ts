@@ -67,6 +67,7 @@ export default defineConfig({
           { text: "Performance", link: "/guide/performance" },
           { text: "Ingestion, hierarchy and editing API", link: "/guide/api-reference" },
           { text: "Theming", link: "/guide/theming" },
+          { text: "Language, locale and search", link: "/guide/language" },
           { text: "Component reference", link: "/guide/components" },
           { text: "Nuxt", link: "/guide/nuxt" },
           { text: "Upgrading from 2.x", link: "/guide/upgrading-from-2" },

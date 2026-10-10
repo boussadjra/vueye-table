@@ -21,7 +21,13 @@ import {
   VtLoadMore,
   VtToolbar,
 } from "@vueye-table/styled";
-import { provideDataTable, useDataTable, type DataTableBinding } from "@vueye-table/vue";
+import {
+  provideDataTable,
+  provideTableLocale,
+  useDataTable,
+  useTableLocale,
+  type DataTableBinding,
+} from "@vueye-table/vue";
 import { computed, defineComponent, h, type PropType, type SlotsType, type VNode } from "vue";
 
 import {
@@ -29,7 +35,7 @@ import {
   controlledState,
   createColumnResolver,
   emitStateChanges,
-  stateEmits,
+  stateEmitValidators,
   expansionOptions,
   emitExpansionChanges,
   CellContent,
@@ -66,13 +72,14 @@ export const VueyeGrid = defineComponent({
     editable: { type: Boolean, default: true },
     rowNumbers: { type: Boolean, default: true },
     columnLetters: { type: Boolean, default: false },
-    label: { type: String, default: "Spreadsheet" },
+    /** The grid's accessible name. Defaults to the messages' `spreadsheet`. */
+    label: { type: String as PropType<string | undefined>, default: undefined },
     /** Show undo, redo, and CSV export buttons. */
     toolbar: { type: Boolean, default: true },
   },
   emits: {
     ...editingEmits,
-    ...Object.fromEntries(stateEmits.map((name) => [name, null])),
+    ...stateEmitValidators,
     "state-change": (_state: TableState) => true,
     "update:data": (_data: readonly unknown[]) => true,
     edit: (_changes: readonly CellChange<unknown>[]) => true,
@@ -80,16 +87,10 @@ export const VueyeGrid = defineComponent({
     export: (_csv: string) => true,
     expand: (_item: unknown, _row: TableRow<unknown>) => true,
     collapse: (_item: unknown, _row: TableRow<unknown>) => true,
-  } as { [K in (typeof stateEmits)[number]]: null } & typeof editingEmits & {
-      "state-change": (state: TableState) => boolean;
-      "update:data": (data: readonly unknown[]) => boolean;
-      edit: (changes: readonly CellChange<unknown>[]) => boolean;
-      "edit-error": (issues: readonly TableIssue[]) => boolean;
-      export: (csv: string) => boolean;
-      expand: (item: unknown, row: TableRow<unknown>) => boolean;
-      collapse: (item: unknown, row: TableRow<unknown>) => boolean;
-    },
+  },
   setup(props, { emit, slots, expose, attrs }) {
+    const inherited = useTableLocale();
+    const locale = provideTableLocale(() => ({ locale: props.locale, messages: props.messages }));
     const resolveColumns = createColumnResolver();
     let previousColumns:
       | { source: readonly unknown[]; editable: boolean; columns: readonly ColumnDef<unknown>[] }
@@ -125,6 +126,8 @@ export const VueyeGrid = defineComponent({
       rowCount: () => props.rowCount,
       columns,
       rowKey: props.rowKey as never,
+      locale: props.locale ?? inherited().locale,
+      normalizeText: props.normalizeText,
       paginate:
         props.paginate ??
         (props.source || props.loadMore ? false : props.virtual ? props.pagination : true),
@@ -184,18 +187,24 @@ export const VueyeGrid = defineComponent({
       h("div", { class: "vt-theme vueye-grid", "data-vt-theme": props.theme }, [
         props.toolbar || props.searchable || props.addRow
           ? h(VtToolbar, () => [
-              props.searchable ? h(VtSearch, { placeholder: props.searchPlaceholder }) : null,
+              props.searchable
+                ? h(VtSearch, {
+                    placeholder: props.searchPlaceholder ?? locale().messages.searchPlaceholder,
+                  })
+                : null,
               props.addRow
-                ? button("Add row", false, () => {
+                ? button(locale().messages.addRow, false, () => {
                     table.insertRows();
                   })
                 : null,
               h("div", { class: "vt-toolbar-spacer" }),
               props.toolbar
                 ? [
-                    button("Undo", !table.canUndo, () => table.undo()),
-                    button("Redo", !table.canRedo, () => table.redo()),
-                    button("Export CSV", false, () => emit("export", table.exportRows())),
+                    button(locale().messages.undo, !table.canUndo, () => table.undo()),
+                    button(locale().messages.redo, !table.canRedo, () => table.redo()),
+                    button(locale().messages.exportCsv, false, () =>
+                      emit("export", table.exportRows()),
+                    ),
                   ]
                 : null,
             ])
@@ -204,7 +213,7 @@ export const VueyeGrid = defineComponent({
           VtGrid,
           {
             table,
-            label: props.label,
+            label: props.label ?? locale().messages.spreadsheet,
             "aria-describedby": attrs["aria-describedby"],
             rowNumbers: props.rowNumbers,
             rowActions: props.editable || props.removeRows,

@@ -1,5 +1,5 @@
 import { addComponent, addImports, defineNuxtModule } from "@nuxt/kit";
-import type { Nuxt } from "@nuxt/schema";
+import type { Nuxt, NuxtModule } from "@nuxt/schema";
 
 /** Options under `vueyeTable` in `nuxt.config`. */
 export interface ModuleOptions {
@@ -76,7 +76,7 @@ const composables = ["useDataTable", "useDataGrid", "defineColumns"] as const;
  * pages that render no table load none of it. Every table is created inside a component, so no
  * state is shared between requests.
  */
-export default defineNuxtModule<ModuleOptions>({
+const vueyeTableModule: NuxtModule<ModuleOptions> = defineNuxtModule<ModuleOptions>({
   meta: {
     name: "@vueye-table/nuxt",
     configKey: "vueyeTable",
@@ -104,3 +104,6 @@ export default defineNuxtModule<ModuleOptions>({
     }
   },
 });
+
+// Annotated so the published declaration names its types instead of inlining unresolved ones.
+export default vueyeTableModule;

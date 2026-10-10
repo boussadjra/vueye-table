@@ -3,6 +3,7 @@ import { issue, type TableIssue } from "./issues";
 import { filterRows, sortRows } from "./pipeline";
 import { createRow, type TableRow } from "./row";
 import type { ExpandedState, RowKey, TableState } from "./state";
+import type { TextNormalizer } from "./text";
 
 /** A runtime supplies its own cancellation primitive; core needs no platform globals. */
 export interface TreeLoadSignal {
@@ -243,9 +244,10 @@ export function processTree<TRow>(
   state: TableState,
   mode: TreeFilter,
   manual: boolean,
+  normalize?: TextNormalizer,
 ): ProcessedTree<TRow> {
   const raw = model.nodes.map((node) => node.row);
-  const matched = manual ? raw : filterRows(raw, columns, state.search, state.filters);
+  const matched = manual ? raw : filterRows(raw, columns, state.search, state.filters, normalize);
   const active = matched !== raw;
   const included = new Set(matched.map((row) => row.key));
   const autoExpanded = new Set<RowKey>();

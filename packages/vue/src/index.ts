@@ -1,4 +1,14 @@
-export { injectDataGrid, injectDataTable, provideDataGrid, provideDataTable } from "./injection";
+export {
+  injectDataGrid,
+  injectDataTable,
+  provideDataGrid,
+  provideDataTable,
+  provideTableLocale,
+  tableLocaleKey,
+  useTableLocale,
+  type TableLocale,
+  type TableLocaleOptions,
+} from "./injection";
 export {
   useDataGrid,
   type DataGridBinding,
