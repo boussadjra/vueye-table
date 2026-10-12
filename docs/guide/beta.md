@@ -1,7 +1,7 @@
 # The 3.0 beta contract
 
-**3.0.0-beta.2 is published** for all six packages on npm's `beta` channel, with provenance and a
-[GitHub release](https://github.com/boussadjra/vueye-table/releases/tag/v3.0.0-beta.2).
+**3.0.0-beta.3 is published** for all six packages on npm's `beta` channel, with provenance and a
+[GitHub release](https://github.com/boussadjra/vueye-table/releases/tag/v3.0.0-beta.3).
 Beta is a prerelease for application feedback and does not establish production readiness.
 npm's `latest` tag still points at the last alpha, so install `@beta` or an exact version.
 
@@ -10,12 +10,12 @@ npm's `latest` tag still points at the last alpha, so install `@beta` or an exac
 Install an exact version or opt into the beta channel:
 
 ```sh
-pnpm add vueye-table@3.0.0-beta.2
+pnpm add vueye-table@3.0.0-beta.3
 # To follow subsequent betas:
 pnpm add vueye-table@beta
 ```
 
-Nuxt applications use `@vueye-table/nuxt@3.0.0-beta.2`. Keep directly installed vueye-table
+Nuxt applications use `@vueye-table/nuxt@3.0.0-beta.3`. Keep directly installed vueye-table
 packages on the same version. Vue 3.5 or later within Vue 3 is required; Nuxt integration supports Nuxt 4.x.
 The packages use ESM. Import `vueye-table/style.css` for full or styled components; the Nuxt
 module adds the stylesheet itself. See [getting started](/guide/getting-started) and
