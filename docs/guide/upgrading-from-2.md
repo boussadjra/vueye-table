@@ -5,6 +5,13 @@ follow the new engine. The 2.x source is on the `legacy` branch.
 
 ## Install
 
+```bash
+pnpm add vueye-table@beta
+```
+
+3.0 is published on npm's `beta` channel. A plain `pnpm add vueye-table` still installs the last
+alpha, and `vueye-table@1` the old line.
+
 ```diff
 - import { VueyeTable } from "vueye-table";
 + import "vueye-table/style.css";
@@ -63,11 +70,24 @@ Custom controls move to `editor.<id>` slots. Local save events do not persist re
 use [pending changes and acknowledged baselines](/guide/validation). No legacy edit event
 is assumed to be equivalent to the new persistence contract.
 
-Search, column filters, multi-column sorting, column visibility, server mode (`manual`), CSV and
-TSV export, a spreadsheet (`<VueyeGrid>`) with editing, clipboard, and undo, dark mode, density,
-and theming through CSS custom properties.
+### Language and themes
 
-## Export and paste behavior in 3.x alpha
+2.x showed English text. In 3.x every word a table shows or announces, such as the search
+placeholder, pagination status and empty state, comes from `messages`, with numbers written in
+`locale`. Pass them on a table or once for the application with
+`app.use(VueyeTablePlugin, { locale, messages })`. Search ignores case and accents by default; set
+`normalize-text` to match your server. Theme colors are CSS custom properties whose defaults your
+own tokens override, and `theme="inherit"` leaves colors entirely to the host. See
+[language](/guide/language) and [theming](/guide/theming).
+
+### Everything else
+
+Search, column filters, multi-column sorting, column visibility, server mode (`manual`), CSV and
+TSV export, a spreadsheet (`<VueyeGrid>`) with editing, clipboard, and undo, virtualization for
+large data, streamed and cursor-loaded data, dark mode, and density are new in 3.x. See the
+[guide](/guide/getting-started) for each.
+
+## Export and paste behavior in 3.x
 
 `exportRows()` now prefixes formula-like CSV/TSV cell text and headers with an apostrophe by
 default. For example, text `=1+1` exports as `'=1+1`, while the numeric value `-12` stays

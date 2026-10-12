@@ -24,8 +24,8 @@ const facts = [
     <HeroGrid />
 
     <div class="inner">
-      <a class="eyebrow" :href="withBase('/guide/upgrading-from-2')">
-        <span class="badge">v3 alpha</span>
+      <a class="eyebrow" :href="withBase('/guide/beta')">
+        <span class="badge">v3 beta</span>
         <span>Rebuilt from the ground up</span>
         <span class="arrow" aria-hidden="true">→</span>
       </a>
@@ -44,7 +44,7 @@ const facts = [
           <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4 10h11m-4-4 4 4-4 4" /></svg>
         </a>
         <a class="vy-button ghost" href="#layers">Explore the layers</a>
-        <CopyCommand command="pnpm add vueye-table" />
+        <CopyCommand command="pnpm add vueye-table@beta" />
       </div>
 
       <div class="showcase">

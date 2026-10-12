@@ -6,7 +6,7 @@ Full-component `edit-mode` and `editor.<id>` slots work with the default compone
 see [editing](/guide/editing).
 
 ```bash
-pnpm add @vueye-table/nuxt
+pnpm add @vueye-table/nuxt@beta
 ```
 
 ```ts

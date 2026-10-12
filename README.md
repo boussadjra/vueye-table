@@ -19,17 +19,36 @@ undo, clipboard, and export. Vue layers sit on top of it, and you pick the one t
 Each layer depends only on the layers beneath it, and `vueye-table` re-exports all of them, so
 one install covers every level.
 
-> **Status:** `3.0.0-alpha`. The API is provisional and may change between alpha releases. The
-> 2.x component lives on the [`legacy`](https://github.com/boussadjra/vueye-table/tree/legacy)
-> branch; see [Upgrading from 2.x](./docs/guide/upgrading-from-2.md).
+> **Status:** `3.0.0-beta.2`, published on npm's `beta` channel. The beta is for application
+> feedback: documented import paths, options, events and slot scopes are kept stable, and a
+> necessary breaking change ships with an ADR and migration notes. It is not production ready.
+> See [the beta contract](./docs/guide/beta.md). The 2.x component lives on the
+> [`legacy`](https://github.com/boussadjra/vueye-table/tree/legacy) branch; see
+> [Upgrading from 2.x](./docs/guide/upgrading-from-2.md).
 
 ## Install
 
 ```bash
-pnpm add vueye-table
+pnpm add vueye-table@beta
 ```
 
-Vue 3.5 or newer is a peer dependency.
+Install `@beta` or an exact version such as `3.0.0-beta.2`: a plain `pnpm add vueye-table` still
+resolves to the last alpha. Vue 3.5 or newer is a peer dependency.
+
+## What the beta covers
+
+- **Tables and spreadsheets**: search, column filters, multi-column sorting, pagination,
+  selection, column visibility, CSV/TSV export, and a spreadsheet grid with clipboard and undo.
+- **Editing and validation**: inline cell and row editing in `VueyeTable`, typed and custom
+  editors, validation issues, dirty rows, revert, and a saved baseline you acknowledge.
+- **Expansion and trees**: detail rows, nested and lazy-loaded children, tree search that keeps
+  matching branches.
+- **Large data**: opt-in row and column virtualization for tables and grids, and incremental
+  streams, cursor loading, and cancellable sources.
+- **Language and themes**: every word shown or announced comes from `messages`, numbers and
+  ordering follow `locale`, search ignores case and accents, and host design tokens win over
+  the defaults.
+- **Server data**: `manual` mode hands searching, sorting and paging to your API.
 
 ## Full table
 
@@ -150,8 +169,19 @@ The styled layer is driven by CSS custom properties on `.vt-surface`:
 }
 ```
 
-Dark colors follow `prefers-color-scheme`; `theme="dark"` or `theme="light"` forces one.
-Density is `compact`, `comfortable`, or `spacious`.
+Dark colors follow `prefers-color-scheme`; `theme="dark"` or `theme="light"` forces one, and
+`theme="inherit"` declares no colors so the host's own tokens apply. The defaults have zero
+specificity, so your tokens always win. Density is `compact`, `comfortable`, or `spacious`.
+
+## Language
+
+```vue
+<VueyeTable :data="rows" :columns="columns" locale="fr" :messages="{ columns: 'Colonnes' }" />
+```
+
+Every word a table shows or announces comes from `TableMessages`; whatever you leave out keeps its
+English default. `app.use(VueyeTablePlugin, { locale, messages })` sets them for the whole
+application. Arrow keys and chevrons mirror in right-to-left layouts.
 
 ## Development
 

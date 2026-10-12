@@ -27,10 +27,10 @@ import CopyCommand from "./CopyCommand.vue";
           View on GitHub
         </a>
       </div>
-      <CopyCommand command="pnpm add vueye-table" />
+      <CopyCommand command="pnpm add vueye-table@beta" />
       <p class="fine">
-        3.0.0-alpha: the API is provisional and may change between alpha releases. The 2.x component
-        lives on the
+        3.0.0-beta: documented APIs stay stable through the beta, but it is not yet production
+        ready. The 2.x component lives on the
         <a href="https://github.com/boussadjra/vueye-table/tree/legacy">legacy branch</a>.
       </p>
     </div>

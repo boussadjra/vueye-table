@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 // @ts-expect-error The standalone release script does not ship TypeScript declarations.
-import { releaseTagFor } from "../../scripts/release-tags.mjs";
+import { isGitHubLatest, releaseTagFor } from "../../scripts/release-tags.mjs";
 
 describe("release channels", () => {
   it("publishes the first 3.0 beta under beta even before a stable 3.x exists", () => {
@@ -17,5 +17,18 @@ describe("release channels", () => {
   it("keeps beta separate and sends stable releases to latest", () => {
     expect(releaseTagFor("3.0.1-beta.1", [new Set(["3.0.0"])])).toBe("beta");
     expect(releaseTagFor("3.0.0", [new Set(["3.0.0-beta.1"])])).toBe("latest");
+  });
+});
+
+describe("GitHub latest release", () => {
+  it("marks stable releases and betas or candidates of a new major as latest", () => {
+    expect(isGitHubLatest("3.0.0")).toBe(true);
+    expect(isGitHubLatest("3.0.0-beta.2")).toBe(true);
+    expect(isGitHubLatest("3.0.0-rc.1")).toBe(true);
+  });
+  it("keeps alpha and prereleases of a later minor or patch as prereleases", () => {
+    expect(isGitHubLatest("3.0.0-alpha.12")).toBe(false);
+    expect(isGitHubLatest("3.1.0-beta.1")).toBe(false);
+    expect(isGitHubLatest("3.0.1-rc.1")).toBe(false);
   });
 });
