@@ -21,6 +21,13 @@ export {
   resolveTreeColumn,
   type DetailSlotProps,
 } from "./hierarchy";
+export {
+  rowAttributes,
+  type AnyRowAttrs,
+  type RowAttributes,
+  type RowAttrs,
+  type RowClass,
+} from "./row-attrs";
 export { cellId, DataGridBody, DataGridCell, DataGridRoot, type GridCellSlotProps } from "./grid";
 export {
   columnStyle,
