@@ -36,9 +36,24 @@ line, loading and empty states, and theming.
 | `locale`              | BCP 47 locale, such as `"fr"` or `"ar-DZ"` | the plugin's, then the runtime's           |
 | `messages`            | `Partial<TableMessages>`                   | the plugin's, then English                 |
 | `normalize-text`      | `(text: string) => string`                 | `foldText`                                 |
+| `row-attrs`           | `(item, row) => RowAttributes`             |                                            |
 
 `selectable`, `select-scope`, `manual`, `row-key`, `locale` (for ordering) and `normalize-text` are
 read when the table is created. See [Language, locale and search](/guide/language).
+
+`row-attrs` gives each body row a class, a style, and `data-*` and `aria-*` attributes, read from
+its item on every render, so a row follows its data without being remounted. The row's own
+attributes (`data-key`, `data-selected`, `data-dirty`, `aria-rowindex`, `aria-selected`, tree
+attributes, `tabindex`) always win, and anything else, event handlers included, is left out:
+`row-click` stays the row's event. `VueyeGrid` takes the same prop.
+
+```vue
+<VueyeTable
+  :data="pupils"
+  :columns="columns"
+  :row-attrs="(pupil) => ({ class: { absent: pupil.absent }, 'data-testid': `pupil-${pupil.id}` })"
+/>
+```
 
 Both full components also accept `row-can-expand: (item) => boolean`, `expand-mode: 'single' | 'multiple'`
 (default `'multiple'`), `tree-column: string`, and `keep-alive-detail: boolean` (default false).
@@ -100,14 +115,15 @@ Use `label` for the grid's accessible name and `aria-describedby` to reference k
 An editable spreadsheet over an array. It accepts the props of `<VueyeTable>` for columns, keys,
 surface, and state, with these differences:
 
-| Prop                                        | Type      | Default                                                             |
-| ------------------------------------------- | --------- | ------------------------------------------------------------------- |
-| `editable`                                  | `boolean` | `true`: columns are editable unless their definition says otherwise |
-| `row-numbers`                               | `boolean` | `true`                                                              |
-| `column-letters`                            | `boolean` | `false`                                                             |
-| `label`                                     | `string`  | `"Spreadsheet"`, the grid's accessible name                         |
-| `toolbar`                                   | `boolean` | `true`: undo, redo, and CSV export buttons                          |
-| `searchable`, `column-toggle`, `pagination` | `boolean` | `false`                                                             |
+| Prop                                        | Type      | Default                                                               |
+| ------------------------------------------- | --------- | --------------------------------------------------------------------- |
+| `editable`                                  | `boolean` | `true`: columns are editable unless their definition says otherwise   |
+| `row-numbers`                               | `boolean` | `true`                                                                |
+| `column-letters`                            | `boolean` | `false`                                                               |
+| `label`                                     | `string`  | `"Spreadsheet"`, the grid's accessible name                           |
+| `toolbar`                                   | `boolean` | `true`: undo, redo, and CSV export buttons                            |
+| `searchable`, `column-toggle`, `pagination` | `boolean` | `false`                                                               |
+| `row-attrs`                                 | function  | as on `<VueyeTable>`: a class, a style, `data-*` and `aria-*` per row |
 
 Events: `update:data`, `edit`, `edit-error`, `export`, `state-change`, and the state `v-model`
 updates. Slots: `cell.<id>` with `{ item, row, column, value, display, editable }`. See
@@ -120,21 +136,21 @@ The grid also accepts the `status` slot with `TableStatusSlotProps`.
 `@vueye-table/styled` arranges the headless components with the theme. Each reads the table
 provided by `<VtTable>`, `<VtGrid>`, or `provideDataTable`.
 
-| Component            | Renders                                                                                                                     |
-| -------------------- | --------------------------------------------------------------------------------------------------------------------------- |
-| `VtTable`            | The surface, loading bar, scroll area, and table. Props: `table` and the surface options.                                   |
-| `VtHeader`           | Header cells with sort buttons and indicators. Slots: `header.<id>`, `header`, `before`, `after`.                           |
-| `VtBody`             | Body rows with the empty state. Slots: `default`, `empty`.                                                                  |
-| `VtGrid`             | The spreadsheet surface. Props: `table`, `label`, `row-numbers`, `column-letters`, and surface options. Slots: `cell.<id>`. |
-| `VtToolbar`          | A bar for controls above or below a table.                                                                                  |
-| `VtSearch`           | A search field with an icon.                                                                                                |
-| `VtColumnVisibility` | A "Columns" menu of checkboxes.                                                                                             |
-| `VtPageSize`         | "Rows per page" with a picker. Prop: `options`.                                                                             |
-| `VtPagination`       | Previous, numbered, and next buttons.                                                                                       |
-| `VtStatus`           | "1–10 of 57 rows, 3 selected", announced politely.                                                                          |
-| `VtLoadMore`         | A styled load-more or retry button. Props: `label`, `loading-label`, `retry-label`.                                         |
-| `VtEmpty`            | The empty state. Prop: `text`.                                                                                              |
-| `VtSortIndicator`    | The sort arrow, with priority in multi-column sorts.                                                                        |
+| Component            | Renders                                                                                                                                  |
+| -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| `VtTable`            | The surface, loading bar, scroll area, and table. Props: `table` and the surface options.                                                |
+| `VtHeader`           | Header cells with sort buttons and indicators. Slots: `header.<id>`, `header`, `before`, `after`.                                        |
+| `VtBody`             | Body rows with the empty state. Slots: `default`, `empty`.                                                                               |
+| `VtGrid`             | The spreadsheet surface. Props: `table`, `label`, `row-numbers`, `column-letters`, `row-attrs`, and surface options. Slots: `cell.<id>`. |
+| `VtToolbar`          | A bar for controls above or below a table.                                                                                               |
+| `VtSearch`           | A search field with an icon.                                                                                                             |
+| `VtColumnVisibility` | A "Columns" menu of checkboxes.                                                                                                          |
+| `VtPageSize`         | "Rows per page" with a picker. Prop: `options`.                                                                                          |
+| `VtPagination`       | Previous, numbered, and next buttons.                                                                                                    |
+| `VtStatus`           | "1–10 of 57 rows, 3 selected", announced politely.                                                                                       |
+| `VtLoadMore`         | A styled load-more or retry button. Props: `label`, `loading-label`, `retry-label`.                                                      |
+| `VtEmpty`            | The empty state. Prop: `text`.                                                                                                           |
+| `VtSortIndicator`    | The sort arrow, with priority in multi-column sorts.                                                                                     |
 
 ```vue
 <script setup lang="ts">
@@ -187,7 +203,7 @@ full grid with row numbers and actions.
 | `DataTableHeaderCell`                   | A header cell with `aria-sort`. Slot: `{ column, sort, toggleSort }`.                                                      |
 | `DataTableSortButton`                   | Toggles a column's sort; Shift adds it to the sort.                                                                        |
 | `DataTableBody`                         | Body rows. Slots: `default` with `{ rows }`, `empty`.                                                                      |
-| `DataTableRow`                          | A row with `aria-selected`. Slot: `{ row, selected, columns }`.                                                            |
+| `DataTableRow`                          | A row with `aria-selected`. Prop `attributes`, from `rowAttributes(rowAttrs, row)`. Slot: `{ row, selected, columns }`.    |
 | `DataTableCell`                         | A cell. Slot: `{ row, column, value, display }`.                                                                           |
 | `DataTableEmpty`                        | Renders its slot only when no row matches.                                                                                 |
 | `DataTableSelectAll`                    | The select-all checkbox, indeterminate when partial. Slot: `{ state, toggle }`.                                            |
@@ -202,7 +218,7 @@ full grid with row numbers and actions.
 | `DataTableDetailRow`                    | Deferred full-width detail. Props: `row`, `colspan`, optional `keep-alive`. Slot: `{ row }`.                               |
 | `DataTableTreeCell`                     | Indentation, disclosure and child-load recovery. Props: `row`, `as`. Slots: `default`, `toggle` with `{ row }`.            |
 | `DataGridRoot`                          | A `role="grid"` spreadsheet with keyboard and clipboard handling.                                                          |
-| `DataGridBody`                          | Grid rows. Slots: `cell`, `rowHeader`.                                                                                     |
+| `DataGridBody`                          | Grid rows. Prop `row-attrs`. Slots: `cell`, `rowHeader`.                                                                   |
 | `DataGridCell`                          | A grid cell with selection, editing, and `aria-selected`. Slots: `default`, `editor`.                                      |
 | `DataCellEditor`                        | Native typed field; props `editor` (slot contract), `spec`, optional `finish`, `autofocus`, `blur-commit`, `tab-commit`.   |
 | `DataTableEditRoot`                     | Renderless table form provider, `table` and `mode` (`"cell"` or `"row"`); emits `save`/`cancel`.                           |

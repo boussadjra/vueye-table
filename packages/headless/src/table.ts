@@ -10,6 +10,7 @@ import {
   defineComponent,
   Fragment,
   h,
+  mergeProps,
   shallowRef,
   type PropType,
   type ShallowRef,
@@ -422,6 +423,14 @@ export const DataTableRow = defineComponent({
     row: rowProp,
     as: asProp("tr"),
     rowIndex: { type: Number as PropType<number | undefined>, default: undefined },
+    /**
+     * A page's own attributes for the row, from `rowAttributes`. They come before the row's own,
+     * so `data-key`, selection, tree, and focus attributes always win; class and style merge.
+     */
+    attributes: {
+      type: Object as PropType<Readonly<Record<string, unknown>> | undefined>,
+      default: undefined,
+    },
   },
   setup(props, { slots }) {
     const table = injectDataTable("<DataTableRow>");
@@ -434,7 +443,7 @@ export const DataTableRow = defineComponent({
       const position = props.rowIndex ?? item?.renderItem.rowIndex ?? table.rows.indexOf(row);
       return h(
         props.as,
-        {
+        mergeProps(props.attributes ?? {}, {
           "aria-rowindex": position === -1 ? undefined : table.pageStart + position + 1,
           "aria-selected": table.selectionMode === "none" ? undefined : String(selected),
           "data-selected": flag(selected),
@@ -456,7 +465,7 @@ export const DataTableRow = defineComponent({
                 "data-virtual-row": "",
               }
             : {}),
-        },
+        }),
         slots.default?.({ row, selected, columns: table.columns }) ??
           table.columns.map((column) => h(DataTableCell, { key: column.id, row, column })),
       );

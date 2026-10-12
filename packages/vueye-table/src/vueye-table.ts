@@ -21,6 +21,7 @@ import {
   DataTableEditRoot,
   DataTableEditCell,
   type CellEditorSlotProps,
+  rowAttributes,
 } from "@vueye-table/headless";
 import {
   VtColumnVisibility,
@@ -295,7 +296,13 @@ export const VueyeTable = defineComponent({
     const bodyRow = ({ row, rowIndex }: DetailSlotProps): VNodeChild =>
       h(
         DataTableRow,
-        { key: row.key, row, rowIndex, onClick: () => emit("row-click", row.original, row) },
+        {
+          key: row.key,
+          row,
+          rowIndex,
+          attributes: rowAttributes(props.rowAttrs, row),
+          onClick: () => emit("row-click", row.original, row),
+        },
         { default: () => cells(row, rowIndex), $stable: true },
       );
 

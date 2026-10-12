@@ -13,11 +13,13 @@ import {
   defineComponent,
   h,
   inject,
+  mergeProps,
   nextTick,
   provide,
   ref,
   useId,
   watch,
+  type ComponentPublicInstance,
   type InjectionKey,
   type PropType,
   type SlotsType,
@@ -44,6 +46,7 @@ import {
   type DetailSlotProps,
 } from "./hierarchy";
 import { loadSentinel } from "./loading";
+import { rowAttributes, type AnyRowAttrs } from "./row-attrs";
 import {
   asProp,
   columnProp,
@@ -312,6 +315,8 @@ export const DataGridBody = defineComponent({
     ...virtualProps,
     colspan: { type: Number, default: undefined },
     treeCell: { type: Boolean, default: true },
+    /** A page's own attributes for each row; the row's own always win. */
+    rowAttrs: { type: Function as PropType<AnyRowAttrs | undefined>, default: undefined },
   },
   setup(props, { slots }) {
     const table = injectDataTable("<DataGridBody>");
@@ -359,7 +364,7 @@ export const DataGridBody = defineComponent({
               );
               return h(
                 "tr",
-                {
+                mergeProps(rowAttributes(props.rowAttrs, row), {
                   key: item.key,
                   role: "row",
                   "aria-rowindex": table.pageStart + rowIndex + 1,
@@ -367,8 +372,9 @@ export const DataGridBody = defineComponent({
                   "data-dirty": flag(row.isDirty),
                   ...hierarchyRowAttrs(table, row, hierarchy),
                   "data-virtual-row": "",
-                  ref: (target) => binding.rows.measureElement(target, item.key),
-                },
+                  ref: (target: Element | ComponentPublicInstance | null) =>
+                    binding.rows.measureElement(target, item.key),
+                }),
                 [slots.rowHeader?.({ row, index: rowIndex }), ...columns],
               );
             },
@@ -398,14 +404,14 @@ export const DataGridBody = defineComponent({
                 const { row, rowIndex } = item;
                 return h(
                   "tr",
-                  {
+                  mergeProps(rowAttributes(props.rowAttrs, row), {
                     key: item.key,
                     role: "row",
                     "aria-rowindex": rowIndex + 2,
                     "data-key": String(row.key),
                     "data-dirty": flag(row.isDirty),
                     ...hierarchyRowAttrs(table, row, hierarchy),
-                  },
+                  }),
                   [
                     slots.rowHeader?.({ row, index: rowIndex }),
                     ...table.columns.map((column, columnIndex) =>

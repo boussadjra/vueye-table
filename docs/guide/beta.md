@@ -25,6 +25,15 @@ Version 2 applications need the [2.x migration guide](/guide/upgrading-from-2). 
 column definitions, selected row keys, slot scopes and immutable data updates changed in 3.0.
 Changing the dependency version alone does not migrate those contracts.
 
+## What changed in beta.3
+
+Beta.3 adds `row-attrs` to `VueyeTable`, `VueyeGrid` and `VtGrid`: `(item, row) =>` a class, a
+style, and `data-*` and `aria-*` attributes for each body row, so a row can be tinted by its state
+and found by tests without a marker in one of its cells. The row's own attributes win on a
+collision and handlers are left out. Headless rows take the same through `DataTableRow`'s
+`attributes` prop and `DataGridBody`'s `row-attrs`, and `rowAttributes` filters them. Nothing was
+removed or renamed. See [components](/guide/components).
+
 ## What changed in beta.2
 
 Beta.2 lets a host application speak its own language and wear its own theme. No import, option,

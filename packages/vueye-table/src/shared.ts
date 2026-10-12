@@ -20,7 +20,7 @@ import {
   type TextNormalizer,
 } from "@vueye-table/core";
 import { virtualProps } from "@vueye-table/headless";
-import { hierarchyProps } from "@vueye-table/headless";
+import { hierarchyProps, type AnyRowAttrs } from "@vueye-table/headless";
 import type { Density } from "@vueye-table/styled";
 import type { TableSource, LoadMore } from "@vueye-table/vue";
 import { defineComponent, type PropType, type VNodeChild } from "vue";
@@ -59,6 +59,11 @@ export const CellContent = defineComponent({
 
 /** Props both full components share. */
 export const commonProps = {
+  /**
+   * `(item, row) => attributes`: a class, a style, and `data-*` and `aria-*` attributes for each
+   * body row, read on every render. The row's own attributes win, and handlers are left out.
+   */
+  rowAttrs: { type: Function as PropType<AnyRowAttrs | undefined>, default: undefined },
   validateRow: { type: Function as PropType<TableOptions<any>["validateRow"]>, default: undefined },
   asyncValidation: {
     type: String as PropType<"held" | "optimistic" | undefined>,

@@ -19,6 +19,7 @@ import {
   injectVirtualRenderer,
   virtualProps,
   type GridCellSlotProps,
+  type AnyRowAttrs,
   DataTableExpandToggle,
   DataTableDetailRow,
   DataTableTreeCell,
@@ -496,6 +497,7 @@ const GridBody = defineComponent({
     },
     rowActions: { type: Boolean, default: false },
     removable: { type: Boolean, default: false },
+    rowAttrs: { type: Function as PropType<AnyRowAttrs | undefined>, default: undefined },
   },
   setup(props) {
     const table = injectDataTable("<VtGrid>");
@@ -507,6 +509,7 @@ const GridBody = defineComponent({
         {
           class: "vt-body",
           treeCell: false,
+          rowAttrs: props.rowAttrs,
           colspan: table.columns.length + (props.rowNumbers || details || props.rowActions ? 1 : 0),
         },
         {
@@ -564,6 +567,8 @@ export const VtGrid = defineComponent({
     ...surfaceProps,
     rowActions: { type: Boolean, default: false },
     removable: { type: Boolean, default: false },
+    /** A page's own class, style, `data-*` and `aria-*` attributes for each body row. */
+    rowAttrs: { type: Function as PropType<AnyRowAttrs | undefined>, default: undefined },
   },
   emits: { save: (_result: unknown) => true, cancel: (_key: unknown) => true },
   setup(props, { slots, attrs, emit }) {
@@ -666,6 +671,7 @@ export const VtGrid = defineComponent({
                       removable: props.removable,
                       treeColumn: props.treeColumn,
                       detail: slots.expanded,
+                      rowAttrs: props.rowAttrs,
                     }),
                   ],
               },
