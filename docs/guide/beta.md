@@ -27,8 +27,9 @@ Changing the dependency version alone does not migrate those contracts.
 
 ## What changed in beta.2
 
-Beta.2 lets a host application speak its own language and wear its own theme. All changes are
-additive; beta.1 applications keep working unchanged.
+Beta.2 lets a host application speak its own language and wear its own theme. No import, option,
+event or slot was removed or renamed. Because theme defaults now have zero specificity, host CSS
+that used to lose to them now applies, so check custom styles when upgrading.
 
 - Every word the components show or announce comes from `TableMessages`, passed through a
   `messages` prop or `VueyeTablePlugin` options. Counts are written in the table's `locale`,
