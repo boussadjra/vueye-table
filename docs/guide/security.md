@@ -21,7 +21,7 @@ an access-control boundary.
 
 Exports escape formula-like text by default. Clipboard copies preserve literal text unless
 `escapeFormulas: true` is passed. Destination software can interpret content differently;
-choose the option for that destination. See [migration notes](/guide/upgrading-from-2#export-and-paste-behavior-in-3-x-alpha).
+choose the option for that destination. See [migration notes](/guide/upgrading-from-2#export-and-paste-behavior-in-3-x).
 
 ## HTML in expanded details
 

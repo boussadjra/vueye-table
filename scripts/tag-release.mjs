@@ -13,6 +13,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 
 import { packageNames, publishablePackages, repositoryRoot } from "./packages.mjs";
+import { isGitHubLatest } from "./release-tags.mjs";
 import { parseVersion } from "./semver.mjs";
 
 function usage(message) {
@@ -95,10 +96,12 @@ function main() {
   const version = readVersion();
   const tag = `v${version}`;
   const prerelease = parseVersion(version).prerelease !== undefined;
+  const latest = isGitHubLatest(version);
   const notes = releaseNotes(version);
 
   if (options.dryRun) {
-    console.log(`Tag: ${tag}${prerelease ? " (prerelease)" : ""}\n\n${notes}`);
+    const kind = latest ? " (latest)" : prerelease ? " (prerelease)" : "";
+    console.log(`Tag: ${tag}${kind}\n\n${notes}`);
     console.log("--dry-run: nothing tagged or released.");
     return;
   }
@@ -130,8 +133,8 @@ function main() {
   writeFileSync(notesFile, notes);
   const releaseArguments = ["release", "create", tag, "--verify-tag", "--title", tag];
   releaseArguments.push("--notes-file", notesFile);
-  // A prerelease never becomes the repository's "Latest" release.
-  if (prerelease) releaseArguments.push("--prerelease", "--latest=false");
+  if (latest) releaseArguments.push("--latest");
+  else releaseArguments.push("--prerelease", "--latest=false");
   run("gh", releaseArguments);
   console.log(`Created release ${tag}.`);
 }

@@ -17,8 +17,10 @@ The Release workflow (`.github/workflows/release.yml`) only runs when `github.re
    npm trusted publishing (OIDC), with provenance. There is no npm token.
 4. The same run tags the merge commit `v<version>` and creates a GitHub release with
    `pnpm release:tag`. The release notes are the `vueye-table` changelog entry for that version,
-   followed by links to every published package. A prerelease is marked as one and never becomes
-   the repository's "Latest" release.
+   followed by links to every published package. GitHub never shows a prerelease as "Latest", so a
+   stable version, or a beta or release candidate of a new major (`3.0.0-beta.2`), is created as
+   a full release marked Latest; otherwise the repository would keep showing the previous major.
+   Alpha versions and prereleases of a later minor or patch stay prereleases.
 
 Publishing only happens once the `release` environment variable `NPM_TRUSTED_PUBLISHING` is
 `true`. Until then, step 3 does nothing, so a merge cannot fail before the packages exist.

@@ -36,8 +36,9 @@ export default defineConfig({
       { text: "Examples", link: "/examples/" },
       { text: "Decisions", link: "/adr/0001-layered-packages" },
       {
-        text: "3.0 alpha",
+        text: "3.0 beta",
         items: [
+          { text: "Beta contract and changes", link: "/guide/beta" },
           { text: "Upgrading from 2.x", link: "/guide/upgrading-from-2" },
           {
             text: "2.x on the legacy branch",
@@ -146,6 +147,6 @@ export default defineConfig({
     ],
     socialLinks: [{ icon: "github", link: "https://github.com/boussadjra/vueye-table" }],
     search: { provider: "local" },
-    footer: { message: "Released under the MIT License. 3.0.0-alpha: the API is provisional." },
+    footer: { message: "Released under the MIT License. 3.0.0-beta: not yet production ready." },
   },
 });

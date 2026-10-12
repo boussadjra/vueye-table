@@ -1,20 +1,21 @@
 # The 3.0 beta contract
 
-**3.0.0-beta.1 is published** for all six packages on npm's `beta` channel, with provenance and a
-[GitHub prerelease](https://github.com/boussadjra/vueye-table/releases/tag/v3.0.0-beta.1).
+**3.0.0-beta.2 is published** for all six packages on npm's `beta` channel, with provenance and a
+[GitHub release](https://github.com/boussadjra/vueye-table/releases/tag/v3.0.0-beta.2).
 Beta is a prerelease for application feedback and does not establish production readiness.
+npm's `latest` tag still points at the last alpha, so install `@beta` or an exact version.
 
 ## Install and upgrade
 
 Install an exact version or opt into the beta channel:
 
 ```sh
-pnpm add vueye-table@3.0.0-beta.1
+pnpm add vueye-table@3.0.0-beta.2
 # To follow subsequent betas:
 pnpm add vueye-table@beta
 ```
 
-Nuxt applications use `@vueye-table/nuxt@3.0.0-beta.1`. Keep directly installed vueye-table
+Nuxt applications use `@vueye-table/nuxt@3.0.0-beta.2`. Keep directly installed vueye-table
 packages on the same version. Vue 3.5 or later within Vue 3 is required; Nuxt integration supports Nuxt 4.x.
 The packages use ESM. Import `vueye-table/style.css` for full or styled components; the Nuxt
 module adds the stylesheet itself. See [getting started](/guide/getting-started) and
@@ -24,7 +25,30 @@ Version 2 applications need the [2.x migration guide](/guide/upgrading-from-2). 
 column definitions, selected row keys, slot scopes and immutable data updates changed in 3.0.
 Changing the dependency version alone does not migrate those contracts.
 
-Applications upgrading from alpha.10 receive the warehouse fixes:
+## What changed in beta.2
+
+Beta.2 lets a host application speak its own language and wear its own theme. All changes are
+additive; beta.1 applications keep working unchanged.
+
+- Every word the components show or announce comes from `TableMessages`, passed through a
+  `messages` prop or `VueyeTablePlugin` options. Counts are written in the table's `locale`,
+  which also orders text. See [language](/guide/language).
+- Search and text filters read text through `normalizeText`, by default `foldText`, which ignores
+  case, accents and Arabic letter shapes. `filterRows` accepts the same function, so a server can
+  filter exactly as the table does.
+- Theme defaults sit at zero specificity on the outermost themed element, so host tokens win and
+  toolbars inherit them. `theme="inherit"` declares no colors. See [theming](/guide/theming).
+- A `header.<id>` slot keeps click-to-sort and receives `{ column, sort, toggleSort }`.
+- Arrow keys and the collapsed-row chevron mirror right to left.
+- State `update:*` events are typed, `VueyeTableExposed` types the template ref, and the Nuxt
+  module's declaration names its types.
+
+The decision is recorded in [ADR 0021](/adr/0021-host-language-text-and-themes).
+
+## What changed in beta.1
+
+Beta.1 promoted the corrected alpha.12 package group. Applications upgrading from alpha.10
+receive the warehouse fixes:
 
 - Row-action menus stay within their utility column and reveal their opened controls in virtual
   viewports. Pointer and keyboard removal use the same operation.
@@ -70,7 +94,7 @@ requires an ADR, migration notes and a new beta version; read the release notes 
 The [Operations desk](/examples/operations-desk) tests the published package group with SQLite,
 100k orders, editable stock, lazy trees and real HTTP streams. Its acceptance log distinguishes
 published versions, unpublished candidates, hosted browser checks and unrun manual checks.
-Beta.1 passed [Windows/Linux application checks and all 36 Chromium/Firefox/WebKit cases](https://github.com/boussadjra/vueye-table/actions/runs/37967992595)
+The full published-package acceptance run was recorded for beta.1: it passed [Windows/Linux application checks and all 36 Chromium/Firefox/WebKit cases](https://github.com/boussadjra/vueye-table/actions/runs/37967992595)
 against the published npm group, with zero retries. The repository gate passed 433 tests.
 Automated accessibility attributes are evidence about markup; they do not prove a successful
 screen-reader session. Known limits belong in the acceptance log and release notes.
