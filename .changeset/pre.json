@@ -26,6 +26,7 @@
     "inline-typed-editors",
     "reactive-tree-filter",
     "rendered-column-coordinates",
+    "row-attrs",
     "tree-data",
     "tree-detail-components",
     "virtual-grid-pointer-focus",

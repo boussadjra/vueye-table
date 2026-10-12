@@ -1,5 +1,17 @@
 # @vueye-table/headless
 
+## 3.0.0-beta.3
+
+### Patch Changes
+
+- ac9e73a: New: `row-attrs` on `VueyeTable`, `VueyeGrid` and `VtGrid`, `(item, row) =>` a class, a style, and
+  `data-*` and `aria-*` attributes for each body row, read on every render. The row's own attributes
+  win on a collision and event handlers are left out. Headless rows take the same through
+  `DataTableRow`'s `attributes` prop and `DataGridBody`'s `row-attrs`; `rowAttributes`, `RowAttrs`
+  and `RowAttributes` are exported.
+  - @vueye-table/core@3.0.0-beta.3
+  - @vueye-table/vue@3.0.0-beta.3
+
 ## 3.0.0-beta.2
 
 ### Minor Changes
