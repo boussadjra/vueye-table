@@ -146,7 +146,8 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      # npm's own CLI performs the OIDC exchange, so it must be recent enough to support it.
+      # npm's own CLI performs the OIDC exchange. Dist-tag updates require npm >=11.21.0 and
+      # Allow npm dist-tag enabled in every package's trusted publisher settings.
       - name: Use an npm release that supports trusted publishing
         run: npm install --global npm@latest
 
@@ -157,7 +158,9 @@ jobs:
         run: pnpm package:check
 
       # Pending changesets open a version pull request. After that PR merges, publish:packages
-      # always writes beta to "beta". Alpha uses "latest" until a stable 3.x exists.
+      # writes every beta to both "beta" and "latest" across all six packages. Re-runs repair
+      # missing or outdated tags without republishing versions already on npm. Alpha uses
+      # "latest" until a stable 3.x exists; an explicit --tag updates only the chosen tag.
       # Publish is skipped until NPM_TRUSTED_PUBLISHING is set, so a merge cannot fail OIDC
       # before the packages exist and trusted publishers are attached.
       - name: Create a release pull request or publish
@@ -171,12 +174,11 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           # No NODE_AUTH_TOKEN and no NPM_TOKEN: authentication is the OIDC exchange above.
-          # Trusted publishing must be configured for every vueye-table package on npm.
+          # Trusted publishing, including Allow npm dist-tag, must be configured for every package.
           NPM_CONFIG_PROVENANCE: "true"
 
-      # With no pending changesets the step above published, so tag that version and release it.
-      # A version that already has its tag and release is skipped, so pushes without a release
-      # change nothing.
+      # With no pending changesets the step above published or repaired npm tags, so tag that
+      # version and release it. Existing Git tags and GitHub releases are skipped.
       - name: Tag the version and create the GitHub release
         if: ${{ steps.changesets.outputs.hasChangesets == 'false' && vars.NPM_TRUSTED_PUBLISHING == 'true' }}
         run: pnpm release:tag

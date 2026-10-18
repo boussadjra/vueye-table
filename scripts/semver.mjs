@@ -29,6 +29,7 @@ export function parseVersion(value) {
 
 function compareIdentifier(left, right) {
   if (left === right) return 0;
+  if (typeof left === "number" && typeof right === "number") return left < right ? -1 : 1;
   if (typeof left === "number") return -1;
   if (typeof right === "number") return 1;
   return left < right ? -1 : 1;

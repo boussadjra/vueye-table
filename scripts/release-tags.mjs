@@ -1,6 +1,6 @@
 import { parseVersion } from "./semver.mjs";
 
-/** Beta always has an explicit channel; alpha retains its established latest policy. */
+/** The primary channel; beta also advances latest through releaseTagsFor. */
 export function releaseTagFor(version, publishedSets) {
   const { major, prerelease } = parseVersion(version);
   if (typeof prerelease?.[0] !== "string") return "latest";
@@ -12,6 +12,13 @@ export function releaseTagFor(version, publishedSets) {
     }),
   );
   return stableExists ? prerelease[0] : "latest";
+}
+
+/** Every tag to synchronize, unless the caller explicitly chooses a single channel. */
+export function releaseTagsFor(version, publishedSets, overrideTag) {
+  if (overrideTag) return [overrideTag];
+  const tag = releaseTagFor(version, publishedSets);
+  return tag === "beta" ? ["beta", "latest"] : [tag];
 }
 
 /**

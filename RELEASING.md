@@ -26,9 +26,10 @@ Publishing only happens once the `release` environment variable `NPM_TRUSTED_PUB
 `true`. Until then, step 3 does nothing, so a merge cannot fail before the packages exist.
 
 Do not use `changeset publish`. `pnpm publish:packages` publishes in dependency order, skips any
-package already on npm at that version (so a failed run can simply be re-run), and picks the
-dist-tag. `pnpm release:tag` is idempotent the same way: it skips a tag or release that already
-exists, and `pnpm release:tag --dry-run` prints the tag and notes without creating anything.
+package already on npm at that exact version, and synchronizes the required dist-tags for all six
+packages. Re-running it repairs missing or outdated tags without republishing existing versions.
+`pnpm release:tag` is idempotent the same way: it skips a tag or release that already exists, and
+`pnpm release:tag --dry-run` prints the tag and notes without creating anything.
 
 ## Prerelease line
 
@@ -61,16 +62,32 @@ followed by a normal Version PR.
 
 ## Dist-tags
 
-- **Beta always uses `beta`**, including the first `3.0.0-beta.1`. Install it explicitly with
-  `pnpm add vueye-table@beta`; applications can also pin the exact version. The publisher updates
-  this channel only when publishing a beta version.
+- **Every beta updates both `beta` and `latest`** for all six packages. For example, publishing
+  `3.0.0-beta.4` makes both `pnpm add vueye-table` and `pnpm add vueye-table@beta` install that
+  version. This policy also applies after a stable version exists; the default install follows
+  the beta line. Applications can pin an exact version when they need a fixed release.
 - **Until a stable 3.x exists**, alpha publishes to `latest`. 1.x stays installable as
   `vueye-table@1`.
-- **Once `3.0.0` is out**, `latest` holds the stable line and a prerelease goes under its own id
-  (`beta`, `rc`). Older majors never count toward this.
+- **Stable versions use `latest`**. Other prereleases use their own id (`alpha`, `rc`) once a
+  stable version of the same major exists. Older majors never count toward this. Beta keeps the
+  two-tag policy above.
 
-`pnpm publish:packages --tag <tag>` overrides the policy for one run, and `--dry-run` prints the
-plan without publishing.
+The publisher uses npm's CLI to repair the required dist-tags even when every package version is
+already published. Before publishing or changing tags, an automatic run refuses to proceed if
+any required tag already points to a newer version. An older checkout therefore cannot move
+release channels backward. `--dry-run` performs the same check and prints the publish and
+tag-repair plan without changing npm.
+
+`pnpm publish:packages --tag <tag>` overrides the automatic policy for one run: only the chosen
+tag is updated, and it may move backward. For an intentional rollback, check out the target
+version and run, for example, `pnpm publish:packages --tag latest`. This updates only `latest`
+across all six packages; `beta` stays at its current version.
+
+Trusted publishing for these tag updates requires **npm 11.21.0 or newer** and **Allow npm
+dist-tag** enabled in the trusted publisher settings of every package. The Release workflow
+installs the current npm release before publishing. If that permission is missing, enable it for
+all six packages, then re-run the publisher; already-published versions are skipped and their
+tags are repaired.
 
 ## First publish
 
@@ -89,6 +106,7 @@ Trusted publishing cannot create a package that does not exist yet, so the first
    - Repository: `vueye-table`
    - Workflow filename: `release.yml`
    - Environment name: `release`
+   - Enable **Allow npm dist-tag** so the publisher can synchronize both release channels.
 6. Delete the `NPM_TOKEN` secret and revoke the token. Set the `release` environment variable
    `NPM_TRUSTED_PUBLISHING` to `true`. Require 2FA and disallow tokens on every package.
 
