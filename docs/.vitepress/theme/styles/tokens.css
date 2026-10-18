@@ -22,6 +22,8 @@
   --vy-grid-line: rgb(19 18 26 / 0.06);
   --vy-glass: rgb(255 255 255 / 0.72);
   --vy-glass-border: rgb(19 18 26 / 0.08);
+  --vy-surface-filter: blur(14px);
+  --vy-nav-filter: saturate(180%) blur(18px);
   --vy-card: #ffffff;
   --vy-card-border: #e9e6f1;
   --vy-elevation:
@@ -67,7 +69,7 @@
   --vp-button-brand-active-bg: #7a1fb3;
 
   --vp-nav-bg-color: rgb(255 255 255 / 0.72);
-  --vp-nav-backdrop-filter: saturate(180%) blur(18px);
+  --vp-nav-backdrop-filter: var(--vy-nav-filter);
   --vp-sidebar-bg-color: transparent;
 
   --vp-code-block-bg: #f8f7fc;
@@ -124,4 +126,36 @@
   --vp-code-block-bg: #0e0d17;
   --vp-code-bg: rgb(207 139 255 / 0.1);
   --vp-code-color: #dcaaff;
+}
+
+@media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
+  :root,
+  .dark {
+    --vy-glass: var(--vp-c-bg-elv);
+    --vy-glass-border: var(--vp-c-border);
+    --vy-surface-filter: none;
+    --vy-nav-filter: none;
+    --vy-scrim-filter: none;
+    --vp-nav-bg-color: var(--vp-c-bg);
+    --vp-nav-home-bg-color: var(--vp-c-bg);
+    --vp-sidebar-bg-color: var(--vp-c-bg-alt);
+  }
+}
+
+@media (prefers-contrast: more) {
+  :root {
+    --vp-c-text-2: #35313f;
+    --vp-c-text-3: #494353;
+    --vp-c-border: #777080;
+    --vp-c-divider: #777080;
+    --vy-card-border: #777080;
+  }
+
+  .dark {
+    --vp-c-text-2: #d6d2e5;
+    --vp-c-text-3: #c2bdd3;
+    --vp-c-border: #9991ab;
+    --vp-c-divider: #9991ab;
+    --vy-card-border: #9991ab;
+  }
 }

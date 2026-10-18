@@ -243,7 +243,13 @@ const themeStyle = computed(() => {
           :aria-label="accent.name"
           :title="accent.name"
           @click="accentName = accent.name"
-        />
+        >
+          <span class="swatch-color" aria-hidden="true">
+            <svg v-if="accentName === accent.name" viewBox="0 0 16 16">
+              <path d="m4 8 2.5 2.5L12 5" />
+            </svg>
+          </span>
+        </button>
       </div>
       <div class="control" role="group" aria-label="Density">
         <span class="control-label">Density</span>
@@ -333,6 +339,7 @@ const themeStyle = computed(() => {
 
 .tabs {
   display: inline-flex;
+  flex-wrap: wrap;
   padding: 3px;
   gap: 2px;
   background: var(--vp-c-bg-soft);
@@ -341,6 +348,7 @@ const themeStyle = computed(() => {
 }
 
 .tabs button {
+  min-height: 2.75rem;
   padding: 6px 14px;
   font-size: 13px;
   font-weight: 550;
@@ -378,22 +386,6 @@ const themeStyle = computed(() => {
   height: 7px;
   border-radius: 50%;
   background: #37d399;
-  box-shadow: 0 0 0 0 rgb(55 211 153 / 0.5);
-  animation: pulse 2.4s infinite;
-}
-
-@keyframes pulse {
-  0% {
-    box-shadow: 0 0 0 0 rgb(55 211 153 / 0.45);
-  }
-
-  70% {
-    box-shadow: 0 0 0 8px rgb(55 211 153 / 0);
-  }
-
-  100% {
-    box-shadow: 0 0 0 0 rgb(55 211 153 / 0);
-  }
 }
 
 .stage {
@@ -459,8 +451,10 @@ const themeStyle = computed(() => {
 
 .control {
   display: inline-flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 8px;
+  max-width: 100%;
+  gap: 4px;
 }
 
 .control-label {
@@ -472,8 +466,20 @@ const themeStyle = computed(() => {
 }
 
 .swatch {
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 8px;
+}
+
+.swatch-color {
+  display: grid;
+  place-items: center;
   width: 22px;
   height: 22px;
+  color: #fff;
   border-radius: 50%;
   background: var(--swatch);
   box-shadow:
@@ -484,18 +490,43 @@ const themeStyle = computed(() => {
     transform 0.2s var(--vy-ease);
 }
 
-.swatch:hover {
-  transform: scale(1.1);
+@media (hover: hover) and (pointer: fine) {
+  .swatch:hover .swatch-color {
+    transform: scale(1.1);
+  }
 }
 
-.swatch[aria-pressed="true"] {
+.swatch[aria-pressed="true"] .swatch-color {
   box-shadow:
     0 0 0 2px var(--vy-card),
     0 0 0 4px var(--swatch);
 }
 
+.swatch svg {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentcolor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.swatch:active .swatch-color {
+  transform: scale(0.9);
+  transition: none;
+}
+
+.swatch:focus-visible,
+.tabs button:focus-visible,
+.segmented button:focus-visible {
+  outline: 2px solid var(--vp-c-brand-1);
+  outline-offset: 3px;
+}
+
 .segmented {
   display: inline-flex;
+  flex-wrap: wrap;
   padding: 2px;
   background: var(--vp-c-bg-soft);
   border: 1px solid var(--vy-card-border);
@@ -503,6 +534,8 @@ const themeStyle = computed(() => {
 }
 
 .segmented button {
+  min-height: 2.75rem;
+  flex: 1 0 auto;
   padding: 3px 10px;
   font-size: 12.5px;
   color: var(--vp-c-text-2);
@@ -514,6 +547,13 @@ const themeStyle = computed(() => {
   color: var(--vp-c-text-1);
   background: var(--vy-card);
   box-shadow: 0 0 0 1px var(--vy-card-border);
+}
+
+.tabs button:active,
+.segmented button:active {
+  background: var(--vp-c-default-soft);
+  box-shadow: inset 0 0 0 1px var(--vy-card-border);
+  transition: none;
 }
 
 .hint {
@@ -556,6 +596,24 @@ const themeStyle = computed(() => {
 
   .tabs {
     justify-self: end;
+    min-width: 0;
+  }
+
+  .controls {
+    gap: 12px;
+    padding: 12px;
+  }
+
+  .control {
+    width: 100%;
+  }
+
+  .control-label {
+    flex-basis: 100%;
+  }
+
+  .segmented {
+    width: 100%;
   }
 
   .main {

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { withBase } from "vitepress";
 
+import { docsRelease } from "../../release";
 import CopyCommand from "./CopyCommand.vue";
 </script>
 
@@ -27,10 +28,9 @@ import CopyCommand from "./CopyCommand.vue";
           View on GitHub
         </a>
       </div>
-      <CopyCommand command="pnpm add vueye-table@beta" />
+      <CopyCommand :command="docsRelease.installCommand" />
       <p class="fine">
-        3.0.0-beta: documented APIs stay stable through the beta, but it is not yet production
-        ready. The 2.x component lives on the
+        {{ docsRelease.notice }} The 2.x component lives on the
         <a href="https://github.com/boussadjra/vueye-table/tree/legacy">legacy branch</a>.
       </p>
     </div>
@@ -75,13 +75,6 @@ import CopyCommand from "./CopyCommand.vue";
   width: 96px;
   height: 96px;
   filter: drop-shadow(0 18px 40px rgb(160 45 230 / 0.45));
-  animation: float 7s ease-in-out infinite;
-}
-
-@keyframes float {
-  50% {
-    transform: translateY(-8px) rotate(4deg);
-  }
 }
 
 .vy-h2 {

@@ -3,13 +3,16 @@
 ## Install
 
 ```bash
-pnpm add vueye-table@beta
+pnpm add vueye-table@3.0.0-beta.3
 ```
 
 3.0 is in beta, published on npm's `beta` channel; a plain `pnpm add vueye-table` still resolves
-to the last alpha. Pin an exact version such as `3.0.0-beta.3` if you prefer, and read
-[the beta contract](/guide/beta) for what stays stable. Vue 3.5 or newer is a peer dependency. `vueye-table` re-exports every layer, so one install covers
+to the last alpha. To follow subsequent betas, use `pnpm add vueye-table@beta` instead of the
+exact version above. Vue 3.5 or newer is a peer dependency. `vueye-table` re-exports every layer, so one install covers
 the engine, the composables, and the headless and styled components.
+
+This is a prerelease for application feedback. Review the [beta contract](/guide/beta) for API
+guarantees and acceptance limits before adopting it.
 
 ## A full table
 

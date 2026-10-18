@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { withBase } from "vitepress";
 
+import { docsRelease } from "../../release";
 import CopyCommand from "./CopyCommand.vue";
 import HeroGrid from "./HeroGrid.vue";
 import LiveShowcase from "./LiveShowcase.vue";
@@ -24,12 +25,6 @@ const facts = [
     <HeroGrid />
 
     <div class="inner">
-      <a class="eyebrow" :href="withBase('/guide/beta')">
-        <span class="badge">v3 beta</span>
-        <span>Rebuilt from the ground up</span>
-        <span class="arrow" aria-hidden="true">→</span>
-      </a>
-
       <h1 id="vy-hero-title" class="title">The <em>data</em> framework for&nbsp;Vue.</h1>
 
       <p class="lede">
@@ -38,13 +33,19 @@ const facts = [
         them.
       </p>
 
+      <a class="release" :href="withBase(docsRelease.contractLink)">
+        <span class="badge">{{ docsRelease.label }}</span>
+        <span>Read the beta contract</span>
+        <span class="arrow" aria-hidden="true">→</span>
+      </a>
+
       <div class="actions">
         <a class="vy-button primary" :href="withBase('/guide/getting-started')">
           Get started
           <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4 10h11m-4-4 4 4-4 4" /></svg>
         </a>
         <a class="vy-button ghost" href="#layers">Explore the layers</a>
-        <CopyCommand command="pnpm add vueye-table@beta" />
+        <CopyCommand :command="docsRelease.installCommand" />
       </div>
 
       <div class="showcase">
@@ -73,6 +74,7 @@ const facts = [
   inset: 0 0 auto;
   z-index: -1;
   height: 1000px;
+  overflow: hidden;
   pointer-events: none;
 }
 
@@ -94,7 +96,6 @@ const facts = [
   height: 480px;
   margin-left: -600px;
   background: #a02de6;
-  animation: drift-a 24s ease-in-out infinite alternate;
 }
 
 .magenta {
@@ -103,7 +104,6 @@ const facts = [
   height: 420px;
   margin-left: 60px;
   background: #c9117f;
-  animation: drift-b 28s ease-in-out infinite alternate;
 }
 
 .blue {
@@ -112,29 +112,10 @@ const facts = [
   height: 360px;
   margin-left: -300px;
   background: #0c93df;
-  animation: drift-c 32s ease-in-out infinite alternate;
 }
 
 .dark .blue {
   opacity: 0.24;
-}
-
-@keyframes drift-a {
-  to {
-    transform: translate3d(120px, 60px, 0) scale(1.12);
-  }
-}
-
-@keyframes drift-b {
-  to {
-    transform: translate3d(-100px, 90px, 0) scale(0.92);
-  }
-}
-
-@keyframes drift-c {
-  to {
-    transform: translate3d(80px, -70px, 0) scale(1.08);
-  }
 }
 
 .inner {
@@ -145,10 +126,14 @@ const facts = [
   text-align: center;
 }
 
-.eyebrow {
+.release {
   display: inline-flex;
   align-items: center;
+  flex-wrap: wrap;
+  justify-content: center;
   gap: 10px;
+  min-height: 44px;
+  margin-top: 24px;
   padding: 4px 14px 4px 4px;
   font-size: 13.5px;
   font-weight: 500;
@@ -156,13 +141,13 @@ const facts = [
   background: var(--vy-glass);
   border: 1px solid var(--vy-glass-border);
   border-radius: 999px;
-  backdrop-filter: blur(14px);
+  backdrop-filter: var(--vy-surface-filter);
   transition:
     color 0.2s,
     border-color 0.2s;
 }
 
-.eyebrow:hover {
+.release:hover {
   color: var(--vp-c-text-1);
   border-color: rgb(160 45 230 / 0.45);
 }
@@ -182,17 +167,17 @@ const facts = [
   transition: transform 0.25s var(--vy-ease);
 }
 
-.eyebrow:hover .arrow {
+.release:hover .arrow {
   transform: translateX(3px);
 }
 
 .title {
   max-width: 11em;
-  margin: 28px auto 0;
-  font-size: clamp(3rem, 8.2vw, 6.5rem);
+  margin: 0 auto;
+  font-size: clamp(3rem, 8.2vw, 6rem);
   font-weight: 700;
   line-height: 0.96;
-  letter-spacing: -0.052em;
+  letter-spacing: -0.04em;
   color: var(--vp-c-text-1);
   text-wrap: balance;
 }
@@ -204,16 +189,7 @@ const facts = [
   font-style: italic;
   font-weight: 400;
   letter-spacing: -0.02em;
-  color: transparent;
-  background: var(--vy-gradient) 0 0 / 200% 100%;
-  background-clip: text;
-  animation: shimmer 9s ease-in-out infinite alternate;
-}
-
-@keyframes shimmer {
-  to {
-    background-position: 100% 0;
-  }
+  color: var(--vp-c-brand-1);
 }
 
 .lede {
@@ -237,7 +213,6 @@ const facts = [
 .showcase {
   position: relative;
   margin-top: clamp(56px, 8vw, 88px);
-  animation: rise 0.9s var(--vy-ease) both;
 }
 
 .showcase::before {
@@ -249,13 +224,6 @@ const facts = [
   border-radius: 50%;
   filter: blur(90px);
   opacity: 0.22;
-}
-
-@keyframes rise {
-  from {
-    opacity: 0;
-    transform: translateY(24px);
-  }
 }
 
 .facts {

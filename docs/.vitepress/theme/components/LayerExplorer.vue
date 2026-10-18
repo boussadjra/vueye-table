@@ -102,7 +102,6 @@ function onKey(event: KeyboardEvent): void {
 <template>
   <section id="layers" class="vy-section vy-layers" aria-labelledby="vy-layers-title">
     <header class="vy-section-head">
-      <p class="vy-kicker">Architecture</p>
       <h2 id="vy-layers-title" class="vy-h2">Five layers. <em>One</em> engine.</h2>
       <p class="vy-section-lede">
         Each package depends only on the layers beneath it. Start at the top with one tag, and drop

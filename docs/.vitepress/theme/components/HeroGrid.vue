@@ -4,14 +4,13 @@ import { columnLabel, toA1 } from "vueye-table";
 
 /*
  * The hero's backdrop: a spreadsheet whose cell cursor follows the pointer, names the cell it is
- * on with the engine's own toA1, and wanders like someone pressing arrow keys when left alone.
+ * on with the engine's own toA1. It stays still until the reader moves the pointer.
  */
 
 const CELL_WIDTH = 112;
 const CELL_HEIGHT = 44;
 const COLUMNS = 26;
 const ROWS = 40;
-const IDLE_AFTER = 2600;
 
 const columnLabels = Array.from({ length: COLUMNS }, (_, index) => columnLabel(index));
 const rowLabels = Array.from({ length: ROWS }, (_, index) => index + 1);
@@ -31,21 +30,9 @@ const rowBandStyle = computed(() => ({
 }));
 
 let host: HTMLElement | null = null;
-let lastPointer = 0;
 let frame = 0;
-let timer: ReturnType<typeof setInterval> | undefined;
+let motionQuery: MediaQueryList | undefined;
 let reducedMotion = false;
-
-function bounds(): { columns: number; rows: number } {
-  const rect = cells.value?.getBoundingClientRect();
-  if (!rect) {
-    return { columns: 8, rows: 8 };
-  }
-  return {
-    columns: Math.max(1, Math.min(COLUMNS, Math.floor(rect.width / CELL_WIDTH))),
-    rows: Math.max(1, Math.min(10, Math.floor(rect.height / CELL_HEIGHT))),
-  };
-}
 
 function place(column: number, row: number): void {
   if (column === cursor.value.column && row === cursor.value.row) {
@@ -55,8 +42,11 @@ function place(column: number, row: number): void {
 }
 
 function onPointerMove(event: PointerEvent): void {
-  lastPointer = Date.now();
-  if (event.target instanceof Element && event.target.closest("[data-grid-ignore]")) {
+  if (
+    reducedMotion ||
+    event.pointerType === "touch" ||
+    (event.target instanceof Element && event.target.closest("[data-grid-ignore]"))
+  ) {
     return;
   }
   const { clientX, clientY } = event;
@@ -74,45 +64,23 @@ function onPointerMove(event: PointerEvent): void {
   });
 }
 
-const steps = [
-  [1, 0],
-  [0, 1],
-  [-1, 0],
-  [0, -1],
-] as const;
-let heading = 0;
-
-function wander(): void {
-  if (reducedMotion || Date.now() - lastPointer < IDLE_AFTER || host?.matches(":hover")) {
-    return;
-  }
-  const { columns, rows } = bounds();
-  if (Math.random() < 0.35) {
-    heading = Math.floor(Math.random() * steps.length);
-  }
-  for (let attempt = 0; attempt < steps.length; attempt += 1) {
-    const [dx, dy] = steps[(heading + attempt) % steps.length] ?? steps[0];
-    const column = cursor.value.column + dx;
-    const row = cursor.value.row + dy;
-    if (column >= 0 && row >= 0 && column < columns && row < rows) {
-      heading = (heading + attempt) % steps.length;
-      place(column, row);
-      return;
-    }
-  }
+function onMotionChange(event: MediaQueryListEvent): void {
+  reducedMotion = event.matches;
+  cancelAnimationFrame(frame);
 }
 
 onMounted(() => {
-  reducedMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  motionQuery = matchMedia("(prefers-reduced-motion: reduce)");
+  reducedMotion = motionQuery.matches;
+  motionQuery.addEventListener("change", onMotionChange);
   host = root.value?.parentElement ?? null;
   host?.addEventListener("pointermove", onPointerMove, { passive: true });
-  timer = setInterval(wander, 900);
 });
 
 onBeforeUnmount(() => {
   host?.removeEventListener("pointermove", onPointerMove);
   cancelAnimationFrame(frame);
-  clearInterval(timer);
+  motionQuery?.removeEventListener("change", onMotionChange);
 });
 </script>
 

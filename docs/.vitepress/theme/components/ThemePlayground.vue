@@ -109,7 +109,13 @@ const attributes = computed(() =>
               :aria-pressed="option.name === swatch.name"
               :style="{ '--light': option.light, '--dark': option.dark }"
               @click="swatch = option"
-            />
+            >
+              <span class="swatch-color" aria-hidden="true">
+                <svg v-if="option.name === swatch.name" viewBox="0 0 16 16">
+                  <path d="m4 8 2.5 2.5L12 5" />
+                </svg>
+              </span>
+            </button>
           </div>
         </fieldset>
         <label class="group range">
@@ -198,37 +204,74 @@ output {
 
 .swatches {
   display: flex;
-  gap: 10px;
+  flex-wrap: wrap;
+  gap: 4px;
 }
 
 .swatch {
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.swatch-color {
+  display: grid;
+  place-items: center;
   width: 28px;
   height: 28px;
+  color: #fff;
   border-radius: 50%;
   background: linear-gradient(135deg, var(--light) 0 50%, var(--dark) 50% 100%);
   border: 2px solid transparent;
   box-shadow: 0 0 0 1px rgb(255 255 255 / 0.12);
-  cursor: pointer;
   transition: transform 0.2s var(--vy-ease);
 }
 
-.swatch:hover {
-  transform: scale(1.08);
+@media (hover: hover) and (pointer: fine) {
+  .swatch:hover .swatch-color {
+    transform: scale(1.08);
+  }
 }
 
-.swatch[aria-pressed="true"] {
+.swatch[aria-pressed="true"] .swatch-color {
   border-color: #0b0a13;
   box-shadow: 0 0 0 2px #f3f1ff;
 }
 
+.swatch svg {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentcolor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.swatch:active .swatch-color {
+  transform: scale(0.9);
+  transition: none;
+}
+
+.swatch:focus-visible,
+.segmented button:focus-visible {
+  outline: 2px solid #c084fc;
+  outline-offset: 3px;
+}
+
 input[type="range"] {
   width: 100%;
+  min-height: 2.75rem;
   accent-color: #c084fc;
 }
 
 .segmented {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  display: flex;
+  flex-wrap: wrap;
   padding: 3px;
   background: rgb(255 255 255 / 0.05);
   border: 1px solid rgb(255 255 255 / 0.08);
@@ -236,6 +279,8 @@ input[type="range"] {
 }
 
 .segmented button {
+  flex: 1 1 auto;
+  min-height: 2.75rem;
   padding: 6px 4px;
   font-size: 12px;
   color: #b7b3cc;
@@ -249,8 +294,14 @@ input[type="range"] {
   background: var(--vy-gradient-strong);
 }
 
+.segmented button:active {
+  background: rgb(255 255 255 / 0.15);
+  transition: none;
+}
+
 .toggles {
   display: flex;
+  flex-wrap: wrap;
   gap: 18px;
 }
 
@@ -258,6 +309,7 @@ input[type="range"] {
   display: inline-flex;
   align-items: center;
   gap: 8px;
+  min-height: 2.75rem;
   cursor: pointer;
 }
 

@@ -30,6 +30,21 @@ body {
   outline-offset: 2px;
 }
 
+:where(button, a, input, select, textarea) {
+  -webkit-tap-highlight-color: transparent;
+}
+
+:where(button, input, select, textarea) {
+  accent-color: var(--vp-c-brand-1);
+  caret-color: var(--vp-c-brand-1);
+}
+
+.vy-home :where(button, a),
+.gallery a,
+.vy-demo :where(button, a) {
+  touch-action: manipulation;
+}
+
 /* Navigation */
 
 :root {
@@ -65,7 +80,7 @@ body {
   font-weight: 450;
 }
 
-.VPSidebar .VPSidebarItem.level-1.is-active > .item > .indicator {
+.VPSidebar .VPSidebarItem:not(.level-0).is-active > .item > .indicator {
   width: 2px;
   background: var(--vy-gradient);
 }
@@ -191,33 +206,12 @@ body {
   text-align: center;
 }
 
-.vy-kicker {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  font-family: var(--vp-font-family-mono);
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--vp-c-brand-1);
-}
-
-.vy-kicker::before {
-  content: "";
-  width: 7px;
-  height: 7px;
-  background: var(--vy-gradient);
-  border-radius: 1.5px;
-  transform: rotate(45deg);
-}
-
 .vy-h2 {
-  margin-top: 18px;
+  margin-top: 0;
   font-size: clamp(2.25rem, 5.2vw, 4rem);
   font-weight: 700;
   line-height: 1;
-  letter-spacing: -0.048em;
+  letter-spacing: -0.04em;
   color: var(--vp-c-text-1);
   text-wrap: balance;
 }
@@ -229,9 +223,7 @@ body {
   font-style: italic;
   font-weight: 400;
   letter-spacing: -0.02em;
-  color: transparent;
-  background: var(--vy-gradient);
-  background-clip: text;
+  color: var(--vp-c-brand-1);
 }
 
 .vy-section-lede {
@@ -247,8 +239,8 @@ body {
   align-items: center;
   justify-content: center;
   gap: 8px;
-  height: 46px;
-  padding: 0 22px;
+  min-height: 46px;
+  padding: 10px 22px;
   font-size: 15px;
   font-weight: 600;
   white-space: nowrap;
@@ -294,12 +286,37 @@ body {
   color: var(--vp-c-text-1);
   background: var(--vy-glass);
   border-color: var(--vy-glass-border);
-  backdrop-filter: blur(14px);
+  backdrop-filter: var(--vy-surface-filter);
 }
 
 .vy-button.ghost:hover {
   border-color: var(--vp-c-border);
   transform: translateY(-1px);
+}
+
+.vy-button.primary:active,
+.vy-button.ghost:active {
+  transform: translateY(0) scale(0.98);
+  transition-duration: 0s;
+}
+
+.vy-button.primary:active svg,
+.vy-button.ghost:active svg {
+  transform: none;
+  transition-duration: 0s;
+}
+
+.vy-home .release:active,
+.vy-home .panel-link:active,
+.vy-home .nuxt:active,
+.gallery a:active {
+  opacity: 0.8;
+  transition-duration: 0s;
+}
+
+.vy-home .plane:active .face {
+  border-color: var(--vp-c-brand-1);
+  transition-duration: 0s;
 }
 
 /* The footer sits on the same canvas as the page. */
@@ -311,9 +328,32 @@ body {
   *,
   *::before,
   *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
+    animation: none !important;
+    transition-property: color, background-color, border-color, opacity !important;
+    transition-duration: 120ms !important;
     scroll-behavior: auto !important;
+  }
+
+  .vy-home .panel:not(.current) {
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
+  .vy-home .aurora,
+  .vy-home .showcase::before {
+    display: none;
+  }
+
+  .VPNavBar::before,
+  .VPLocalNav {
+    background: var(--vp-c-bg);
+    backdrop-filter: none;
+  }
+}
+
+@media (prefers-contrast: more) {
+  :focus-visible {
+    outline-width: 3px;
   }
 }

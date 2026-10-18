@@ -1,6 +1,7 @@
 {
   "extends": "@vueye-table/typescript-config/application",
   "compilerOptions": {
+    "allowImportingTsExtensions": true,
     "skipLibCheck": true
   },
   "vueCompilerOptions": {
