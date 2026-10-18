@@ -49,7 +49,6 @@ function onPointerMove(event: PointerEvent): void {
 <template>
   <section class="vy-section vy-features" aria-labelledby="vy-features-title">
     <header class="vy-section-head">
-      <p class="vy-kicker">What it does</p>
       <h2 id="vy-features-title" class="vy-h2">
         Built like a spreadsheet. <em>Shaped</em> like Vue.
       </h2>
@@ -470,13 +469,6 @@ kbd {
   height: 1.1em;
   margin: 0 1px -0.2em;
   background: var(--vp-c-text-1);
-  animation: blink 1.1s steps(1) infinite;
-}
-
-@keyframes blink {
-  50% {
-    opacity: 0;
-  }
 }
 
 .suggest {
@@ -621,22 +613,10 @@ kbd {
 
 .bar span {
   display: block;
-  width: 38%;
+  width: 100%;
   height: 100%;
   background: var(--vy-gradient);
   border-radius: inherit;
-  animation: load 2.8s var(--vy-ease) infinite;
-}
-
-@keyframes load {
-  0% {
-    transform: translateX(-100%);
-  }
-
-  60%,
-  100% {
-    transform: translateX(270%);
-  }
 }
 
 /* Immutable: two arrays sharing rows. */

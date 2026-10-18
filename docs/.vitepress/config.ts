@@ -1,7 +1,186 @@
-import { defineConfig, postcssIsolateStyles } from "vitepress";
+import { defineConfig, postcssIsolateStyles, type DefaultTheme } from "vitepress";
+
+import { docsRelease } from "./release.ts";
 
 const description =
   "A Vue framework for data, data tables, and spreadsheets: one engine, with composables, headless and styled components, and a full table on top.";
+
+type DocsSection = "Guide" | "Examples" | "Decisions";
+
+const guideItems: DefaultTheme.SidebarItem[] = [
+  {
+    text: "Start",
+    collapsed: false,
+    items: [
+      { text: "Getting started", link: "/guide/getting-started" },
+      { text: "3.0 beta contract", link: "/guide/beta" },
+      { text: "Layers", link: "/guide/layers" },
+      { text: "Nuxt", link: "/guide/nuxt" },
+    ],
+  },
+  {
+    text: "Tables",
+    collapsed: false,
+    items: [
+      { text: "Columns", link: "/guide/columns" },
+      { text: "State and v-model", link: "/guide/state" },
+      { text: "Row expansion", link: "/guide/expansion" },
+      { text: "Tree data", link: "/guide/trees" },
+      { text: "Theming", link: "/guide/theming" },
+      { text: "Language, locale and search", link: "/guide/language" },
+    ],
+  },
+  {
+    text: "Editing",
+    collapsed: true,
+    items: [
+      { text: "Editing and spreadsheets", link: "/guide/editing" },
+      { text: "Validation and saving", link: "/guide/validation" },
+      { text: "Vue row drafts", link: "/guide/row-drafts" },
+    ],
+  },
+  {
+    text: "Large data",
+    collapsed: true,
+    items: [
+      { text: "Server-side data", link: "/guide/server-data" },
+      { text: "Incremental data and streams", link: "/guide/streaming" },
+      { text: "Large datasets and virtualization", link: "/guide/virtualization" },
+    ],
+  },
+  {
+    text: "Reference",
+    collapsed: true,
+    items: [
+      { text: "Security", link: "/guide/security" },
+      { text: "Performance", link: "/guide/performance" },
+      {
+        text: "Benchmarks",
+        collapsed: true,
+        items: [
+          { text: "Tree data benchmark", link: "/benchmarks/tree-data" },
+          { text: "Validation benchmark", link: "/benchmarks/validation" },
+          { text: "Streaming benchmark", link: "/benchmarks/streaming" },
+        ],
+      },
+      { text: "Ingestion, hierarchy and editing API", link: "/guide/api-reference" },
+      { text: "Component reference", link: "/guide/components" },
+      { text: "Upgrading from 2.x", link: "/guide/upgrading-from-2" },
+    ],
+  },
+];
+
+const exampleItems: DefaultTheme.SidebarItem[] = [
+  { text: "Gallery", link: "/examples/" },
+  { text: "Full table", link: "/examples/table" },
+  { text: "Spreadsheet", link: "/examples/grid" },
+  { text: "Orders dashboard", link: "/examples/orders-dashboard" },
+  { text: "CRM contacts", link: "/examples/crm-contacts" },
+  { text: "Inventory sheet", link: "/examples/inventory" },
+  { text: "Financial report", link: "/examples/financial-report" },
+  { text: "Operations desk (standalone)", link: "/examples/operations-desk" },
+  { text: "Order details", link: "/examples/row-expansion" },
+  { text: "Project files", link: "/examples/tree-data" },
+  { text: "Tree and detail components", link: "/examples/hierarchy-components" },
+  { text: "Lazy file explorer", link: "/examples/file-explorer" },
+  { text: "Editable department tree", link: "/examples/budget-tree" },
+  { text: "Server-side API", link: "/examples/server-side" },
+  { text: "Streaming source (core)", link: "/examples/streaming" },
+  { text: "Streaming components (Vue)", link: "/examples/streaming-components" },
+  { text: "Live NDJSON logs", link: "/examples/live-logs" },
+  { text: "Infinite issue tracker", link: "/examples/infinite-issues" },
+  { text: "Inline and typed editors", link: "/examples/inline-editors" },
+  { text: "Row drafts (Vue)", link: "/examples/row-drafts" },
+  { text: "Virtual layout", link: "/examples/virtual-layout" },
+  { text: "Virtual grid", link: "/examples/virtual-grid" },
+  { text: "Virtual components", link: "/examples/virtual-components" },
+];
+
+const decisionItems: DefaultTheme.SidebarItem[] = [
+  {
+    text: "Foundations",
+    collapsed: false,
+    items: [
+      { text: "0001 Layered packages", link: "/adr/0001-layered-packages" },
+      { text: "0002 Engine state and snapshots", link: "/adr/0002-engine-state-and-snapshots" },
+      { text: "0004 Components and theming", link: "/adr/0004-components-and-theming" },
+      { text: "0009 Content boundaries", link: "/adr/0009-content-boundaries" },
+      { text: "0020 Beta API contract", link: "/adr/0020-beta-api-contract" },
+      { text: "0019 Rendered column coordinates", link: "/adr/0019-rendered-column-coordinates" },
+      {
+        text: "0021 Host language, text folding and themes",
+        link: "/adr/0021-host-language-text-and-themes",
+      },
+      { text: "0022 Row attributes", link: "/adr/0022-row-attributes" },
+    ],
+  },
+  {
+    text: "Large data",
+    collapsed: true,
+    items: [
+      { text: "0005 Virtualization", link: "/adr/0005-virtualization" },
+      {
+        text: "0006 Incremental ingestion and streaming",
+        link: "/adr/0006-incremental-ingestion-and-streaming",
+      },
+      { text: "0010 Vue virtual bindings", link: "/adr/0010-vue-virtual-bindings" },
+      { text: "0013 Component virtualization", link: "/adr/0013-component-virtualization" },
+      {
+        text: "0015 Vue sources and cursor loading",
+        link: "/adr/0015-vue-sources-and-cursor-loading",
+      },
+    ],
+  },
+  {
+    text: "Editing",
+    collapsed: true,
+    items: [
+      { text: "0003 Editing and spreadsheets", link: "/adr/0003-editing-and-spreadsheets" },
+      {
+        text: "0008 Validation, editors and persistence",
+        link: "/adr/0008-validation-editors-and-persistence",
+      },
+      {
+        text: "0012 Validation and row operations",
+        link: "/adr/0012-validation-and-row-operations",
+      },
+      { text: "0014 Vue row drafts", link: "/adr/0014-vue-row-drafts-and-editor-metadata" },
+      { text: "0017 Inline and typed editors", link: "/adr/0017-inline-and-typed-editors" },
+    ],
+  },
+  {
+    text: "Trees and details",
+    collapsed: true,
+    items: [
+      { text: "0007 Expansion and detail items", link: "/adr/0007-expansion-and-trees" },
+      { text: "0011 Tree data", link: "/adr/0011-tree-data" },
+      { text: "0016 Hierarchy components", link: "/adr/0016-hierarchy-components" },
+      { text: "0018 Reactive tree search context", link: "/adr/0018-reactive-tree-search-context" },
+    ],
+  },
+];
+
+function sectionSidebar(active: DocsSection): DefaultTheme.SidebarItem[] {
+  return [
+    {
+      text: "Guide",
+      link: "/guide/getting-started",
+      collapsed: active !== "Guide",
+      items: guideItems,
+    },
+    {
+      text: "Examples",
+      collapsed: false,
+      items: exampleItems,
+    },
+    {
+      text: "Decisions",
+      link: "/adr/0001-layered-packages",
+      collapsed: active !== "Decisions",
+      items: decisionItems,
+    },
+  ];
+}
 
 export default defineConfig({
   title: "vueye-table",
@@ -36,9 +215,9 @@ export default defineConfig({
       { text: "Examples", link: "/examples/" },
       { text: "Decisions", link: "/adr/0001-layered-packages" },
       {
-        text: "3.0 beta",
+        text: docsRelease.label,
         items: [
-          { text: "Beta contract and changes", link: "/guide/beta" },
+          { text: "Beta contract", link: docsRelease.contractLink },
           { text: "Upgrading from 2.x", link: "/guide/upgrading-from-2" },
           {
             text: "2.x on the legacy branch",
@@ -47,106 +226,15 @@ export default defineConfig({
         ],
       },
     ],
-    sidebar: [
-      {
-        text: "Guide",
-        items: [
-          { text: "Getting started", link: "/guide/getting-started" },
-          { text: "3.0 beta contract", link: "/guide/beta" },
-          { text: "Layers", link: "/guide/layers" },
-          { text: "Columns", link: "/guide/columns" },
-          { text: "State and v-model", link: "/guide/state" },
-          { text: "Server-side data", link: "/guide/server-data" },
-          { text: "Incremental data and streams", link: "/guide/streaming" },
-          { text: "Large datasets and virtualization", link: "/guide/virtualization" },
-          { text: "Row expansion", link: "/guide/expansion" },
-          { text: "Tree data", link: "/guide/trees" },
-          { text: "Editing and spreadsheets", link: "/guide/editing" },
-          { text: "Validation and saving", link: "/guide/validation" },
-          { text: "Vue row drafts", link: "/guide/row-drafts" },
-          { text: "Security", link: "/guide/security" },
-          { text: "Performance", link: "/guide/performance" },
-          { text: "Ingestion, hierarchy and editing API", link: "/guide/api-reference" },
-          { text: "Theming", link: "/guide/theming" },
-          { text: "Language, locale and search", link: "/guide/language" },
-          { text: "Component reference", link: "/guide/components" },
-          { text: "Nuxt", link: "/guide/nuxt" },
-          { text: "Upgrading from 2.x", link: "/guide/upgrading-from-2" },
-        ],
-      },
-      {
-        text: "Examples",
-        items: [
-          { text: "Gallery", link: "/examples/" },
-          { text: "Operations desk (standalone)", link: "/examples/operations-desk" },
-          { text: "Full table", link: "/examples/table" },
-          { text: "Spreadsheet", link: "/examples/grid" },
-          { text: "Virtual layout", link: "/examples/virtual-layout" },
-          { text: "Virtual grid", link: "/examples/virtual-grid" },
-          { text: "Virtual components", link: "/examples/virtual-components" },
-          { text: "Order details", link: "/examples/row-expansion" },
-          { text: "Project files", link: "/examples/tree-data" },
-          { text: "Tree and detail components", link: "/examples/hierarchy-components" },
-          { text: "Inline and typed editors", link: "/examples/inline-editors" },
-          { text: "Orders dashboard", link: "/examples/orders-dashboard" },
-          { text: "CRM contacts", link: "/examples/crm-contacts" },
-          { text: "Server-side API", link: "/examples/server-side" },
-          { text: "Streaming source (core)", link: "/examples/streaming" },
-          { text: "Streaming components (Vue)", link: "/examples/streaming-components" },
-          { text: "Row drafts (Vue)", link: "/examples/row-drafts" },
-          { text: "Inventory sheet", link: "/examples/inventory" },
-          { text: "Live NDJSON logs", link: "/examples/live-logs" },
-          { text: "Infinite issue tracker", link: "/examples/infinite-issues" },
-          { text: "Lazy file explorer", link: "/examples/file-explorer" },
-          { text: "Editable department tree", link: "/examples/budget-tree" },
-          { text: "Financial report", link: "/examples/financial-report" },
-        ],
-      },
-      {
-        text: "Decisions",
-        items: [
-          { text: "0001 Layered packages", link: "/adr/0001-layered-packages" },
-          { text: "0002 Engine state and snapshots", link: "/adr/0002-engine-state-and-snapshots" },
-          { text: "0003 Editing and spreadsheets", link: "/adr/0003-editing-and-spreadsheets" },
-          { text: "0004 Components and theming", link: "/adr/0004-components-and-theming" },
-          { text: "0005 Virtualization", link: "/adr/0005-virtualization" },
-          {
-            text: "0006 Incremental ingestion and streaming",
-            link: "/adr/0006-incremental-ingestion-and-streaming",
-          },
-          { text: "0007 Expansion and detail items", link: "/adr/0007-expansion-and-trees" },
-          {
-            text: "0008 Validation, editors and persistence",
-            link: "/adr/0008-validation-editors-and-persistence",
-          },
-          { text: "0009 Content boundaries", link: "/adr/0009-content-boundaries" },
-          { text: "0011 Tree data", link: "/adr/0011-tree-data" },
-          {
-            text: "0012 Validation and row operations",
-            link: "/adr/0012-validation-and-row-operations",
-          },
-          { text: "0013 Component virtualization", link: "/adr/0013-component-virtualization" },
-          { text: "0014 Vue row drafts", link: "/adr/0014-vue-row-drafts-and-editor-metadata" },
-          {
-            text: "0015 Vue sources and cursor loading",
-            link: "/adr/0015-vue-sources-and-cursor-loading",
-          },
-          { text: "0016 Hierarchy components", link: "/adr/0016-hierarchy-components" },
-          { text: "0017 Inline and typed editors", link: "/adr/0017-inline-and-typed-editors" },
-          {
-            text: "0018 Reactive tree search context",
-            link: "/adr/0018-reactive-tree-search-context",
-          },
-          {
-            text: "0019 Rendered column coordinates",
-            link: "/adr/0019-rendered-column-coordinates",
-          },
-          { text: "0020 Beta API contract", link: "/adr/0020-beta-api-contract" },
-        ],
-      },
-    ],
+    sidebar: {
+      "/guide/": sectionSidebar("Guide"),
+      "/examples/": sectionSidebar("Examples"),
+      "/benchmarks/": sectionSidebar("Guide"),
+      "/adr/": sectionSidebar("Decisions"),
+      "/": sectionSidebar("Guide"),
+    },
     socialLinks: [{ icon: "github", link: "https://github.com/boussadjra/vueye-table" }],
     search: { provider: "local" },
-    footer: { message: "Released under the MIT License. 3.0.0-beta: not yet production ready." },
+    footer: { message: `Released under the MIT License. ${docsRelease.notice}` },
   },
 });

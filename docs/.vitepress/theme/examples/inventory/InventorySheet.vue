@@ -563,14 +563,7 @@ const INITIALS: Record<Category, string> = {
 }
 
 .tile-value .tile-number {
-  background: var(--vy-gradient-strong);
-  background-clip: text;
-  color: transparent;
-}
-
-.dark .tile-value .tile-number {
-  background: var(--vy-gradient);
-  background-clip: text;
+  color: var(--vp-c-brand-1);
 }
 
 .tile-note {

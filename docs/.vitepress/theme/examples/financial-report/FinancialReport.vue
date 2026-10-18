@@ -549,10 +549,7 @@ const worstLine = computed(() => {
   font-style: italic;
   font-weight: 400;
   font-size: 1.12em;
-  background: var(--vy-gradient);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+  color: var(--vp-c-brand-1);
 }
 
 /* Segmented controls, chips, and buttons */

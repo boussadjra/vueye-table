@@ -6,8 +6,11 @@ Full-component `edit-mode` and `editor.<id>` slots work with the default compone
 see [editing](/guide/editing).
 
 ```bash
-pnpm add @vueye-table/nuxt@beta
+pnpm add @vueye-table/nuxt@3.0.0-beta.3
 ```
+
+This is a prerelease for application feedback. Keep directly installed vueye-table packages on
+the same version. See the [beta contract](/guide/beta) for API guarantees and acceptance limits.
 
 ```ts
 export default defineNuxtConfig({

@@ -1272,7 +1272,7 @@ const subtotal = computed(() =>
   z-index: 6;
   border-radius: 16px;
   background: rgb(20 12 35 / 0.28);
-  backdrop-filter: blur(2px);
+  backdrop-filter: var(--vy-scrim-filter, blur(2px));
 }
 
 .dark .od-backdrop {

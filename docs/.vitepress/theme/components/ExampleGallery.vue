@@ -7,6 +7,7 @@ import { withBase } from "vitepress";
  */
 
 interface Example {
+  readonly group: "start" | "workflow" | "loading" | "hierarchy";
   readonly link: string;
   readonly title: string;
   readonly summary: string;
@@ -19,6 +20,27 @@ interface Example {
 
 const examples: readonly Example[] = [
   {
+    group: "start",
+    link: "/examples/table",
+    title: "Full table",
+    summary: "Every feature of the complete table, with its state shown live as plain data.",
+    layer: "VueyeTable",
+    tags: ["v-model", "state"],
+    art: "table",
+    hue: "#8a24c9",
+  },
+  {
+    group: "start",
+    link: "/examples/grid",
+    title: "Spreadsheet",
+    summary: "Order lines edited in place, with a log of every new array and A1 address.",
+    layer: "VueyeGrid",
+    tags: ["clipboard", "undo"],
+    art: "sheet",
+    hue: "#f59b4e",
+  },
+  {
+    group: "loading",
     link: "/examples/live-logs",
     title: "Live NDJSON logs",
     summary: "Generated log bytes decoded into a virtual table, with progress and cancellation.",
@@ -28,6 +50,7 @@ const examples: readonly Example[] = [
     hue: "#0c93df",
   },
   {
+    group: "loading",
     link: "/examples/infinite-issues",
     title: "Infinite issue tracker",
     summary: "Cursor loading over the existing issue API, with search, sorting and retry.",
@@ -37,6 +60,7 @@ const examples: readonly Example[] = [
     hue: "#8a24c9",
   },
   {
+    group: "hierarchy",
     link: "/examples/file-explorer",
     title: "Lazy file explorer",
     summary:
@@ -47,6 +71,7 @@ const examples: readonly Example[] = [
     hue: "#0f9d7a",
   },
   {
+    group: "hierarchy",
     link: "/examples/budget-tree",
     title: "Editable department tree",
     summary: "An adjacency grid combines child edits, virtual rows and protected local changes.",
@@ -56,6 +81,7 @@ const examples: readonly Example[] = [
     hue: "#e1583a",
   },
   {
+    group: "workflow",
     link: "/examples/orders-dashboard",
     title: "Orders dashboard",
     summary: "An admin screen with filters, bulk actions, inline line items and a detail drawer.",
@@ -65,6 +91,7 @@ const examples: readonly Example[] = [
     hue: "#a02de6",
   },
   {
+    group: "workflow",
     link: "/examples/crm-contacts",
     title: "CRM contacts",
     summary: "One table state drawn as a table and as cards, built from headless components.",
@@ -74,6 +101,7 @@ const examples: readonly Example[] = [
     hue: "#c9117f",
   },
   {
+    group: "loading",
     link: "/examples/server-side",
     title: "Server-side API",
     summary:
@@ -84,6 +112,7 @@ const examples: readonly Example[] = [
     hue: "#0c93df",
   },
   {
+    group: "workflow",
     link: "/examples/inventory",
     title: "Inventory sheet",
     summary: "A stock spreadsheet with validation, computed columns, and conditional formatting.",
@@ -93,6 +122,7 @@ const examples: readonly Example[] = [
     hue: "#e1583a",
   },
   {
+    group: "workflow",
     link: "/examples/financial-report",
     title: "Financial report",
     summary:
@@ -102,86 +132,135 @@ const examples: readonly Example[] = [
     art: "report",
     hue: "#0f9d7a",
   },
-  {
-    link: "/examples/table",
-    title: "Full table",
-    summary: "Every feature of the complete table, with its state shown live as plain data.",
-    layer: "VueyeTable",
-    tags: ["v-model", "state"],
-    art: "table",
-    hue: "#8a24c9",
-  },
-  {
-    link: "/examples/grid",
-    title: "Spreadsheet",
-    summary: "Order lines edited in place, with a log of every new array and A1 address.",
-    layer: "VueyeGrid",
-    tags: ["clipboard", "undo"],
-    art: "sheet",
-    hue: "#f59b4e",
-  },
 ];
+
+const groups = [
+  {
+    id: "start",
+    title: "Start with a table or spreadsheet",
+    summary: "Try the full components before choosing a more specialized example.",
+  },
+  {
+    id: "workflow",
+    title: "Application workflows",
+    summary: "Combine tables, editing and custom views in a complete screen.",
+  },
+  {
+    id: "loading",
+    title: "Loading data",
+    summary: "Explore server paging, cursor loading and cancellable streams.",
+  },
+  {
+    id: "hierarchy",
+    title: "Trees and editing",
+    summary: "Load nested records on demand or edit a department tree.",
+  },
+] as const;
+
+const exampleGroups = groups.map((group) => ({
+  ...group,
+  examples: examples.filter((example) => example.group === group.id),
+}));
 </script>
 
 <template>
-  <div class="gallery vp-raw">
-    <a
-      v-for="example in examples"
-      :key="example.link"
-      class="card"
-      :href="withBase(example.link)"
-      :style="{ '--hue': example.hue }"
+  <div class="gallery-groups vp-raw">
+    <section
+      v-for="group in exampleGroups"
+      :key="group.id"
+      :aria-labelledby="`gallery-${group.id}`"
     >
-      <div class="art" :data-art="example.art" aria-hidden="true">
-        <template v-if="example.art === 'dashboard'">
-          <div class="kpis"><i /><i /><i /></div>
-          <div class="chips"><b /><b /><b /><b /></div>
-          <div class="rows"><i v-for="n in 4" :key="n" /></div>
-        </template>
-        <template v-else-if="example.art === 'cards'">
-          <div class="tiles">
-            <i v-for="n in 6" :key="n"><u /></i>
-          </div>
-        </template>
-        <template v-else-if="example.art === 'network'">
-          <div class="rows"><i v-for="n in 3" :key="n" /></div>
-          <div class="log">
-            <span v-for="n in 4" :key="n"><em /><s :style="{ width: `${30 + n * 12}%` }" /></span>
-          </div>
-        </template>
-        <template v-else-if="example.art === 'sheet'">
-          <div class="cells">
-            <i v-for="n in 20" :key="n" :class="{ on: n === 8, range: n === 9 || n === 13 }" />
-          </div>
-        </template>
-        <template v-else-if="example.art === 'report'">
-          <div class="bars">
-            <i v-for="n in 4" :key="n" :style="{ height: `${35 + n * 14}%` }" />
-          </div>
-          <div class="rows grouped"><i v-for="n in 4" :key="n" /></div>
-        </template>
-        <template v-else>
-          <div class="rows"><i v-for="n in 5" :key="n" /></div>
-        </template>
+      <div class="group-intro">
+        <h2 :id="`gallery-${group.id}`">{{ group.title }}</h2>
+        <p>{{ group.summary }}</p>
       </div>
-      <div class="text">
-        <span class="layer">{{ example.layer }}</span>
-        <h3>{{ example.title }}</h3>
-        <p>{{ example.summary }}</p>
-        <ul class="tags">
-          <li v-for="tag in example.tags" :key="tag">{{ tag }}</li>
-        </ul>
+      <div class="gallery">
+        <a
+          v-for="example in group.examples"
+          :key="example.link"
+          class="card"
+          :href="withBase(example.link)"
+          :style="{ '--hue': example.hue }"
+        >
+          <div class="art" :data-art="example.art" aria-hidden="true">
+            <template v-if="example.art === 'dashboard'">
+              <div class="kpis"><i /><i /><i /></div>
+              <div class="chips"><b /><b /><b /><b /></div>
+              <div class="rows"><i v-for="n in 4" :key="n" /></div>
+            </template>
+            <template v-else-if="example.art === 'cards'">
+              <div class="tiles">
+                <i v-for="n in 6" :key="n"><u /></i>
+              </div>
+            </template>
+            <template v-else-if="example.art === 'network'">
+              <div class="rows"><i v-for="n in 3" :key="n" /></div>
+              <div class="log">
+                <span v-for="n in 4" :key="n"
+                  ><em /><s :style="{ width: `${30 + n * 12}%` }"
+                /></span>
+              </div>
+            </template>
+            <template v-else-if="example.art === 'sheet'">
+              <div class="cells">
+                <i v-for="n in 20" :key="n" :class="{ on: n === 8, range: n === 9 || n === 13 }" />
+              </div>
+            </template>
+            <template v-else-if="example.art === 'report'">
+              <div class="bars">
+                <i v-for="n in 4" :key="n" :style="{ height: `${35 + n * 14}%` }" />
+              </div>
+              <div class="rows grouped"><i v-for="n in 4" :key="n" /></div>
+            </template>
+            <template v-else>
+              <div class="rows"><i v-for="n in 5" :key="n" /></div>
+            </template>
+          </div>
+          <div class="text">
+            <span class="layer">{{ example.layer }}</span>
+            <h3>{{ example.title }}</h3>
+            <p>{{ example.summary }}</p>
+            <ul class="tags">
+              <li v-for="tag in example.tags" :key="tag">{{ tag }}</li>
+            </ul>
+          </div>
+        </a>
       </div>
-    </a>
+    </section>
   </div>
 </template>
 
 <style scoped>
+.gallery-groups {
+  display: grid;
+  gap: 3rem;
+  margin: 2rem 0;
+}
+
+.group-intro {
+  display: grid;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.group-intro h2 {
+  margin: 0;
+  color: var(--vp-c-text-1);
+  font-size: clamp(1.375rem, 3vw, 1.625rem);
+  font-weight: 650;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+}
+
+.group-intro p {
+  max-width: 65ch;
+}
+
 .gallery {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
   gap: 18px;
-  margin: 28px 0;
 }
 
 .card {
