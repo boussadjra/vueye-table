@@ -7,10 +7,12 @@
  */
 import { spawnSync } from "node:child_process";
 import { readFileSync } from "node:fs";
-import { join } from "node:path";
+import { createRequire } from "node:module";
+import { dirname, join } from "node:path";
 
 import { publishablePackages, repositoryRoot } from "./packages.mjs";
-import { releaseTagFor } from "./release-tags.mjs";
+import { executePublishPlan } from "./publish-plan.mjs";
+import { releaseTagsFor } from "./release-tags.mjs";
 import { parseVersion } from "./semver.mjs";
 
 const registry = "https://registry.npmjs.org";
@@ -21,15 +23,16 @@ function usage(message) {
 Usage: pnpm publish:packages [options]
 
 Publishes each package in the fixed vueye-table group only when its exact
-version is not already present on npm.
+version is not already present on npm, then synchronizes its dist-tags.
 
-Beta releases always publish under "beta". Until a stable release of the
-current major exists, alpha publishes under "latest". Once one is on the
-registry, other prereleases publish under their own id (alpha, rc).
+Beta releases update both "beta" and "latest", including on a rerun when
+the version is already published. Until a stable release of the current
+major exists, alpha publishes under "latest". Once one is on the registry,
+other prereleases publish under their own id (alpha, rc).
 Older majors (vueye-table 1.x and 2.x) do not count.
 
 Options:
-  --tag <tag>      Dist-tag to publish under (overrides the policy above)
+  --tag <tag>      Update only this dist-tag (overrides the policy above)
   --otp <code>     npm one-time password, when required by the npm account
   --dry-run        Print the registry-backed plan and publish nothing
   --help           Show this message
@@ -89,18 +92,21 @@ function readManifests() {
   return manifests;
 }
 
-async function publishedVersions(name) {
+async function publishedPackage(name) {
   const response = await fetch(`${registry}/${encodeURIComponent(name)}`, {
     headers: { accept: "application/vnd.npm.install-v1+json" },
   });
-  if (response.status === 404) return new Set();
+  if (response.status === 404) return { published: new Set(), distTags: {} };
   if (!response.ok) throw new Error(`${name}: registry returned ${response.status}`);
   const body = await response.json();
-  return new Set(Object.keys(body.versions ?? {}));
+  return {
+    published: new Set(Object.keys(body.versions ?? {})),
+    distTags: body["dist-tags"] ?? {},
+  };
 }
 
 function publish(name, { otp, tag }) {
-  const command = process.platform === "win32" ? "pnpm.cmd" : "pnpm";
+  const command = join(repositoryRoot, "node_modules", "pnpm", "bin", "pnpm.cjs");
   const publishArguments = [
     "--filter",
     name,
@@ -113,8 +119,30 @@ function publish(name, { otp, tag }) {
   ];
   if (otp) publishArguments.push("--otp", otp);
   return (
-    spawnSync(command, publishArguments, { cwd: repositoryRoot, stdio: "inherit" }).status === 0
+    spawnSync(process.execPath, [command, ...publishArguments], {
+      cwd: repositoryRoot,
+      stdio: "inherit",
+    }).status === 0
   );
+}
+
+function updateTag(name, version, tag, { otp }) {
+  const args = ["dist-tag", "add", `${name}@${version}`, tag, "--registry", registry];
+  if (otp) args.push("--otp", otp);
+  // Launch npm's CLI directly on Windows, where .cmd shims require a shell.
+  const command =
+    process.platform === "win32"
+      ? join(
+          dirname(createRequire(process.execPath).resolve("npm/package.json")),
+          "bin",
+          "npm-cli.js",
+        )
+      : undefined;
+  const result = command
+    ? spawnSync(process.execPath, [command, ...args], { cwd: repositoryRoot, stdio: "inherit" })
+    : spawnSync("npm", args, { cwd: repositoryRoot, stdio: "inherit" });
+  if (result.error) console.error(result.error.message);
+  return result.status === 0;
 }
 
 async function main() {
@@ -124,53 +152,42 @@ async function main() {
 
   const plan = await Promise.all(
     manifests.map(async (manifest) => {
-      const published = await publishedVersions(manifest.name);
-      return { ...manifest, published, alreadyPublished: published.has(version) };
+      const metadata = await publishedPackage(manifest.name);
+      return { ...manifest, ...metadata, alreadyPublished: metadata.published.has(version) };
     }),
   );
   // The group shares one version and one tag, decided by every package's history together.
-  const tag =
-    options.tag ??
-    releaseTagFor(
-      version,
-      plan.map(({ published }) => published),
-    );
+  const tags = releaseTagsFor(
+    version,
+    plan.map(({ published }) => published),
+    options.tag,
+  );
 
-  console.log(`Publishing ${version} under the "${tag}" tag\n`);
+  console.log(`Publishing ${version} with tags: ${tags.join(", ")}\n`);
 
   const width = Math.max(...plan.map(({ name }) => name.length));
-  for (const { alreadyPublished, name } of plan) {
+  for (const { alreadyPublished, name, distTags } of plan) {
+    const updates = tags.filter((tag) => distTags[tag] !== version);
     console.log(
-      `  ${name.padEnd(width)}  ${alreadyPublished ? "already published" : "to publish"}`,
+      `  ${name.padEnd(width)}  ${alreadyPublished ? "already published" : "to publish"}; ${updates.length > 0 ? `update tags: ${updates.join(", ")}` : "tags current"}`,
     );
   }
 
   const pending = plan.filter(({ alreadyPublished }) => !alreadyPublished);
-  if (pending.length === 0) {
-    console.log(`\nEvery package is already published at ${version}. Nothing to do.`);
-    return;
-  }
+  const { publishedCount, taggedCount } = await executePublishPlan(
+    plan,
+    { ...options, version, tags, allowTagDowngrade: options.tag !== undefined },
+    { publish, updateTag },
+  );
   if (options.dryRun) {
     console.log(
-      `\n--dry-run: ${pending.length} package${pending.length === 1 ? "" : "s"} would be published.`,
+      `\n--dry-run: ${pending.length} package${pending.length === 1 ? "" : "s"} would be published; listed tags would be synchronized.`,
     );
     return;
   }
 
-  const failed = [];
-  for (const [index, { name }] of pending.entries()) {
-    console.log(`\n-- ${name} (${index + 1}/${pending.length}) --`);
-    if (!publish(name, { otp: options.otp, tag })) failed.push(name);
-  }
-
-  if (failed.length > 0) {
-    console.error(
-      `\nFailed: ${failed.join(", ")}. Re-run this command to retry only unfinished packages.`,
-    );
-    process.exit(1);
-  }
   console.log(
-    `\nPublished ${pending.length} package${pending.length === 1 ? "" : "s"} at ${version}.`,
+    `\nPublished ${publishedCount} package${publishedCount === 1 ? "" : "s"} at ${version}; updated ${taggedCount} dist-tag${taggedCount === 1 ? "" : "s"}.`,
   );
 }
 
