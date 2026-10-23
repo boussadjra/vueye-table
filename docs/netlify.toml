@@ -4,5 +4,5 @@ command = "npx --yes pnpm@11.17.0 --filter @vueye-table/docs... run build"
 publish = ".vitepress/dist"
 
 [build.environment]
-NODE_VERSION = "22"
+NODE_VERSION = "22.23.4"
 PNPM_VERSION = "11.17.0"
