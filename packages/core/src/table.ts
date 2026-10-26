@@ -1,4 +1,10 @@
-import { resolveColumn, type ColumnDef, type TableColumn, type TextContext } from "./column";
+import {
+  clampColumnWidth,
+  resolveColumn,
+  type ColumnDef,
+  type TableColumn,
+  type TextContext,
+} from "./column";
 import { escapeFormula, readDelimited, toDelimited } from "./delimited";
 import { createEditValidation } from "./edit-validation";
 import { rangeContains, type CellPosition, type CellRange } from "./grid";
@@ -325,6 +331,14 @@ export interface DataTable<TRow> {
 
   toggleColumn(columnId: string, visible?: boolean): void;
   moveColumn(columnId: string, toIndex: number): void;
+  /**
+   * Give a column a width in pixels, kept within its `minWidth` and `maxWidth`. A width equal to
+   * the column's own `width` removes its entry from `state.columnSizing`. Unknown and
+   * non-resizable columns, and widths that are not finite and positive, are ignored.
+   */
+  resizeColumn(columnId: string, width: number): void;
+  /** Return one column, or every column, to the width its definition gives. */
+  resetColumnSize(columnId?: string): void;
 
   edit(edits: CellEdit | readonly CellEdit[], options?: EditOptions<TRow>): EditResult<TRow>;
   undo(): boolean;
@@ -363,6 +377,29 @@ function memo<TDeps extends readonly unknown[], TResult>(
     last = { deps, result };
     return result;
   };
+}
+
+function validSize(width: unknown): width is number {
+  return typeof width === "number" && Number.isFinite(width) && width > 0;
+}
+
+/** The width a state entry gives a column, or `undefined` when the entry is absent or unusable. */
+function usableSize<TRow>(
+  column: TableColumn<TRow>,
+  sizing: TableState["columnSizing"],
+): number | undefined {
+  if (!column.resizable || !Object.hasOwn(sizing, column.id)) return undefined;
+  const width = sizing[column.id];
+  return validSize(width) ? clampColumnWidth(column, width) : undefined;
+}
+
+function withoutSize(
+  sizing: TableState["columnSizing"],
+  columnId: string,
+): TableState["columnSizing"] {
+  return Object.hasOwn(sizing, columnId)
+    ? Object.fromEntries(Object.entries(sizing).filter(([id]) => id !== columnId))
+    : sizing;
 }
 
 function isInputEdit(edit: CellEdit): edit is CellInputEdit {
@@ -718,6 +755,26 @@ export function createTable<TRow, TSignal extends TreeLoadSignal = TreeLoadSigna
     },
   );
 
+  /** Apply `state.columnSizing`; columns without a usable entry keep their identity. */
+  const sizeColumns = memo(
+    (
+      columns: readonly TableColumn<TRow>[],
+      byId: ReadonlyMap<string, TableColumn<TRow>>,
+      sizing: TableState["columnSizing"],
+    ) => {
+      let changed = false;
+      const sized = columns.map((column) => {
+        const width = usableSize(column, sizing);
+        if (width === undefined) return column;
+        changed = true;
+        return Object.freeze({ ...column, width, isResized: true });
+      });
+      return changed
+        ? { columns: sized, byId: new Map(sized.map((column) => [column.id, column])) }
+        : { columns, byId };
+    },
+  );
+
   let primedFilter:
     | {
         rows: readonly TableRow<TRow>[];
@@ -808,6 +865,7 @@ export function createTable<TRow, TSignal extends TreeLoadSignal = TreeLoadSigna
       ...Object.keys(state.filters),
       ...state.hiddenColumns,
       ...state.columnOrder,
+      ...Object.keys(state.columnSizing),
     ]);
     for (const id of referenced) {
       if (!byId.has(id)) {
@@ -817,6 +875,26 @@ export function createTable<TRow, TSignal extends TreeLoadSignal = TreeLoadSigna
           }),
         );
       }
+    }
+    for (const [id, width] of Object.entries(state.columnSizing)) {
+      const column = byId.get(id);
+      if (!column) continue;
+      if (!validSize(width))
+        issues.push(
+          issue(
+            "invalid_column_size",
+            `The width ${String(width)} for column "${id}" is not a positive number of pixels; the column keeps its own width.`,
+            { column: id },
+          ),
+        );
+      else if (!column.resizable)
+        issues.push(
+          issue(
+            "column_not_resizable",
+            `The column "${id}" is not resizable; its width in the state is ignored.`,
+            { column: id },
+          ),
+        );
     }
     const { pageSize } = state.pagination;
     if (paginate && (!Number.isInteger(pageSize) || pageSize < 1)) {
@@ -850,7 +928,8 @@ export function createTable<TRow, TSignal extends TreeLoadSignal = TreeLoadSigna
     const expanded = model
       ? undefined
       : expansionStage(indexed as IndexedRows<TRow>, state.expanded, state.selection);
-    const ordered = orderColumns(columns, state.columnOrder, state.hiddenColumns);
+    const sized = sizeColumns(columns, byId, state.columnSizing);
+    const ordered = orderColumns(sized.columns, state.columnOrder, state.hiddenColumns);
     const issues = [
       ...optionIssues,
       ...ingestionIssues,
@@ -1072,7 +1151,7 @@ export function createTable<TRow, TSignal extends TreeLoadSignal = TreeLoadSigna
       pendingCells: validation.cells(),
       isSelected: (key: RowKey): boolean => selected.has(key),
       getSort: (columnId: string): SortInfo | undefined => sortIndex.get(columnId),
-      getColumn: (columnId: string): TableColumn<TRow> | undefined => byId.get(columnId),
+      getColumn: (columnId: string): TableColumn<TRow> | undefined => sized.byId.get(columnId),
       getRow: (key: RowKey): TableRow<TRow> | undefined =>
         treeRow
           ? treeRow(key)
@@ -2757,6 +2836,22 @@ export function createTable<TRow, TSignal extends TreeLoadSignal = TreeLoadSigna
       order.splice(from, 1);
       order.splice(target, 0, columnId);
       commit({ columnOrder: order });
+    },
+    resizeColumn(columnId, width) {
+      const column = resolveColumns(definitions).byId.get(columnId);
+      if (!column?.resizable || !validSize(width)) return;
+      const next = clampColumnWidth(column, width);
+      commit({
+        columnSizing:
+          next === column.defaultWidth
+            ? withoutSize(state.columnSizing, columnId)
+            : { ...state.columnSizing, [columnId]: next },
+      });
+    },
+    resetColumnSize(columnId) {
+      commit({
+        columnSizing: columnId === undefined ? {} : withoutSize(state.columnSizing, columnId),
+      });
     },
 
     edit(edits, editOptions) {

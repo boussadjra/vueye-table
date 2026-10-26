@@ -56,6 +56,7 @@ const initialState: TableState = {
   expanded: [],
   hiddenColumns: [],
   columnOrder: [],
+  columnSizing: {},
 };
 const tableState = shallowRef<TableState>(initialState);
 const updates = ref(0);

@@ -74,6 +74,8 @@ carrying the new value:
 | `align`      | `"start"`        | `"start"`, `"center"`, or `"end"`. Use `"end"` for numbers.             |
 | `width`      |                  | Width in pixels.                                                        |
 | `minWidth`   |                  | Minimum width in pixels.                                                |
+| `maxWidth`   |                  | The widest a user may resize the column, in pixels.                     |
+| `resizable`  | `true`           | Whether a user may give the column another width.                       |
 | `sortable`   | `true`           | Whether a user may sort by the column.                                  |
 | `searchable` | `true`           | Whether the free-text search looks at the column.                       |
 | `hidden`     | `false`          | Hidden until a user shows it.                                           |
@@ -84,6 +86,38 @@ carrying the new value:
 | `type`       | the value's type | How typed text is read: `"text"`, `"number"`, `"boolean"`, or `"date"`. |
 | `parse`      | reads by `type`  | Turns typed or pasted text into a value. Throw to refuse it.            |
 | `meta`       | `{}`             | Anything your own renderer needs. The engine never reads it.            |
+
+## Widths and resizing
+
+`width` is the width a column starts with. A width a user gives a column lives in the table state,
+as `columnSizing`, so it can be saved, restored, and written to the URL like sorting or hidden
+columns. Each column the snapshot hands a renderer carries the width to draw:
+
+```ts
+const table = createTable({
+  data: orders,
+  columns: [
+    { id: "id", width: 110, resizable: false },
+    { id: "customer", width: 220, minWidth: 120, maxWidth: 480 },
+  ],
+});
+
+table.resizeColumn("customer", 600);
+table.getSnapshot().getColumn("customer")?.width; // 480, kept within maxWidth
+table.getState().columnSizing; // { customer: 480 }
+table.resetColumnSize("customer"); // back to 220
+```
+
+`resizeColumn` keeps a width within `minWidth` and `maxWidth`, and ignores columns marked
+`resizable: false` and widths that are not a positive number. Resizing never changes the page and
+never re-runs search, filters, or sorting. `resetColumnSize()` with no id returns every column to
+its own width, and `reset()` does too. A state entry that names an unknown column, holds something
+other than a positive number, or targets a column that is not resizable is ignored and reported in
+`snapshot.issues`.
+
+On a column, `width` is the width to draw, `defaultWidth` is the definition's `width`, and
+`isResized` tells whether the width came from the state. The components do not draw resize
+handles yet; until they do, call `resizeColumn` from your own header markup.
 
 ## Formatting
 

@@ -9,6 +9,8 @@ export type TableIssueCode =
   | "duplicate_row_key"
   | "unknown_column"
   | "invalid_page_size"
+  | "invalid_column_size"
+  | "column_not_resizable"
   | "unknown_row"
   | "read_only_cell"
   | "invalid_value"

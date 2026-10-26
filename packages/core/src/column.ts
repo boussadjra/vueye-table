@@ -22,6 +22,10 @@ export interface ColumnOptions<TRow, TValue> {
   /** Width in pixels. */
   readonly width?: number | undefined;
   readonly minWidth?: number | undefined;
+  /** The widest a user may resize the column, in pixels. */
+  readonly maxWidth?: number | undefined;
+  /** Whether a user may resize this column. Defaults to `true`. */
+  readonly resizable?: boolean | undefined;
   /** Whether a user may sort by this column. Defaults to `true`. */
   readonly sortable?: boolean | undefined;
   /** Whether the free-text search looks at this column. Defaults to `true`. */
@@ -100,8 +104,15 @@ export interface TableColumn<TRow> {
   readonly id: string;
   readonly header: string;
   readonly align: ColumnAlign;
+  /** The width to draw: the user's width from `state.columnSizing`, else `defaultWidth`. */
   readonly width: number | undefined;
+  /** The definition's `width`. */
+  readonly defaultWidth: number | undefined;
   readonly minWidth: number | undefined;
+  readonly maxWidth: number | undefined;
+  readonly resizable: boolean;
+  /** Whether `width` comes from `state.columnSizing`. */
+  readonly isResized: boolean;
   readonly sortable: boolean;
   readonly searchable: boolean;
   readonly initiallyHidden: boolean;
@@ -119,6 +130,18 @@ export interface TableColumn<TRow> {
   parse(input: string, row: TRow, sample?: unknown): ParseResult;
   /** Return a copy of `row` carrying `value`, or `undefined` for a read-only column. */
   setValue(row: TRow, value: unknown): TRow | undefined;
+}
+
+/**
+ * Keep a width within a column's `minWidth` and `maxWidth`. When the two disagree, `minWidth`
+ * wins.
+ */
+export function clampColumnWidth(
+  column: Pick<TableColumn<unknown>, "minWidth" | "maxWidth">,
+  width: number,
+): number {
+  const upper = column.maxWidth ?? Number.POSITIVE_INFINITY;
+  return Math.max(column.minWidth ?? 0, Math.min(upper, width));
 }
 
 /** The outcome of reading text into a cell value. */
@@ -366,7 +389,11 @@ export function resolveColumn<TRow>(
     header: def.header ?? humanize(def.id),
     align: def.align ?? "start",
     width: def.width,
+    defaultWidth: def.width,
     minWidth: def.minWidth,
+    maxWidth: def.maxWidth,
+    resizable: def.resizable ?? true,
+    isResized: false,
     sortable: def.sortable ?? true,
     searchable: def.searchable ?? true,
     initiallyHidden: def.hidden ?? false,
