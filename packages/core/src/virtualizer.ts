@@ -35,7 +35,8 @@ export interface VirtualWindow {
 }
 
 export interface Virtualizer {
-  setOptions(options: VirtualizerOptions): void;
+  /** Reconfigure layout, optionally discarding cached measurements for the supplied keys. */
+  setOptions(options: VirtualizerOptions, resetMeasurements?: readonly RowKey[]): void;
   setViewport(offset: number, size: number): void;
   measure(key: RowKey, size: number): void;
   getWindow(): VirtualWindow;
@@ -211,7 +212,8 @@ export function createVirtualizer(initialOptions: VirtualizerOptions): Virtualiz
 
   configure(initialOptions);
   return {
-    setOptions(next) {
+    setOptions(next, resetMeasurements) {
+      for (const key of resetMeasurements ?? []) measured.delete(key);
       configure(next);
       notify();
     },

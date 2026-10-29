@@ -75,6 +75,84 @@ function fixture(observer = false, margin = 0) {
 }
 
 describe("Vue virtualization", () => {
+  it("uses effective widths before mount, clamps controlled sizes, and resets to definitions", () => {
+    const scope = effectScope();
+    scope.run(() => {
+      const table = useDataTable({
+        data: rows,
+        columns: [{ id: "name", width: 160, minWidth: 80, maxWidth: 320 }, { id: "id" }],
+      });
+      const columns = useVirtualColumns(useDataGrid(table), { scrollElement: null });
+      expect(columns.items.map((item) => item.size)).toEqual([160, 120]);
+      table.resizeColumn("name", 250);
+      expect(columns.getItem(0)?.size).toBe(250);
+      table.setState({ columnSizing: { name: 999 } });
+      expect(columns.getItem(0)?.size).toBe(320);
+      table.reset();
+      expect(columns.getItem(0)?.size).toBe(160);
+      table.setColumns([{ id: "name", width: 200 }, { id: "id" }]);
+      expect(columns.getItem(0)?.size).toBe(200);
+    });
+    scope.stop();
+  });
+
+  it.each([false, true])(
+    "refreshes measured column sizes after resize and reset (observer: %s)",
+    async (observer) => {
+      const f = fixture(observer);
+      await nextTick();
+      const header = document.createElement("div");
+      const headerBounds = vi.spyOn(header, "getBoundingClientRect").mockReturnValue({
+        height: 40,
+        width: 100,
+      } as DOMRect);
+      const secondHeader = document.createElement("div");
+      vi.spyOn(secondHeader, "getBoundingClientRect").mockReturnValue({
+        height: 40,
+        width: 150,
+      } as DOMRect);
+      f.columns.measureElement(header, "c0");
+      f.columns.measureElement(secondHeader, "c1");
+      await nextTick();
+      expect(f.columns.totalSize).toBe(2050);
+
+      f.columns.scrollToKey("c5", { align: "start" });
+      f.el.scrollLeft += 10;
+      f.el.dispatchEvent(new Event("scroll"));
+      f.table.resizeColumn("c0", 250);
+      expect(f.columns.getItem(0)?.size).toBe(250);
+      expect(f.columns.getItem(1)?.size).toBe(150);
+      expect(f.columns.getItem(2)?.start).toBe(400);
+      expect(f.columns.totalSize).toBe(2200);
+      expect(f.el.scrollLeft).toBe(710);
+
+      f.table.moveColumn("c1", 0);
+      expect(f.columns.getItem(0)).toMatchObject({ key: "c1", size: 150 });
+      expect(f.columns.getItem(1)).toMatchObject({ key: "c0", size: 250 });
+      f.table.resetColumnSize("c0");
+      expect(f.columns.getItem(1)?.size).toBe(100);
+      expect(f.columns.totalSize).toBe(2050);
+
+      f.table.toggleColumn("c0", false);
+      f.table.resizeColumn("c0", 300);
+      f.table.toggleColumn("c0", true);
+      expect(f.columns.getItem(1)?.size).toBe(300);
+      f.table.setState({ columnSizing: { c0: 180 } });
+      expect(f.columns.getItem(1)?.size).toBe(180);
+      f.table.resetColumnSize();
+      expect(f.columns.getItem(1)?.size).toBe(100);
+      expect(f.columns.getItem(0)?.size).toBe(150);
+      headerBounds.mockReturnValue({ height: 40, width: 130 } as DOMRect);
+      f.columns.measureElement(null, "c0");
+      f.columns.measureElement(header, "c0");
+      await nextTick();
+      expect(f.columns.getItem(1)?.size).toBe(130);
+      f.table.resizeColumn("c1", 220);
+      expect(f.columns.getItem(1)?.size).toBe(130);
+      f.wrapper.unmount();
+    },
+  );
+
   it("accounts for leading header space and reports invalid margins", async () => {
     const f = fixture(false, 40);
     await nextTick();
