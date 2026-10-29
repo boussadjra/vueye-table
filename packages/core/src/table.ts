@@ -2,9 +2,11 @@ import {
   clampColumnWidth,
   resolveColumn,
   type ColumnDef,
+  type ColumnPinSide,
   type TableColumn,
   type TextContext,
 } from "./column";
+import { layoutColumns } from "./column-layout";
 import { escapeFormula, readDelimited, toDelimited } from "./delimited";
 import { createEditValidation } from "./edit-validation";
 import { rangeContains, type CellPosition, type CellRange } from "./grid";
@@ -158,6 +160,8 @@ export interface TableSnapshot<TRow> {
   readonly columns: readonly TableColumn<TRow>[];
   /** Every column in display order, hidden ones included. */
   readonly allColumns: readonly TableColumn<TRow>[];
+  readonly pinnedStartWidth: number;
+  readonly pinnedEndWidth: number;
   /** Rows on the current page, or all processed rows when pagination is disabled. */
   readonly rows: readonly TableRow<TRow>[];
   /** Data rows followed by their open details; details do not affect pagination or grid positions. */
@@ -331,6 +335,8 @@ export interface DataTable<TRow> {
 
   toggleColumn(columnId: string, visible?: boolean): void;
   moveColumn(columnId: string, toIndex: number): void;
+  /** Pin to a logical side, or unpin with false. Pinning does not change pagination. */
+  pinColumn(columnId: string, side: ColumnPinSide | false): void;
   /**
    * Give a column a width in pixels, kept within its `minWidth` and `maxWidth`. A width equal to
    * the column's own `width` removes its entry from `state.columnSizing`. Unknown and
@@ -381,6 +387,10 @@ function memo<TDeps extends readonly unknown[], TResult>(
 
 function validSize(width: unknown): width is number {
   return typeof width === "number" && Number.isFinite(width) && width > 0;
+}
+
+function validPinSide(side: unknown): side is ColumnPinSide | false {
+  return side === "start" || side === "end" || side === false;
 }
 
 /** The width a state entry gives a column, or `undefined` when the entry is absent or unusable. */
@@ -517,16 +527,31 @@ export function createTable<TRow, TSignal extends TreeLoadSignal = TreeLoadSigna
   let definitions = options.columns;
   let rowCount = options.rowCount;
   let expandedIssue: TableIssue | undefined;
+  let columnPinningIssue: TableIssue | undefined;
+  let pinOperationIssue: TableIssue | undefined;
+  const recordStateIssue = (problem: TableIssue): void => {
+    if (problem.code === "invalid_column_pinning") columnPinningIssue = problem;
+    else expandedIssue = problem;
+  };
   let initialState = createInitialState(
     {
       ...options.initialState,
       hiddenColumns:
         options.initialState?.hiddenColumns ??
         options.columns.filter((column) => column.hidden === true).map((column) => column.id),
+      columnPinning:
+        options.initialState?.columnPinning === undefined
+          ? {
+              start: options.columns
+                .filter((column) => column.pinned === "start")
+                .map((column) => column.id),
+              end: options.columns
+                .filter((column) => column.pinned === "end")
+                .map((column) => column.id),
+            }
+          : options.initialState.columnPinning,
     },
-    (problem) => {
-      expandedIssue = problem;
-    },
+    recordStateIssue,
   );
   let state = initialState;
   let snapshot: TableSnapshot<TRow> | undefined;
@@ -735,25 +760,7 @@ export function createTable<TRow, TSignal extends TreeLoadSignal = TreeLoadSigna
     return counts;
   });
 
-  const orderColumns = memo(
-    (
-      columns: readonly TableColumn<TRow>[],
-      columnOrder: readonly string[],
-      hiddenColumns: readonly string[],
-    ) => {
-      const position = new Map(columnOrder.map((id, index) => [id, index]));
-      const ordered = columns
-        .map((column, index) => ({ column, index }))
-        .toSorted((left, right) => {
-          const leftPosition = position.get(left.column.id) ?? columnOrder.length + left.index;
-          const rightPosition = position.get(right.column.id) ?? columnOrder.length + right.index;
-          return leftPosition - rightPosition;
-        })
-        .map(({ column }) => column);
-      const hidden = new Set(hiddenColumns);
-      return { all: ordered, visible: ordered.filter((column) => !hidden.has(column.id)) };
-    },
-  );
+  const orderColumns = memo(layoutColumns<TRow>);
 
   /** Apply `state.columnSizing`; columns without a usable entry keep their identity. */
   const sizeColumns = memo(
@@ -860,12 +867,16 @@ export function createTable<TRow, TSignal extends TreeLoadSignal = TreeLoadSigna
   function stateIssues(byId: ReadonlyMap<string, TableColumn<TRow>>): TableIssue[] {
     const issues: TableIssue[] = [];
     if (expandedIssue) issues.push(expandedIssue);
+    if (columnPinningIssue) issues.push(columnPinningIssue);
+    if (pinOperationIssue) issues.push(pinOperationIssue);
     const referenced = new Set([
       ...state.sorting.map((rule) => rule.column),
       ...Object.keys(state.filters),
       ...state.hiddenColumns,
       ...state.columnOrder,
       ...Object.keys(state.columnSizing),
+      ...state.columnPinning.start,
+      ...state.columnPinning.end,
     ]);
     for (const id of referenced) {
       if (!byId.has(id)) {
@@ -929,7 +940,12 @@ export function createTable<TRow, TSignal extends TreeLoadSignal = TreeLoadSigna
       ? undefined
       : expansionStage(indexed as IndexedRows<TRow>, state.expanded, state.selection);
     const sized = sizeColumns(columns, byId, state.columnSizing);
-    const ordered = orderColumns(sized.columns, state.columnOrder, state.hiddenColumns);
+    const ordered = orderColumns(
+      sized.columns,
+      state.columnOrder,
+      state.hiddenColumns,
+      state.columnPinning,
+    );
     const issues = [
       ...optionIssues,
       ...ingestionIssues,
@@ -937,6 +953,7 @@ export function createTable<TRow, TSignal extends TreeLoadSignal = TreeLoadSigna
       ...columnIssues,
       ...indexed.issues,
       ...stateIssues(byId),
+      ...ordered.issues,
       ...loadIssues.values(),
       ...Array.from(loadValidationIssues.values()).flat(),
       ...Array.from(cellProblems.values()).flatMap((row) => [...row.values()]),
@@ -1094,6 +1111,8 @@ export function createTable<TRow, TSignal extends TreeLoadSignal = TreeLoadSigna
       state,
       columns: ordered.visible,
       allColumns: ordered.all,
+      pinnedStartWidth: ordered.pinnedStartWidth,
+      pinnedEndWidth: ordered.pinnedEndWidth,
       rows,
       renderItems:
         !model && state.expanded !== true && state.expanded.length === 0
@@ -1151,7 +1170,7 @@ export function createTable<TRow, TSignal extends TreeLoadSignal = TreeLoadSigna
       pendingCells: validation.cells(),
       isSelected: (key: RowKey): boolean => selected.has(key),
       getSort: (columnId: string): SortInfo | undefined => sortIndex.get(columnId),
-      getColumn: (columnId: string): TableColumn<TRow> | undefined => sized.byId.get(columnId),
+      getColumn: (columnId: string): TableColumn<TRow> | undefined => ordered.byId.get(columnId),
       getRow: (key: RowKey): TableRow<TRow> | undefined =>
         treeRow
           ? treeRow(key)
@@ -1328,8 +1347,13 @@ export function createTable<TRow, TSignal extends TreeLoadSignal = TreeLoadSigna
   function commit(patch: TableStatePatch): void {
     const previous = state;
     const previousIssue = expandedIssue;
+    const previousPinningIssue = columnPinningIssue;
     const next = mergePatch(patch);
-    if (next === previous && previousIssue === expandedIssue) {
+    if (
+      next === previous &&
+      previousIssue === expandedIssue &&
+      previousPinningIssue === columnPinningIssue
+    ) {
       return;
     }
     state = next;
@@ -1379,11 +1403,10 @@ export function createTable<TRow, TSignal extends TreeLoadSignal = TreeLoadSigna
 
   function mergePatch(patch: TableStatePatch): TableState {
     if (patch.expanded !== undefined) expandedIssue = undefined;
-    const next = mergeState(state, patch, (problem) => {
-      expandedIssue = problem;
-    });
+    if (patch.columnPinning !== undefined) columnPinningIssue = undefined;
+    const next = mergeState(state, patch, recordStateIssue);
     return expandMode === "single" && patch.expanded !== undefined
-      ? mergeState(state, { ...patch, expanded: canonicalExpanded(next.expanded, next) })
+      ? mergeState(next, { expanded: canonicalExpanded(next.expanded, next) })
       : next;
   }
 
@@ -2606,8 +2629,13 @@ export function createTable<TRow, TSignal extends TreeLoadSignal = TreeLoadSigna
 
     setState(patch) {
       const previousIssue = expandedIssue;
+      const previousPinningIssue = columnPinningIssue;
       const next = mergePatch(patch);
-      if (next !== state || previousIssue !== expandedIssue) {
+      if (
+        next !== state ||
+        previousIssue !== expandedIssue ||
+        previousPinningIssue !== columnPinningIssue
+      ) {
         state = next;
         snapshot = undefined;
         abortLoads();
@@ -2824,18 +2852,71 @@ export function createTable<TRow, TSignal extends TreeLoadSignal = TreeLoadSigna
       });
     },
     moveColumn(columnId, toIndex) {
-      const order = getSnapshot().allColumns.map((column) => column.id);
-      const from = order.indexOf(columnId);
-      if (from === -1) {
-        return;
-      }
-      const target = Math.min(Math.max(0, Math.trunc(toIndex)), order.length - 1);
-      if (target === from) {
-        return;
-      }
+      const columns = getSnapshot().allColumns;
+      const column = columns.find((candidate) => candidate.id === columnId);
+      if (!column || !Number.isFinite(toIndex)) return;
+      const region = columns.filter((candidate) => candidate.pinned === column.pinned);
+      const offset = columns.indexOf(region[0]!);
+      const from = region.indexOf(column);
+      const target = Math.min(Math.max(0, Math.trunc(toIndex) - offset), region.length - 1);
+      if (target === from) return;
+      const order = region.map((candidate) => candidate.id);
       order.splice(from, 1);
       order.splice(target, 0, columnId);
-      commit({ columnOrder: order });
+      if (column.pinned) {
+        commit({ columnPinning: { ...state.columnPinning, [column.pinned]: order } });
+      } else {
+        commit({
+          columnOrder: [
+            ...columns.slice(0, offset).map((candidate) => candidate.id),
+            ...order,
+            ...columns.slice(offset + region.length).map((candidate) => candidate.id),
+          ],
+        });
+      }
+    },
+    pinColumn(columnId, side) {
+      const column = resolveColumns(definitions).byId.get(columnId);
+      const problem = !column
+        ? issue("unknown_column", `No column has the id "${columnId}"; its pin is ignored.`, {
+            column: columnId,
+          })
+        : !validPinSide(side)
+          ? issue(
+              "invalid_column_pinning",
+              "A pin side must be start, end, or false; the pin is ignored.",
+              { column: columnId },
+            )
+          : side !== false && !column.pinnable
+            ? issue(
+                "column_not_pinnable",
+                `Column "${columnId}" cannot be pinned; its pin is ignored.`,
+                { column: columnId },
+              )
+            : undefined;
+      if (problem) {
+        if (
+          pinOperationIssue?.code !== problem.code ||
+          pinOperationIssue.column !== problem.column
+        ) {
+          pinOperationIssue = problem;
+          notify();
+        }
+        return;
+      }
+      const hadIssue = pinOperationIssue !== undefined;
+      pinOperationIssue = undefined;
+      const start = state.columnPinning.start.filter(
+        (id, index, ids) => id !== columnId || (side === "start" && ids.indexOf(id) === index),
+      );
+      const end = state.columnPinning.end.filter(
+        (id, index, ids) => id !== columnId || (side === "end" && ids.indexOf(id) === index),
+      );
+      if (side === "start" && !start.includes(columnId)) start.push(columnId);
+      if (side === "end" && !end.includes(columnId)) end.push(columnId);
+      const previous = state;
+      commit({ columnPinning: { start, end } });
+      if (hadIssue && previous === state) notify();
     },
     resizeColumn(columnId, width) {
       const column = resolveColumns(definitions).byId.get(columnId);
@@ -2975,7 +3056,11 @@ export function createTable<TRow, TSignal extends TreeLoadSignal = TreeLoadSigna
     },
 
     reset() {
+      const hadIssue = pinOperationIssue !== undefined;
+      pinOperationIssue = undefined;
+      const previous = state;
       commit(initialState);
+      if (hadIssue && previous === state) notify();
     },
     destroy() {
       destroyed = true;

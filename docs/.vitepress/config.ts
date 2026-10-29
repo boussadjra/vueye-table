@@ -93,6 +93,7 @@ const exampleItems: DefaultTheme.SidebarItem[] = [
   { text: "Row drafts (Vue)", link: "/examples/row-drafts" },
   { text: "Virtual layout", link: "/examples/virtual-layout" },
   { text: "Virtual grid", link: "/examples/virtual-grid" },
+  { text: "Column pinning", link: "/examples/column-pinning" },
   { text: "Virtual components", link: "/examples/virtual-components" },
 ];
 
@@ -112,6 +113,7 @@ const decisionItems: DefaultTheme.SidebarItem[] = [
         link: "/adr/0021-host-language-text-and-themes",
       },
       { text: "0022 Row attributes", link: "/adr/0022-row-attributes" },
+      { text: "0024 Column sizing and pinning", link: "/adr/0024-column-sizing-and-pinning" },
     ],
   },
   {

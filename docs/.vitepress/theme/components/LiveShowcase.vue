@@ -57,6 +57,7 @@ const initialState: TableState = {
   hiddenColumns: [],
   columnOrder: [],
   columnSizing: {},
+  columnPinning: { start: [], end: [] },
 };
 const tableState = shallowRef<TableState>(initialState);
 const updates = ref(0);
