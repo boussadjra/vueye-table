@@ -59,6 +59,8 @@ function focusFirst(): void {
     <div class="controls">
       <button type="button" @click="focusFirst">Focus first cell</button>
       <button type="button" @click="focusLast">Focus last cell</button>
+      <button type="button" @click="table.resizeColumn('c0', 280)">Widen first column</button>
+      <button type="button" @click="table.resetColumnSize()">Reset column widths</button>
     </div>
     <p :id="`${id}-help`">
       20,000 sample rows · 24 columns. Focus the grid and use the arrow keys to move.

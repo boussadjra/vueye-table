@@ -2,6 +2,32 @@ import { createTable, createVirtualizer, type RowKey, type VirtualWindow } from 
 import { describe, expect, it, vi } from "vitest";
 
 describe("createVirtualizer", () => {
+  it("discards selected measurements atomically while retaining other typed and hidden keys", () => {
+    let keys: RowKey[] = [1, "1", "hidden"];
+    const options = () => ({
+      count: keys.length,
+      estimateSize: 100,
+      getKey: (index: number) => keys[index]!,
+    });
+    const virtual = createVirtualizer(options());
+    virtual.measure(1, 200);
+    virtual.measure("1", 150);
+    virtual.measure("hidden", 300);
+    virtual.setViewport(0, 500);
+    keys = [1, "1"];
+    virtual.setOptions(options());
+    const listener = vi.fn<(view: VirtualWindow) => void>();
+    virtual.subscribe(listener);
+    virtual.setOptions(options(), [1, "hidden", "missing"]);
+    expect(listener).toHaveBeenCalledTimes(1);
+    expect(listener.mock.calls[0]?.[0].items.map((item) => item.size)).toEqual([100, 150]);
+    expect(virtual.getWindow().totalSize).toBe(250);
+    keys = ["hidden", "1", 1];
+    virtual.setOptions(options());
+    expect(virtual.getWindow().items.map((item) => item.size)).toEqual([100, 150, 100]);
+    expect(virtual.getItem(2)?.start).toBe(250);
+  });
+
   it("looks up measured offscreen items without changing the viewport", () => {
     const virtual = createVirtualizer({ count: 100, estimateSize: 40 });
     virtual.setViewport(0, 80);

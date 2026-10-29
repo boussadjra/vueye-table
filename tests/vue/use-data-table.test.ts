@@ -20,6 +20,23 @@ describe("useDataTable", () => {
     expect(table.state.expanded).toEqual([]);
     scope.stop();
   });
+  it("forwards column sizing operations and follows a controlled width", async () => {
+    const state = ref<{ columnSizing?: Record<string, number> }>({});
+    const scope = effectScope();
+    const table = scope.run(() =>
+      useDataTable<Person>({ data: people, columns: [{ id: "age", width: 80 }], state }),
+    )!;
+    table.resizeColumn("age", 120);
+    expect(table.getColumn("age")?.width).toBe(120);
+    expect(table.state.columnSizing).toEqual({ age: 120 });
+    table.resetColumnSize("age");
+    expect(table.columns[0]?.width).toBe(80);
+    state.value = { columnSizing: { age: 140 } };
+    await nextTick();
+    expect(table.columns[0]?.width).toBe(140);
+    scope.stop();
+  });
+
   it("exposes snapshot fields as plain reactive properties", async () => {
     const scope = effectScope();
     const table = scope.run(() =>

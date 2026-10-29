@@ -1,6 +1,6 @@
 # State and v-model
 
-Expansion is part of state as `expanded: readonly RowKey[] | true`, defaulting to `[]`. Complete state literals must include this field. See [row expansion](/guide/expansion) for rendering details and single-row rules.
+Expansion is part of state as `expanded: readonly RowKey[] | true`, defaulting to `[]`. Column widths a user chose are part of state as `columnSizing: Record<string, number>`, defaulting to `{}`. Complete state literals must include both fields. See [row expansion](/guide/expansion) for rendering details and single-row rules, and [column widths](/guide/columns#widths-and-resizing) for sizing.
 
 Everything a user can change about a table is one plain, serializable object:
 
@@ -14,12 +14,13 @@ interface TableState {
   expanded: (string | number)[] | true;
   hiddenColumns: string[];
   columnOrder: string[];
+  columnSizing: Record<string, number>; // pixels, by column id
 }
 ```
 
 Because it is data, the state can be saved, restored, compared, written to the URL, or sent to a
 server. Every change goes through a named operation (`toggleSort`, `search`, `filter`,
-`goToPage`, `select`, `toggleColumn`, …), each operation skips changes that change nothing, and a
+`goToPage`, `select`, `toggleColumn`, `resizeColumn`, …), each operation skips changes that change nothing, and a
 new frozen state replaces the old one.
 
 ## v-model on the full components

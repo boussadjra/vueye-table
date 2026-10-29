@@ -1,6 +1,6 @@
 # Virtual rows and columns
 
-This example uses 20,000 sample rows and 24 sample columns. Only the nearby rows and columns are rendered. Focus the last cell to jump to the far corner, then use the arrow keys inside the grid.
+This example uses 20,000 sample rows and 24 sample columns. Only the nearby rows and columns are rendered. Widen the first column and reset its width to see the horizontal layout update. Focus the last cell to jump to the far corner, then use the arrow keys inside the grid.
 
 <script setup>
 import VirtualGrid from '../.vitepress/theme/components/VirtualGrid.vue'

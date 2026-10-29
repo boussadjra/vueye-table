@@ -37,6 +37,8 @@ export interface TableState {
   readonly hiddenColumns: readonly string[];
   /** Column ids in display order. Columns missing from the list keep their definition order. */
   readonly columnOrder: readonly string[];
+  /** Widths in pixels a user gave columns, by column id. Other columns keep their `width`. */
+  readonly columnSizing: Readonly<Record<string, number>>;
 }
 
 /** A partial state, as accepted by `setState` and `initialState`. */
@@ -59,6 +61,7 @@ export function createInitialState(
     expanded: normalizeExpanded(patch.expanded === undefined ? [] : patch.expanded, onIssue),
     hiddenColumns: patch.hiddenColumns ?? [],
     columnOrder: patch.columnOrder ?? [],
+    columnSizing: patch.columnSizing ?? {},
   });
 }
 
@@ -82,6 +85,11 @@ export function mergeState(
       continue;
     }
     if (key === "expanded" && sameExpanded(state.expanded, value as ExpandedState)) continue;
+    if (
+      key === "columnSizing" &&
+      sameSizing(state.columnSizing, value as TableState["columnSizing"])
+    )
+      continue;
     next[key] = value;
     changed = true;
   }
@@ -115,6 +123,14 @@ function sameExpanded(left: ExpandedState, right: ExpandedState): boolean {
       right !== true &&
       left.length === right.length &&
       left.every((key, index) => key === right[index]))
+  );
+}
+
+function sameSizing(left: TableState["columnSizing"], right: TableState["columnSizing"]): boolean {
+  const keys = Object.keys(left);
+  return (
+    keys.length === Object.keys(right).length &&
+    keys.every((key) => Object.hasOwn(right, key) && Object.is(left[key], right[key]))
   );
 }
 
@@ -153,5 +169,9 @@ function freezeState(state: TableState, previous?: TableState): TableState {
       state.columnOrder === previous?.columnOrder
         ? previous.columnOrder
         : Object.freeze([...state.columnOrder]),
+    columnSizing:
+      state.columnSizing === previous?.columnSizing
+        ? previous.columnSizing
+        : Object.freeze({ ...state.columnSizing }),
   });
 }

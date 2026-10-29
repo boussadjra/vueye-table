@@ -36,11 +36,17 @@ const view = virtual.getWindow();
 For columns, supply the visible column count, ids, widths, and horizontal offset instead.
 An estimate may be a positive number or a function of the index. Stable unique keys retain
 measured sizes across reorder and filtering; index keys are suitable only for an unchanged order.
-Measurements remain cached for the helper's lifetime, so recreate it when you need to clear them.
+Measurements remain cached for the helper's lifetime. Pass keys as the second argument to
+`setOptions` to discard their cached measurements and use the new estimates atomically.
+Measurements for other keys are retained, including keys temporarily absent from the layout.
 
 ```ts
 virtual.measure(rows[10]!.key, 72);
 virtual.setOptions({ count: rows.length, estimateSize: 36, getKey: (index) => rows[index]!.key });
+// Re-estimate a row whose old measurement is no longer valid.
+virtual.setOptions({ count: rows.length, estimateSize: 36, getKey: (index) => rows[index]!.key }, [
+  rows[10]!.key,
+]);
 const offset = virtual.getOffsetForIndex(50, "center");
 virtual.setViewport(offset, 180);
 const stop = virtual.subscribe((next) => render(next));
@@ -55,19 +61,19 @@ Rebuilding invalidated offsets visits the affected suffix once on its next looku
 
 ## API reference
 
-| API                                | Meaning                                                               |
-| ---------------------------------- | --------------------------------------------------------------------- |
-| `VirtualizerOptions.count`         | Non-negative safe integer item count.                                 |
-| `estimateSize`                     | Positive finite size, or a function returning one for an index.       |
-| `overscan`                         | Non-negative safe integer extra items on each side; default 5.        |
-| `getKey(index)`                    | Unique string or finite number identity; defaults to the index.       |
-| `onIssue(issue)`                   | Called when a recovery issue is first reported.                       |
-| `setOptions(options)`              | Refresh layout options and clear prior diagnostics.                   |
-| `setViewport(offset, size)`        | Set non-negative finite viewport values; offsets clamp to the layout. |
-| `measure(key, size)`               | Replace one known item's size; unknown keys do nothing.               |
-| `getWindow()`                      | Return a frozen, cached `VirtualWindow`.                              |
-| `getOffsetForIndex(index, align?)` | Return a clamped scroll offset; alignment defaults to `auto`.         |
-| `subscribe(listener)`              | Observe changes; returns an unsubscribe function.                     |
+| API                                       | Meaning                                                                     |
+| ----------------------------------------- | --------------------------------------------------------------------------- |
+| `VirtualizerOptions.count`                | Non-negative safe integer item count.                                       |
+| `estimateSize`                            | Positive finite size, or a function returning one for an index.             |
+| `overscan`                                | Non-negative safe integer extra items on each side; default 5.              |
+| `getKey(index)`                           | Unique string or finite number identity; defaults to the index.             |
+| `onIssue(issue)`                          | Called when a recovery issue is first reported.                             |
+| `setOptions(options, resetMeasurements?)` | Refresh layout and diagnostics; discard measurements for the supplied keys. |
+| `setViewport(offset, size)`               | Set non-negative finite viewport values; offsets clamp to the layout.       |
+| `measure(key, size)`                      | Replace one known item's size; unknown keys do nothing.                     |
+| `getWindow()`                             | Return a frozen, cached `VirtualWindow`.                                    |
+| `getOffsetForIndex(index, align?)`        | Return a clamped scroll offset; alignment defaults to `auto`.               |
+| `subscribe(listener)`                     | Observe changes; returns an unsubscribe function.                           |
 
 `VirtualItem` exposes `index`, `key`, `start`, and `size`. `VirtualWindow` exposes `items`,
 `totalSize`, `paddingStart`, `paddingEnd`, inclusive `startIndex`/`endIndex`, `offset`,
@@ -129,9 +135,16 @@ Function refs pass null when removed, releasing observation for that key. Compon
 
 Newly attached elements are measured after Vue's next DOM patch; await `nextTick()` before reading the resulting layout. Released refs are skipped if that patch has not finished.
 
+`useVirtualColumns` uses each column's effective `width` before falling back to
+`estimateColumnWidth` (default 120). Resizing, resetting, changing column definitions, or applying
+`state.columnSizing` discards the changed columns' old measurements. The layout immediately uses
+their new widths, keeps the first visible column and inset, and retains measurements for other
+columns. A column resized while hidden uses its new width when shown again. Further element
+measurements still work after the change.
+
 Observation begins after mount through the supplied element's owner view. SSR and initial hydration render exactly `initialCount` items (default 10), without overscan, limited by the source length. An empty source or initial count zero renders no items. Invalid counts recover to 10 with `invalid_virtual_option`. After mount the actual viewport and overscan determine the slice. Until an element exists the initial window remains available. Use these composables inside a component's setup/effect scope so listeners, watchers and observers are released on disposal.
 
-Filtering, replacing or reordering rows retains the first visible key and inset if it survives; otherwise the old offset clamps to the new extent. Measurements are retained by key for the binding lifetime. Set `overflow-anchor: none` on your scroller so native anchoring does not compete. Estimates, overscan, initial count and grid connection are creation options; the element ref and table contents remain reactive.
+Filtering, replacing or reordering rows retains the first visible key and inset if it survives; otherwise the old offset clamps to the new extent. Measurements are retained by key for the binding lifetime, except when a column's effective width changes as described above ([ADR 0023](/adr/0023-virtual-column-measurement-invalidation)). Set `overflow-anchor: none` on your scroller so native anchoring does not compete. Estimates, overscan, initial count and grid connection are creation options; the element ref and table contents remain reactive.
 
 Pass the same `grid` in row options to bring logical row focus into view during keyboard navigation; columns automatically follow their grid. `grid.table` exposes the owning table. Supply your own accessible markup, focus handling, row/column counts and indices; these bindings do not render components or change DOM focus. Native tables can use spacer rows; custom grids can use positioned items as in the example. `getItem(index)` reads a frozen offscreen item without scrolling; a missing index returns undefined. Optional `scrollMargin` reserves leading header/gutter space and can be a reactive getter. Invalid margins recover to zero with a TableIssue.
 

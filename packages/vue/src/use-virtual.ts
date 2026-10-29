@@ -40,6 +40,7 @@ export interface UseVirtualRowsOptions<TRow> extends VirtualViewportOptions {
   readonly grid?: DataGridBinding<TRow> | undefined;
 }
 export interface UseVirtualColumnsOptions extends VirtualViewportOptions {
+  /** Fallback for columns without an effective width. Defaults to 120. */
   readonly estimateColumnWidth?: number | ((index: number) => number) | undefined;
 }
 export interface VirtualRowItem<TRow> extends VirtualItem {
@@ -64,8 +65,16 @@ function useVirtualAxis<TSource, TItem extends VirtualItem>(
   options: VirtualViewportOptions,
   horizontal: boolean,
   project: (item: VirtualItem, source: TSource) => TItem,
+  sizeOf?: (item: TSource) => number | undefined,
 ): VirtualBinding<TItem> {
   let items = source();
+  const knownSizes = new Map<RowKey, number | undefined>(
+    sizeOf ? items.map((item) => [keyOf(item), sizeOf(item)]) : [],
+  );
+  const estimateSize = sizeOf
+    ? (index: number): number =>
+        sizeOf(items[index]!) ?? (typeof estimate === "number" ? estimate : estimate(index))
+    : estimate;
   let mounted = false;
   let disposed = false;
   let element: HTMLElement | null | undefined;
@@ -85,7 +94,7 @@ function useVirtualAxis<TSource, TItem extends VirtualItem>(
         });
   const layoutOptions = () => ({
     count: items.length,
-    estimateSize: estimate,
+    estimateSize,
     overscan: mounted ? options.overscan : 0,
     getKey: (index: number): RowKey => keyOf(items[index]!),
   });
@@ -93,7 +102,7 @@ function useVirtualAxis<TSource, TItem extends VirtualItem>(
   function seed(): void {
     let size = 0;
     for (let index = 0; index < Math.min(initialCount, items.length); index += 1) {
-      const value = typeof estimate === "number" ? estimate : estimate(index);
+      const value = typeof estimateSize === "number" ? estimateSize : estimateSize(index);
       size += Number.isFinite(value) && value > 0 ? value : 40;
     }
     virtual.setViewport(0, size);
@@ -172,8 +181,19 @@ function useVirtualAxis<TSource, TItem extends VirtualItem>(
     (next) => {
       const saved = anchor();
       const offset = virtual.getWindow().offset;
+      const resetMeasurements: RowKey[] = [];
+      if (sizeOf) {
+        for (const item of next) {
+          const key = keyOf(item);
+          const size = sizeOf(item);
+          if (knownSizes.has(key) && !Object.is(knownSizes.get(key), size))
+            resetMeasurements.push(key);
+          // Keep hidden keys so width changes while hidden also discard their old measurement.
+          knownSizes.set(key, size);
+        }
+      }
       items = next;
-      virtual.setOptions(layoutOptions());
+      virtual.setOptions(layoutOptions(), resetMeasurements);
       if (mounted) restore(saved, offset);
       else seed();
     },
@@ -231,6 +251,7 @@ function useVirtualAxis<TSource, TItem extends VirtualItem>(
       unsubscribe();
       elements.clear();
       keysByElement.clear();
+      knownSizes.clear();
       element = undefined;
     });
   margin();
@@ -344,6 +365,7 @@ export function useVirtualColumns<TRow>(
     options,
     true,
     (item, column) => ({ ...item, column }),
+    (column) => column.width,
   );
   const stopFocus = watch(
     () => grid.selection?.focus.column,

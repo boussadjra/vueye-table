@@ -124,6 +124,10 @@ const decisionItems: DefaultTheme.SidebarItem[] = [
         link: "/adr/0006-incremental-ingestion-and-streaming",
       },
       { text: "0010 Vue virtual bindings", link: "/adr/0010-vue-virtual-bindings" },
+      {
+        text: "0023 Virtual column measurement invalidation",
+        link: "/adr/0023-virtual-column-measurement-invalidation",
+      },
       { text: "0013 Component virtualization", link: "/adr/0013-component-virtualization" },
       {
         text: "0015 Vue sources and cursor loading",

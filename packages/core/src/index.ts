@@ -1,4 +1,5 @@
 export {
+  clampColumnWidth,
   compareValues,
   defineColumns,
   formatValue,
