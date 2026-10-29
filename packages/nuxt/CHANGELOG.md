@@ -1,5 +1,11 @@
 # @vueye-table/nuxt
 
+## 3.0.0-beta.5
+
+### Patch Changes
+
+- vueye-table@3.0.0-beta.5
+
 ## 3.0.0-beta.4
 
 ### Patch Changes

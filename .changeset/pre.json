@@ -15,6 +15,7 @@
   },
   "changesets": [
     "beta-latest-release-tags",
+    "column-pinning",
     "column-sizing",
     "component-virtualization",
     "content-boundaries",
