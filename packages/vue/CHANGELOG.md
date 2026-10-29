@@ -1,5 +1,38 @@
 # @vueye-table/vue
 
+## 3.0.0-beta.4
+
+### Minor Changes
+
+- ba76f38: Add column widths to the table state. `TableState.columnSizing` holds the widths a user gave
+  columns, by id; `resizeColumn` and `resetColumnSize` change it, keeping widths within the new
+  `maxWidth` option and `minWidth`, and skipping columns marked `resizable: false`. Snapshot columns
+  carry the width to draw in `width`, plus `defaultWidth`, `maxWidth`, `resizable`, and `isResized`.
+  Invalid, unknown, or non-resizable entries are ignored and reported as `invalid_column_size`,
+  `unknown_column`, or `column_not_resizable`. Resizing re-runs no row pipeline stage. Complete
+  `TableState` literals must now include `columnSizing: {}`. The Vue binding forwards both
+  operations.
+
+### Patch Changes
+
+- 18b07e7: Publish each beta on both the `beta` and `latest` npm channels so default installs receive the
+  current beta across all six packages. Repair missing or outdated release tags when the publisher
+  is re-run, without republishing versions that already exist. An explicit `--tag` updates only
+  that channel. Trusted publishing for tag updates requires npm 11.21.0 or newer and **Allow npm
+  dist-tag** enabled for each package's trusted publisher.
+- ba76f38: Keep virtual column sizes in sync with effective column widths after resizing, resetting,
+  controlled state updates, and column definition changes. Discard only measurements whose column
+  width changed, including changes made while hidden, and preserve other measurements and scroll
+  anchoring. Explicit widths take precedence over the column estimate.
+
+  The core virtualizer's `setOptions` accepts an optional second array of keys whose cached
+  measurements should be discarded while reconfiguring layout.
+
+- Updated dependencies [18b07e7]
+- Updated dependencies [ba76f38]
+- Updated dependencies [ba76f38]
+  - @vueye-table/core@3.0.0-beta.4
+
 ## 3.0.0-beta.3
 
 ### Patch Changes

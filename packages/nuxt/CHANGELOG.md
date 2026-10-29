@@ -1,5 +1,17 @@
 # @vueye-table/nuxt
 
+## 3.0.0-beta.4
+
+### Patch Changes
+
+- 18b07e7: Publish each beta on both the `beta` and `latest` npm channels so default installs receive the
+  current beta across all six packages. Repair missing or outdated release tags when the publisher
+  is re-run, without republishing versions that already exist. An explicit `--tag` updates only
+  that channel. Trusted publishing for tag updates requires npm 11.21.0 or newer and **Allow npm
+  dist-tag** enabled for each package's trusted publisher.
+- Updated dependencies [18b07e7]
+  - vueye-table@3.0.0-beta.4
+
 ## 3.0.0-beta.3
 
 ### Patch Changes

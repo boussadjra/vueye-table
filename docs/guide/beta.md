@@ -1,21 +1,21 @@
 # The 3.0 beta contract
 
-**3.0.0-beta.3 is published** for all six packages on npm's `beta` channel, with provenance and a
-[GitHub release](https://github.com/boussadjra/vueye-table/releases/tag/v3.0.0-beta.3).
+**3.0.0-beta.4 is published** for all six packages on npm's `beta` and `latest` channels, with provenance and a
+[GitHub release](https://github.com/boussadjra/vueye-table/releases/tag/v3.0.0-beta.4).
 Beta is a prerelease for application feedback and does not establish production readiness.
-npm's `latest` tag still points at the last alpha, so install `@beta` or an exact version.
+The default install and `@beta` both follow the current beta; pin an exact version to keep a fixed release.
 
 ## Install and upgrade
 
 Install an exact version or opt into the beta channel:
 
 ```sh
-pnpm add vueye-table@3.0.0-beta.3
+pnpm add vueye-table@3.0.0-beta.4
 # To follow subsequent betas:
 pnpm add vueye-table@beta
 ```
 
-Nuxt applications use `@vueye-table/nuxt@3.0.0-beta.3`. Keep directly installed vueye-table
+Nuxt applications use `@vueye-table/nuxt@3.0.0-beta.4`. Keep directly installed vueye-table
 packages on the same version. Vue 3.5 or later within Vue 3 is required; Nuxt integration supports Nuxt 4.x.
 The packages use ESM. Import `vueye-table/style.css` for full or styled components; the Nuxt
 module adds the stylesheet itself. See [getting started](/guide/getting-started) and
@@ -24,6 +24,25 @@ module adds the stylesheet itself. See [getting started](/guide/getting-started)
 Version 2 applications need the [2.x migration guide](/guide/upgrading-from-2). In particular,
 column definitions, selected row keys, slot scopes and immutable data updates changed in 3.0.
 Changing the dependency version alone does not migrate those contracts.
+
+## What changed in beta.4
+
+Beta.4 adds persistent column widths through `TableState.columnSizing`, `resizeColumn`, and
+`resetColumnSize`. Widths respect `minWidth`, `maxWidth`, and `resizable`; resizing keeps the
+current page and reuses the row pipeline. Virtual columns discard stale measurements when a
+width changes while retaining other measurements and scroll anchoring. See
+[column widths](/guide/columns#widths-and-resizing) and [virtualization](/guide/virtualization).
+
+**Migration:** complete hand-built `TableState` literals must add `columnSizing: {}`. Partial
+state patches need no change. Component resize handles remain follow-up work; applications can
+call the sizing operations from their own controls.
+
+The core virtualizer's `setOptions` also accepts an optional second array of keys whose cached
+measurements should be discarded when rebuilding layout. See
+[ADR 0023](/adr/0023-virtual-column-measurement-invalidation).
+
+Every beta now updates both `beta` and `latest` across all six packages, so default installs
+follow the beta line. Exact versions remain available for applications that need a fixed release.
 
 ## What changed in beta.3
 

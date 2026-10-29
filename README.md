@@ -19,7 +19,7 @@ undo, clipboard, and export. Vue layers sit on top of it, and you pick the one t
 Each layer depends only on the layers beneath it, and `vueye-table` re-exports all of them, so
 one install covers every level.
 
-> **Status:** `3.0.0-beta.3`, published on npm's `beta` channel. The beta is for application
+> **Status:** `3.0.0-beta.4`, published on npm's `beta` and `latest` channels. The beta is for application
 > feedback: documented import paths, options, events and slot scopes are kept stable, and a
 > necessary breaking change ships with an ADR and migration notes. It is not production ready.
 > See [the beta contract](./docs/guide/beta.md). The 2.x component lives on the
@@ -32,8 +32,8 @@ one install covers every level.
 pnpm add vueye-table@beta
 ```
 
-Install `@beta` or an exact version such as `3.0.0-beta.3`: a plain `pnpm add vueye-table` still
-resolves to the last alpha. Vue 3.5 or newer is a peer dependency.
+Install an exact version such as `3.0.0-beta.4` to pin a release. Both `pnpm add vueye-table` and
+`pnpm add vueye-table@beta` follow the current beta. Vue 3.5 or newer is a peer dependency.
 
 ## What the beta covers
 

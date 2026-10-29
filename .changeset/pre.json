@@ -14,6 +14,8 @@
     "@vueye-table/vitest-config": "0.0.0"
   },
   "changesets": [
+    "beta-latest-release-tags",
+    "column-sizing",
     "component-virtualization",
     "content-boundaries",
     "core-row-expansion",
@@ -29,6 +31,7 @@
     "row-attrs",
     "tree-data",
     "tree-detail-components",
+    "virtual-column-measurements",
     "virtual-grid-pointer-focus",
     "virtual-row-action-menus",
     "virtual-tree-keyboard-focus",
