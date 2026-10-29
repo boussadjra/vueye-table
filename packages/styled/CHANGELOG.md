@@ -1,5 +1,14 @@
 # @vueye-table/styled
 
+## 3.0.0-beta.5
+
+### Patch Changes
+
+- Updated dependencies [0eaab48]
+  - @vueye-table/core@3.0.0-beta.5
+  - @vueye-table/vue@3.0.0-beta.5
+  - @vueye-table/headless@3.0.0-beta.5
+
 ## 3.0.0-beta.4
 
 ### Patch Changes
