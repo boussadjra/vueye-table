@@ -171,7 +171,9 @@ export const DataGridRoot = defineComponent({
       }
       if (virtual && !grid.editor && (event.key === "PageUp" || event.key === "PageDown")) {
         const current = grid.selection?.focus ?? { row: 0, column: 0 };
-        const item = virtual.rowItems.find((entry) => entry.renderItem.rowIndex === current.row);
+        const item = virtual.rowItems.find(
+          (entry) => entry.renderItem.kind === "row" && entry.renderItem.rowIndex === current.row,
+        );
         const step = Math.max(
           1,
           Math.floor(virtual.rows.viewportSize / (item?.size ?? props.rowHeight)),
@@ -336,9 +338,9 @@ export const DataGridBody = defineComponent({
           props.colspan ?? table.columns.length + (slots.rowHeader ? 1 : 0),
         );
         const content = slots.default({
-          rows: binding.rowItems
-            .filter((item) => item.renderItem.kind === "row")
-            .map((item) => item.renderItem.row),
+          rows: binding.rowItems.flatMap((item) =>
+            item.renderItem.kind === "row" ? [item.renderItem.row] : [],
+          ),
         });
         return h(props.as, { ref: element }, sentinel ? [...content, sentinel] : content);
       }
@@ -348,6 +350,7 @@ export const DataGridBody = defineComponent({
             binding,
             props.colspan ?? table.columns.length + (slots.rowHeader ? 1 : 0),
             (item) => {
+              if (item.renderItem.kind === "group") return null;
               if (item.renderItem.kind !== "row")
                 return details.render(item.renderItem.row, item.renderItem.rowIndex);
               const { row, rowIndex } = item.renderItem;
@@ -381,9 +384,9 @@ export const DataGridBody = defineComponent({
           ),
           ...details.retained(
             new Set(
-              binding.rowItems
-                .filter((item) => item.renderItem.kind === "detail")
-                .map((item) => item.renderItem.row.key),
+              binding.rowItems.flatMap((item) =>
+                item.renderItem.kind === "detail" ? [item.renderItem.row.key] : [],
+              ),
             ),
           ),
           ...(loadSentinel(table, props.colspan ?? table.columns.length + (slots.rowHeader ? 1 : 0))
@@ -398,39 +401,41 @@ export const DataGridBody = defineComponent({
       const content =
         slots.default?.({ rows: table.rows }) ??
         table.renderItems.map((item) =>
-          item.kind === "detail"
-            ? details.render(item.row, item.rowIndex)
-            : (() => {
-                const { row, rowIndex } = item;
-                return h(
-                  "tr",
-                  mergeProps(rowAttributes(props.rowAttrs, row), {
-                    key: item.key,
-                    role: "row",
-                    "aria-rowindex": rowIndex + 2,
-                    "data-key": String(row.key),
-                    "data-dirty": flag(row.isDirty),
-                    ...hierarchyRowAttrs(table, row, hierarchy),
-                  }),
-                  [
-                    slots.rowHeader?.({ row, index: rowIndex }),
-                    ...table.columns.map((column, columnIndex) =>
-                      h(
-                        DataGridCell,
-                        {
-                          key: column.id,
-                          row,
-                          column,
-                          rowIndex,
-                          columnIndex,
-                          tree: props.treeCell,
-                        },
-                        { default: slots.cell, editor: slots.editor, $stable: true },
+          item.kind === "group"
+            ? null
+            : item.kind === "detail"
+              ? details.render(item.row, item.rowIndex)
+              : (() => {
+                  const { row, rowIndex } = item;
+                  return h(
+                    "tr",
+                    mergeProps(rowAttributes(props.rowAttrs, row), {
+                      key: item.key,
+                      role: "row",
+                      "aria-rowindex": rowIndex + 2,
+                      "data-key": String(row.key),
+                      "data-dirty": flag(row.isDirty),
+                      ...hierarchyRowAttrs(table, row, hierarchy),
+                    }),
+                    [
+                      slots.rowHeader?.({ row, index: rowIndex }),
+                      ...table.columns.map((column, columnIndex) =>
+                        h(
+                          DataGridCell,
+                          {
+                            key: column.id,
+                            row,
+                            column,
+                            rowIndex,
+                            columnIndex,
+                            tree: props.treeCell,
+                          },
+                          { default: slots.cell, editor: slots.editor, $stable: true },
+                        ),
                       ),
-                    ),
-                  ],
-                );
-              })(),
+                    ],
+                  );
+                })(),
         );
       const sentinel = loadSentinel(
         table,

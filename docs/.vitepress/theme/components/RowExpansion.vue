@@ -51,7 +51,7 @@ const table = useDataTable({
                 ><span v-else>No items</span>
               </td>
             </tr>
-            <tr v-else :id="`${id}-${item.rowIndex}`" class="detail">
+            <tr v-else-if="item.kind === 'detail'" :id="`${id}-${item.rowIndex}`" class="detail">
               <td colspan="3">
                 <ul>
                   <li v-for="line in item.row.original.lines" :key="line">{{ line }}</li>

@@ -5,6 +5,11 @@ import type { EditorSpec, Validator } from "./validation";
 
 export type ColumnAlign = "start" | "center" | "end";
 export type ColumnPinSide = "start" | "end";
+export type GroupValue = string | number;
+export type AggregateKind = "sum" | "count" | "min" | "max" | "mean" | "median" | "unique";
+export type Aggregate<TRow, TValue = unknown> =
+  | AggregateKind
+  | ((values: readonly TValue[], rows: readonly TRow[]) => unknown);
 
 /** How typed or pasted text becomes a value when a column has no `parse`. */
 export type ColumnType = "text" | "number" | "boolean" | "date";
@@ -33,6 +38,11 @@ export interface ColumnOptions<TRow, TValue> {
   readonly pinnable?: boolean | undefined;
   /** Whether a user may sort by this column. Defaults to `true`. */
   readonly sortable?: boolean | undefined;
+  readonly groupable?: boolean | undefined;
+  /** Bucket a cell, for example a date into a month. */
+  readonly groupValue?: ((value: TValue, row: TRow) => GroupValue) | undefined;
+  readonly aggregate?: Aggregate<TRow, TValue> | undefined;
+  readonly formatAggregate?: ((value: unknown, rows: readonly TRow[]) => string) | undefined;
   /** Whether the free-text search looks at this column. Defaults to `true`. */
   readonly searchable?: boolean | undefined;
   /** Hidden until a user shows it. */
@@ -125,6 +135,10 @@ export interface TableColumn<TRow> {
   /** Last visible start column or first visible end column. */
   readonly isPinnedEdge: boolean;
   readonly sortable: boolean;
+  readonly groupable: boolean;
+  readonly groupValue: ((value: unknown, row: TRow) => GroupValue) | undefined;
+  readonly aggregate: Aggregate<TRow> | undefined;
+  readonly formatAggregate: ((value: unknown, rows: readonly TRow[]) => string) | undefined;
   readonly searchable: boolean;
   readonly initiallyHidden: boolean;
   readonly meta: Readonly<Record<string, unknown>>;
@@ -392,6 +406,8 @@ export function resolveColumn<TRow>(
   const customFilter = def.filter;
   const customParse = def.parse;
   const editable = def.editable ?? false;
+  const groupValue = def.groupValue;
+  const aggregate = def.aggregate;
   const customSetValue = def.setValue;
   const canWrite = safe && (accessor === undefined || customSetValue !== undefined);
 
@@ -410,6 +426,16 @@ export function resolveColumn<TRow>(
     pinOffset: 0,
     isPinnedEdge: false,
     sortable: def.sortable ?? true,
+    groupable: def.groupable ?? true,
+    groupValue: groupValue
+      ? (value: unknown, row: TRow): GroupValue => groupValue(value as never, row)
+      : undefined,
+    aggregate:
+      typeof aggregate === "function"
+        ? (values: readonly unknown[], rows: readonly TRow[]): unknown =>
+            aggregate(values as never, rows)
+        : aggregate,
+    formatAggregate: def.formatAggregate,
     searchable: def.searchable ?? true,
     initiallyHidden: def.hidden ?? false,
     meta: Object.freeze({ ...def.meta }),

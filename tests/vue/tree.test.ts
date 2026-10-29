@@ -86,7 +86,9 @@ describe("Vue trees", () => {
     expect(el.scrollTop).toBe(400);
     table.toggleExpanded(0);
     expect(el.scrollTop).toBe(480);
-    expect(virtual.items[0]?.renderItem.row.key).toBe(10);
+    expect(
+      virtual.items[0]?.renderItem.kind === "row" ? virtual.items[0].renderItem.row.key : undefined,
+    ).toBe(10);
     wrapper.unmount();
   });
   it("cancels native lazy signals when a Vue scope is disposed", async () => {

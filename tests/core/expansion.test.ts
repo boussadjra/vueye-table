@@ -41,7 +41,9 @@ describe("row expansion", () => {
       "row",
       "detail",
     ]);
-    expect(snapshot.renderItems.map((item) => item.rowIndex)).toEqual([0, 0, 1, 1]);
+    expect(
+      snapshot.renderItems.map((item) => (item.kind === "group" ? undefined : item.rowIndex)),
+    ).toEqual([0, 0, 1, 1]);
     expect(new Set(snapshot.renderItems.map((item) => item.key)).size).toBe(4);
     expect(snapshot.rows).toHaveLength(2);
     expect(snapshot.rowCount).toBe(3);

@@ -6,6 +6,74 @@ import { defineComponent, effectScope, h, nextTick, ref, shallowRef, watch } fro
 import { people, type Person } from "../fixtures";
 
 describe("useDataTable", () => {
+  it("forwards grouping operations, controlled state and stable row drafts", async () => {
+    const state = ref<{ grouping: readonly string[]; expandedGroups: readonly string[] | true }>({
+      grouping: ["city"],
+      expandedGroups: true,
+    });
+    const onStateChange = vi.fn<() => void>();
+    const scope = effectScope();
+    const table = scope.run(() =>
+      useDataTable<Person>({
+        data: people,
+        columns: [
+          { id: "city", editable: true },
+          { id: "age", aggregate: "mean" },
+        ],
+        state,
+        onStateChange,
+      }),
+    )!;
+    const group = table.renderItems[0]!;
+    if (group.kind !== "group") throw Error("Expected group header");
+    expect(group.value).toBe("London");
+    table.toggleGroupSelection(group.key);
+    expect(table.state.selection).toEqual([1]);
+    table.toggleGroup(group.key, false);
+    expect(table.getGroup(group.key)?.isExpanded).toBe(false);
+    table.collapseAllGroups();
+    expect(table.rows).toHaveLength(0);
+    table.expandAllGroups();
+    const draft = table.editRow(1);
+    draft.values.city = "Boston";
+    await draft.save();
+    expect(table.getRow(1)?.original.city).toBe("Boston");
+    expect(table.state.selection).toEqual([1]);
+    const count = onStateChange.mock.calls.length;
+    state.value = { grouping: [], expandedGroups: true };
+    await nextTick();
+    expect(table.grouped).toBe(false);
+    expect(onStateChange).toHaveBeenCalledTimes(count);
+    table.groupBy(["city"]);
+    expect(table.grouped).toBe(true);
+    scope.stop();
+  });
+  it("keeps grid focus on the edited grouped leaf rather than the old position", () => {
+    const scope = effectScope();
+    const table = scope.run(() =>
+      useDataTable({
+        data: [
+          { id: 1, region: "A" },
+          { id: 2, region: "A" },
+          { id: 3, region: "B" },
+          { id: 4, region: "C" },
+        ],
+        columns: [{ id: "region", editable: true }],
+        paginate: false,
+        initialState: { grouping: ["region"], sorting: [{ column: "region", direction: "asc" }] },
+      }),
+    )!;
+    const grid = scope.run(() => useDataGrid(table))!;
+    expect(grid.bounds.value.rows).toBe(4);
+    grid.focusCell({ row: 0, column: 0 });
+    expect(grid.startEdit()).toBe(true);
+    grid.updateDraft("C");
+    expect(grid.commitEdit()?.status).toBe("applied");
+    expect(table.rows.map((row) => row.key)).toEqual([2, 3, 1, 4]);
+    expect(grid.selection?.focus).toEqual({ row: 2, column: 0 });
+    expect(grid.cellAt(grid.selection!.focus)?.row.key).toBe(1);
+    scope.stop();
+  });
   it("forwards pinning and follows controlled pin state without echoing it", async () => {
     const state = ref({ columnPinning: { start: ["city"], end: ["age"] } });
     const onStateChange = vi.fn<() => void>();

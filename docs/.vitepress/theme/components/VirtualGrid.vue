@@ -83,31 +83,32 @@ function focusFirst(): void {
         class="canvas"
         :style="{ height: `${rows.totalSize}px`, width: `${columns.totalSize}px` }"
       >
-        <div
-          v-for="item in rows.items"
-          :key="item.key"
-          :ref="(element) => measure(element, item.key)"
-          class="row"
-          role="row"
-          :aria-rowindex="item.renderItem.rowIndex + 1"
-          :style="{ transform: `translateY(${item.start}px)` }"
-        >
+        <template v-for="item in rows.items" :key="item.key">
           <div
-            v-for="column in columns.items"
-            :id="cellId(item.renderItem.rowIndex, column.index)"
-            :key="column.key"
-            class="cell"
-            :class="{
-              active: grid.isFocused({ row: item.renderItem.rowIndex, column: column.index }),
-            }"
-            role="gridcell"
-            :aria-colindex="column.index + 1"
-            :style="{ width: `${column.size}px`, transform: `translateX(${column.start}px)` }"
-            @click="grid.focusCell({ row: item.renderItem.rowIndex, column: column.index })"
+            v-if="item.renderItem.kind === 'row'"
+            :ref="(element) => measure(element, item.key)"
+            class="row"
+            role="row"
+            :aria-rowindex="item.renderItem.rowIndex + 1"
+            :style="{ transform: `translateY(${item.start}px)` }"
           >
-            {{ item.renderItem.row.getDisplay(column.column.id) }}
+            <div
+              v-for="column in columns.items"
+              :id="cellId(item.renderItem.rowIndex, column.index)"
+              :key="column.key"
+              class="cell"
+              :class="{
+                active: grid.isFocused({ row: item.renderItem.rowIndex, column: column.index }),
+              }"
+              role="gridcell"
+              :aria-colindex="column.index + 1"
+              :style="{ width: `${column.size}px`, transform: `translateX(${column.start}px)` }"
+              @click="grid.focusCell({ row: item.renderItem.rowIndex, column: column.index })"
+            >
+              {{ item.renderItem.row.getDisplay(column.column.id) }}
+            </div>
           </div>
-        </div>
+        </template>
       </div>
     </div>
     <p role="status">

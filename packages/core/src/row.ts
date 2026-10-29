@@ -1,4 +1,5 @@
 import type { TableColumn } from "./column";
+import type { GroupValue } from "./column";
 import type { TableIssue } from "./issues";
 import type { RowKey } from "./state";
 import type { ChildStatus } from "./tree";
@@ -27,11 +28,10 @@ export interface TableRow<TRow> {
   getDisplay(columnId: string): string;
 }
 
-export type RowItemKind = "row" | "detail";
+export type RowItemKind = "row" | "detail" | "group";
 
 /** A renderer item; detail items do not count as data rows or grid coordinates. */
-export interface TableRenderItem<TRow> {
-  readonly kind: RowItemKind;
+interface RowRenderData<TRow> {
   readonly key: string;
   /** The parent data row, also for detail items. */
   readonly row: TableRow<TRow>;
@@ -39,8 +39,27 @@ export interface TableRenderItem<TRow> {
   readonly rowIndex: number;
 }
 
+export type DataRenderItem<TRow> = RowRenderData<TRow> &
+  ({ readonly kind: "row" } | { readonly kind: "detail" });
+
+/** A read-only group header, never a data row or grid coordinate. */
+export interface TableGroup {
+  readonly kind: "group";
+  readonly key: string;
+  readonly columnId: string;
+  readonly value: GroupValue;
+  readonly depth: number;
+  readonly leafCount: number;
+  readonly isExpanded: boolean;
+  readonly selection: "none" | "some" | "all";
+  getAggregate(this: void, columnId: string): unknown;
+  getAggregateDisplay(this: void, columnId: string): string;
+}
+
+export type TableRenderItem<TRow> = DataRenderItem<TRow> | TableGroup;
+
 /** Disjoint namespaces and typed keys avoid collisions between 1, "1", and detail-like ids. */
-export function getRowItemKey(key: RowKey, kind: RowItemKind = "row"): string {
+export function getRowItemKey(key: RowKey, kind: "row" | "detail" = "row"): string {
   return JSON.stringify([kind, typeof key, key]);
 }
 

@@ -58,6 +58,8 @@ const initialState: TableState = {
   columnOrder: [],
   columnSizing: {},
   columnPinning: { start: [], end: [] },
+  grouping: [],
+  expandedGroups: true,
 };
 const tableState = shallowRef<TableState>(initialState);
 const updates = ref(0);

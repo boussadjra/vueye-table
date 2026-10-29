@@ -300,7 +300,7 @@ export const DataTableBody = defineComponent({
     return () => {
       if (props.virtual && !virtual) return h(VirtualDataTableBody, props, slots);
       if (virtual) return renderTableBody(table, virtual, props.as, props.colspan, slots, details);
-      let content: VNode[] | VNode | undefined = slots.default?.({ rows: table.rows });
+      let content: VNodeChild[] | VNode | undefined = slots.default?.({ rows: table.rows });
       if (!content) {
         content =
           table.rows.length === 0 && slots.empty
@@ -312,7 +312,9 @@ export const DataTableBody = defineComponent({
                   ? slots.row
                     ? h(Fragment, { key: item.key }, [slots.row(item)])
                     : h(DataTableRow, { key: item.key, row: item.row, rowIndex: item.rowIndex })
-                  : details.render(item.row, item.rowIndex),
+                  : item.kind === "detail"
+                    ? details.render(item.row, item.rowIndex)
+                    : null,
               );
       }
       const visibleDetails = new Set(
@@ -347,9 +349,9 @@ function renderTableBody(
   const width = colspan ?? table.columns.length;
   const attrs = element ? { ref: element } : {};
   const content = slots.default?.({
-    rows: virtual.rowItems
-      .filter((item) => item.renderItem.kind === "row")
-      .map((item) => item.renderItem.row),
+    rows: virtual.rowItems.flatMap((item) =>
+      item.renderItem.kind === "row" ? [item.renderItem.row] : [],
+    ),
   });
   if (table.rows.length === 0 && slots.empty)
     return h(
@@ -374,13 +376,15 @@ function renderTableBody(
               row: item.renderItem.row,
               rowIndex: item.renderItem.rowIndex,
             })
-        : details.render(item.renderItem.row, item.renderItem.rowIndex),
+        : item.renderItem.kind === "detail"
+          ? details.render(item.renderItem.row, item.renderItem.rowIndex)
+          : null,
     ),
     ...details.retained(
       new Set(
-        virtual.rowItems
-          .filter((item) => item.renderItem.kind === "detail")
-          .map((item) => item.renderItem.row.key),
+        virtual.rowItems.flatMap((item) =>
+          item.renderItem.kind === "detail" ? [item.renderItem.row.key] : [],
+        ),
       ),
     ),
     ...(loadSentinel(table, width) ? [loadSentinel(table, width)] : []),
@@ -440,7 +444,9 @@ export const DataTableRow = defineComponent({
       const { row } = props;
       const selected = table.isSelected(row.key);
       const item = virtual ? virtualRow(virtual, row) : undefined;
-      const position = props.rowIndex ?? item?.renderItem.rowIndex ?? table.rows.indexOf(row);
+      const position =
+        props.rowIndex ??
+        (item?.renderItem.kind === "row" ? item.renderItem.rowIndex : table.rows.indexOf(row));
       return h(
         props.as,
         mergeProps(props.attributes ?? {}, {

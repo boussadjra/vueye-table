@@ -46,6 +46,10 @@ export interface TableState {
   /** Widths in pixels a user gave columns, by column id. Other columns keep their `width`. */
   readonly columnSizing: Readonly<Record<string, number>>;
   readonly columnPinning: ColumnPinning;
+  /** Column ids, from outermost group to innermost group. */
+  readonly grouping: readonly string[];
+  /** Group keys, separate from row/detail expansion. Defaults to every group open. */
+  readonly expandedGroups: readonly string[] | true;
 }
 
 /** A partial state, as accepted by `setState` and `initialState`. */
@@ -69,6 +73,11 @@ export function createInitialState(
     hiddenColumns: patch.hiddenColumns ?? [],
     columnOrder: patch.columnOrder ?? [],
     columnSizing: patch.columnSizing ?? {},
+    grouping: normalizeGrouping(patch.grouping === undefined ? [] : patch.grouping, onIssue),
+    expandedGroups: normalizeGroupsExpanded(
+      patch.expandedGroups === undefined ? true : patch.expandedGroups,
+      onIssue,
+    ),
     columnPinning: normalizeColumnPinning(
       patch.columnPinning === undefined ? { start: [], end: [] } : patch.columnPinning,
       onIssue,
@@ -85,11 +94,15 @@ export function mergeState(
   const next: Record<string, unknown> = { ...state };
   for (const [key, input] of Object.entries(patch)) {
     const value =
-      key === "expanded" && input !== undefined
-        ? normalizeExpanded(input, onIssue)
-        : key === "columnPinning" && input !== undefined
-          ? normalizeColumnPinning(input, onIssue)
-          : input;
+      key === "grouping" && input !== undefined
+        ? normalizeGrouping(input, onIssue)
+        : key === "expandedGroups" && input !== undefined
+          ? normalizeGroupsExpanded(input, onIssue)
+          : key === "expanded" && input !== undefined
+            ? normalizeExpanded(input, onIssue)
+            : key === "columnPinning" && input !== undefined
+              ? normalizeColumnPinning(input, onIssue)
+              : input;
     if (value === undefined || Object.is(next[key], value)) {
       continue;
     }
@@ -100,6 +113,9 @@ export function mergeState(
       continue;
     }
     if (key === "expanded" && sameExpanded(state.expanded, value as ExpandedState)) continue;
+    if (key === "grouping" && sameExpanded(state.grouping, value as readonly string[])) continue;
+    if (key === "expandedGroups" && sameExpanded(state.expandedGroups, value as ExpandedState))
+      continue;
     if (key === "columnPinning" && samePinning(state.columnPinning, value as ColumnPinning))
       continue;
     if (
@@ -111,6 +127,34 @@ export function mergeState(
     changed = true;
   }
   return changed ? freezeState(next as unknown as TableState, state) : state;
+}
+
+function normalizeGrouping(
+  value: unknown,
+  onIssue?: (problem: TableIssue) => void,
+): readonly string[] {
+  if (Array.isArray(value) && value.every((id: unknown) => typeof id === "string"))
+    return [...new Set(value)];
+  onIssue?.(
+    issue("invalid_grouping", "Grouping must be an array of column ids; grouping is disabled."),
+  );
+  return [];
+}
+
+function normalizeGroupsExpanded(
+  value: unknown,
+  onIssue?: (problem: TableIssue) => void,
+): readonly string[] | true {
+  if (value === true) return true;
+  if (Array.isArray(value) && value.every((key: unknown) => typeof key === "string"))
+    return [...new Set(value)];
+  onIssue?.(
+    issue(
+      "invalid_expanded_groups",
+      "Expanded groups must be true or an array of group keys; all groups are collapsed.",
+    ),
+  );
+  return [];
 }
 
 function normalizeExpanded(value: unknown, onIssue?: (problem: TableIssue) => void): ExpandedState {
@@ -230,5 +274,15 @@ function freezeState(state: TableState, previous?: TableState): TableState {
             start: Object.freeze([...state.columnPinning.start]),
             end: Object.freeze([...state.columnPinning.end]),
           }),
+    grouping:
+      state.grouping === previous?.grouping
+        ? previous.grouping
+        : Object.freeze([...state.grouping]),
+    expandedGroups:
+      state.expandedGroups === previous?.expandedGroups
+        ? previous.expandedGroups
+        : state.expandedGroups === true
+          ? true
+          : Object.freeze([...state.expandedGroups]),
   });
 }

@@ -10,6 +10,13 @@ import { layoutColumns } from "./column-layout";
 import { escapeFormula, readDelimited, toDelimited } from "./delimited";
 import { createEditValidation } from "./edit-validation";
 import { rangeContains, type CellPosition, type CellRange } from "./grid";
+import {
+  createGroupingStage,
+  flattenGroups,
+  type GroupEntry,
+  type GroupModel,
+  type GroupNode,
+} from "./grouping";
 import { issue, type TableIssue } from "./issues";
 import type { DeepKeys } from "./path";
 import { getPath, isSafePath } from "./path";
@@ -29,7 +36,14 @@ import {
   type PageItem,
   paginationItems,
 } from "./pipeline";
-import { createRow, getRowItemKey, type TableRow, type TableRenderItem } from "./row";
+import {
+  createRow,
+  getRowItemKey,
+  type TableRow,
+  type TableRenderItem,
+  type TableGroup,
+  type DataRenderItem,
+} from "./row";
 import { appendList, mapList } from "./row-list";
 import {
   DEFAULT_PAGE_SIZE,
@@ -152,6 +166,7 @@ export interface SortInfo {
 export interface TableSnapshot<TRow> {
   /** True when hierarchy options are configured, including an empty tree. */
   readonly tree: boolean;
+  readonly grouped: boolean;
   readonly loadState: LoadState;
   readonly loadedRowCount: number;
   readonly expectedRowCount: number | undefined;
@@ -162,9 +177,9 @@ export interface TableSnapshot<TRow> {
   readonly allColumns: readonly TableColumn<TRow>[];
   readonly pinnedStartWidth: number;
   readonly pinnedEndWidth: number;
-  /** Rows on the current page, or all processed rows when pagination is disabled. */
+  /** Visible data leaves on the current page; group headers have no grid coordinate. */
   readonly rows: readonly TableRow<TRow>[];
-  /** Data rows followed by their open details; details do not affect pagination or grid positions. */
+  /** Group headers, visible data leaves and open details. Details never consume page slots. */
   readonly renderItems: readonly TableRenderItem<TRow>[];
   readonly paginate: boolean;
   /** Rows on every page, filtered and sorted. For `manual` tables this is the current page. */
@@ -173,7 +188,7 @@ export interface TableSnapshot<TRow> {
   readonly page: number;
   readonly pageSize: number;
   readonly pageCount: number;
-  /** Rows that pass the search and filters. */
+  /** Pagination units: leaves, tree roots, group roots or visible items according to paginateBy. */
   readonly rowCount: number;
   /** Rows before searching and filtering. */
   readonly totalRowCount: number;
@@ -198,6 +213,8 @@ export interface TableSnapshot<TRow> {
   getSort(columnId: string): SortInfo | undefined;
   getColumn(columnId: string): TableColumn<TRow> | undefined;
   getRow(key: RowKey): TableRow<TRow> | undefined;
+  /** Includes collapsed groups and groups on other pages. */
+  getGroup(key: string): TableGroup | undefined;
 }
 
 /** An edit given as a value of the column's type. */
@@ -252,6 +269,8 @@ export interface CopyOptions {
 }
 
 export interface ExportOptions extends CopyOptions {
+  /** Include group labels and aggregate cells. Defaults to leaf data only. */
+  readonly groups?: boolean | undefined;
   /** Prepend a numeric Depth column for hierarchical exports. */
   readonly depth?: boolean | undefined;
   /** Prefix the first data column with this text repeated per level. */
@@ -332,6 +351,13 @@ export interface DataTable<TRow> {
   toggleExpanded(key: RowKey, expanded?: boolean): void;
   expandAll(): void;
   collapseAll(): void;
+  /** Set grouping columns and return to the first page. */
+  groupBy(columnIds: readonly string[]): void;
+  toggleGroup(key: string, expanded?: boolean): void;
+  expandAllGroups(): void;
+  collapseAllGroups(): void;
+  /** Select or deselect every filtered leaf of a group. */
+  toggleGroupSelection(key: string, selected?: boolean): void;
 
   toggleColumn(columnId: string, visible?: boolean): void;
   moveColumn(columnId: string, toIndex: number): void;
@@ -529,8 +555,12 @@ export function createTable<TRow, TSignal extends TreeLoadSignal = TreeLoadSigna
   let expandedIssue: TableIssue | undefined;
   let columnPinningIssue: TableIssue | undefined;
   let pinOperationIssue: TableIssue | undefined;
+  let groupingIssue: TableIssue | undefined;
+  let expandedGroupsIssue: TableIssue | undefined;
   const recordStateIssue = (problem: TableIssue): void => {
     if (problem.code === "invalid_column_pinning") columnPinningIssue = problem;
+    else if (problem.code === "invalid_grouping") groupingIssue = problem;
+    else if (problem.code === "invalid_expanded_groups") expandedGroupsIssue = problem;
     else expandedIssue = problem;
   };
   let initialState = createInitialState(
@@ -823,6 +853,33 @@ export function createTable<TRow, TSignal extends TreeLoadSignal = TreeLoadSigna
         ? primedSort.result
         : sortRows(rows, columns, sorting),
   );
+  const groupStage = memo(createGroupingStage<TRow>(textContext.collator));
+  function currentGroups(): GroupModel<TRow> | undefined {
+    if (treeEnabled || manual || !state.grouping.length) return undefined;
+    const { columns, byId } = resolveColumns(definitions);
+    const indexed = indexRows(data, byId);
+    return groupStage(
+      sortStage(
+        filterStage(indexed.rows, columns, state.search, state.filters),
+        columns,
+        state.sorting,
+      ),
+      columns,
+      state.grouping,
+      state.sorting,
+    );
+  }
+  const visibleGroups = memo(flattenGroups<TRow>);
+  const groupSelection = memo((model: GroupModel<TRow>, selection: readonly RowKey[]) => {
+    const selected = new Set(selection);
+    const result = new Map<string, SelectionCoverage>();
+    for (const node of model.byKey.values()) {
+      let count = 0;
+      for (const row of node.leaves) if (selected.has(row.key)) count++;
+      result.set(node.key, coverage(count, node.leaves.length));
+    }
+    return result;
+  });
   const rowMembership = new WeakMap<readonly TableRow<TRow>[], Set<RowKey>>();
   function membership(rows: readonly TableRow<TRow>[]): Set<RowKey> {
     let keys = rowMembership.get(rows);
@@ -869,6 +926,10 @@ export function createTable<TRow, TSignal extends TreeLoadSignal = TreeLoadSigna
     if (expandedIssue) issues.push(expandedIssue);
     if (columnPinningIssue) issues.push(columnPinningIssue);
     if (pinOperationIssue) issues.push(pinOperationIssue);
+    if (groupingIssue) issues.push(groupingIssue);
+    if (expandedGroupsIssue) issues.push(expandedGroupsIssue);
+    if (treeEnabled && state.grouping.length)
+      issues.push(issue("grouping_with_tree", "Grouping is ignored for tree tables."));
     const referenced = new Set([
       ...state.sorting.map((rule) => rule.column),
       ...Object.keys(state.filters),
@@ -968,6 +1029,9 @@ export function createTable<TRow, TSignal extends TreeLoadSignal = TreeLoadSigna
     let page: number;
     let pageCount: number;
     let treeRow: ((key: RowKey) => TableRow<TRow> | undefined) | undefined;
+    let grouped: GroupModel<TRow> | undefined;
+    let groupEntries: readonly GroupEntry<TRow>[] | undefined;
+    let groupRootPagination = false;
     let totalCount = indexed.rows.length;
     if (model) {
       const processed = processedTreeStage(
@@ -1049,25 +1113,60 @@ export function createTable<TRow, TSignal extends TreeLoadSignal = TreeLoadSigna
       page = clampPage(state.pagination.page, pageCount);
     } else {
       const filtered = filterStage(indexed.rows, columns, state.search, state.filters);
-      processedRows = expandedOrder(sortStage(filtered, columns, state.sorting), expanded!.byKey);
-      filteredCount = processedRows.length;
-      pageCount = countPages(filteredCount, pageSize);
-      page = clampPage(state.pagination.page, pageCount);
-      rows = paginateRows(processedRows, { page, pageSize });
+      const sorted = sortStage(filtered, columns, state.sorting);
+      const grouping = state.grouping.length
+        ? groupStage(sorted, columns, state.grouping, state.sorting)
+        : undefined;
+      if (grouping) issues.push(...grouping.issues);
+      if (grouping?.active) {
+        grouped = grouping;
+        groupRootPagination = (options.paginateBy ?? "root") === "root";
+        processedRows = expandedOrder(grouping.rows, expanded!.byKey);
+        const entries = groupRootPagination
+          ? undefined
+          : visibleGroups(grouping.roots, state.expandedGroups);
+        filteredCount = groupRootPagination ? grouping.roots.length : entries!.length;
+        pageCount = countPages(filteredCount, pageSize);
+        page = clampPage(state.pagination.page, pageCount);
+        groupEntries = groupRootPagination
+          ? flattenGroups(
+              paginate
+                ? grouping.roots.slice((page - 1) * pageSize, page * pageSize)
+                : grouping.roots,
+              state.expandedGroups,
+            )
+          : paginate
+            ? entries!.slice((page - 1) * pageSize, page * pageSize)
+            : entries!;
+        rows = groupEntries
+          .filter((entry): entry is TableRow<TRow> => "original" in entry)
+          .map((row) => expanded!.byKey.get(row.key)!);
+      } else {
+        processedRows = expandedOrder(sorted, expanded!.byKey);
+        filteredCount = processedRows.length;
+        pageCount = countPages(filteredCount, pageSize);
+        page = clampPage(state.pagination.page, pageCount);
+        rows = paginateRows(processedRows, { page, pageSize });
+      }
     }
 
     if (!paginate) {
-      rows = processedRows;
+      if (!grouped) rows = processedRows;
       page = 1;
       pageCount = 1;
-      pageSize = Math.max(1, rows.length);
+      pageSize = Math.max(
+        1,
+        groupRootPagination ? filteredCount : (groupEntries?.length ?? rows.length),
+      );
     }
     const flatProjected = new Map<RowKey, TableRow<TRow>>();
+    const flatMetadata = (row: TableRow<TRow>): TableRow<TRow> =>
+      metadata(grouped ? shareRow(row, Object.freeze({ ...row, depth: grouped.depth })) : row);
     if (!model) {
       const project = (row: TableRow<TRow>): TableRow<TRow> => {
         let result = flatProjected.get(row.key);
         if (!result) {
-          result = metadata(row);
+          result = flatMetadata(row);
           flatProjected.set(row.key, result);
         }
         return result;
@@ -1098,13 +1197,52 @@ export function createTable<TRow, TSignal extends TreeLoadSignal = TreeLoadSigna
         : model
           ? scopeRows.filter((row) => selected.has(row.key)).length
           : selectedInProcessed;
-    const pageStart = rows.length === 0 ? 0 : (page - 1) * pageSize + 1;
+    const pageStart = (groupEntries?.length ?? rows.length) === 0 ? 0 : (page - 1) * pageSize + 1;
     const sortIndex = new Map(
       state.sorting.map((rule, priority) => [rule.column, { direction: rule.direction, priority }]),
     );
+    const groupCoverage = grouped ? groupSelection(grouped, state.selection) : undefined;
+    const groupHeaders = new Map<string, TableGroup>();
+    const expandedGroups = state.expandedGroups;
+    const groupHeader = (node: GroupNode<TRow>): TableGroup => {
+      const cached = groupHeaders.get(node.key);
+      if (cached) return cached;
+      const value: TableGroup = Object.freeze({
+        kind: "group",
+        key: node.key,
+        columnId: node.columnId,
+        value: node.value,
+        depth: node.depth,
+        leafCount: node.leaves.length,
+        isExpanded: expandedGroups === true || expandedGroups.includes(node.key),
+        selection: groupCoverage?.get(node.key) ?? "none",
+        getAggregate: node.getAggregate,
+        getAggregateDisplay: node.getAggregateDisplay,
+      });
+      groupHeaders.set(node.key, value);
+      return value;
+    };
+    const dataItems = (row: TableRow<TRow>, rowIndex: number): DataRenderItem<TRow>[] => {
+      const item: DataRenderItem<TRow> = Object.freeze({
+        kind: "row",
+        key: getRowItemKey(row.key),
+        row,
+        rowIndex,
+      });
+      return row.isExpanded && (!model || (options.getRowCanExpand?.(row.original) ?? false))
+        ? [
+            item,
+            Object.freeze({ kind: "detail", key: getRowItemKey(row.key, "detail"), row, rowIndex }),
+          ]
+        : [item];
+    };
+    const pageIndices = groupEntries
+      ? new Map(rows.map((row, index) => [row.key, index]))
+      : undefined;
 
     return Object.freeze({
       tree: treeEnabled,
+      grouped: grouped !== undefined,
       loadState,
       loadedRowCount: indexed.rows.length,
       expectedRowCount,
@@ -1114,8 +1252,15 @@ export function createTable<TRow, TSignal extends TreeLoadSignal = TreeLoadSigna
       pinnedStartWidth: ordered.pinnedStartWidth,
       pinnedEndWidth: ordered.pinnedEndWidth,
       rows,
-      renderItems:
-        !model && state.expanded !== true && state.expanded.length === 0
+      renderItems: groupEntries
+        ? Object.freeze(
+            groupEntries.flatMap((entry): TableRenderItem<TRow>[] =>
+              "original" in entry
+                ? dataItems(flatProjected.get(entry.key)!, pageIndices!.get(entry.key)!)
+                : [groupHeader(entry)],
+            ),
+          )
+        : !model && state.expanded !== true && state.expanded.length === 0
           ? mapList(rows, (row, rowIndex) =>
               Object.freeze({ kind: "row" as const, key: getRowItemKey(row.key), row, rowIndex }),
             )
@@ -1150,11 +1295,11 @@ export function createTable<TRow, TSignal extends TreeLoadSignal = TreeLoadSigna
       totalRowCount: manual ? filteredCount : totalCount,
       pageStart,
       pageEnd:
-        rows.length === 0
+        (groupEntries?.length ?? rows.length) === 0
           ? 0
-          : rootPagination
+          : rootPagination || groupRootPagination
             ? Math.min(filteredCount, page * pageSize)
-            : pageStart + rows.length - 1,
+            : pageStart + (groupEntries?.length ?? rows.length) - 1,
       pageItems: paginationItems(page, pageCount),
       canPreviousPage: page > 1,
       canNextPage: page < pageCount,
@@ -1175,7 +1320,11 @@ export function createTable<TRow, TSignal extends TreeLoadSignal = TreeLoadSigna
         treeRow
           ? treeRow(key)
           : (flatProjected.get(key) ??
-            (expanded!.byKey.get(key) ? metadata(expanded!.byKey.get(key)!) : undefined)),
+            (expanded!.byKey.get(key) ? flatMetadata(expanded!.byKey.get(key)!) : undefined)),
+      getGroup: (key: string): TableGroup | undefined => {
+        const node = grouped?.byKey.get(key);
+        return node ? groupHeader(node) : undefined;
+      },
     });
   }
 
@@ -1348,11 +1497,15 @@ export function createTable<TRow, TSignal extends TreeLoadSignal = TreeLoadSigna
     const previous = state;
     const previousIssue = expandedIssue;
     const previousPinningIssue = columnPinningIssue;
+    const previousGroupingIssue = groupingIssue;
+    const previousGroupsIssue = expandedGroupsIssue;
     const next = mergePatch(patch);
     if (
       next === previous &&
       previousIssue === expandedIssue &&
-      previousPinningIssue === columnPinningIssue
+      previousPinningIssue === columnPinningIssue &&
+      previousGroupingIssue === groupingIssue &&
+      previousGroupsIssue === expandedGroupsIssue
     ) {
       return;
     }
@@ -1404,6 +1557,8 @@ export function createTable<TRow, TSignal extends TreeLoadSignal = TreeLoadSigna
   function mergePatch(patch: TableStatePatch): TableState {
     if (patch.expanded !== undefined) expandedIssue = undefined;
     if (patch.columnPinning !== undefined) columnPinningIssue = undefined;
+    if (patch.grouping !== undefined) groupingIssue = undefined;
+    if (patch.expandedGroups !== undefined) expandedGroupsIssue = undefined;
     const next = mergeState(state, patch, recordStateIssue);
     return expandMode === "single" && patch.expanded !== undefined
       ? mergeState(next, { expanded: canonicalExpanded(next.expanded, next) })
@@ -2630,11 +2785,15 @@ export function createTable<TRow, TSignal extends TreeLoadSignal = TreeLoadSigna
     setState(patch) {
       const previousIssue = expandedIssue;
       const previousPinningIssue = columnPinningIssue;
+      const previousGroupingIssue = groupingIssue;
+      const previousGroupsIssue = expandedGroupsIssue;
       const next = mergePatch(patch);
       if (
         next !== state ||
         previousIssue !== expandedIssue ||
-        previousPinningIssue !== columnPinningIssue
+        previousPinningIssue !== columnPinningIssue ||
+        previousGroupingIssue !== groupingIssue ||
+        previousGroupsIssue !== expandedGroupsIssue
       ) {
         state = next;
         snapshot = undefined;
@@ -2835,6 +2994,36 @@ export function createTable<TRow, TSignal extends TreeLoadSignal = TreeLoadSigna
     collapseAll() {
       commit({ expanded: [] });
     },
+    groupBy(columnIds) {
+      const next = mergeState(state, { grouping: columnIds }, recordStateIssue);
+      if (next.grouping !== state.grouping || groupingIssue)
+        commit({ grouping: columnIds, pagination: firstPage() });
+    },
+    toggleGroup(key, expanded) {
+      const group = getSnapshot().getGroup(key);
+      if (!group) return;
+      const open = expanded ?? !group.isExpanded;
+      if (open === group.isExpanded) return;
+      const keys =
+        state.expandedGroups === true ? [...currentGroups()!.byKey.keys()] : state.expandedGroups;
+      commit({
+        expandedGroups: open ? [...keys, key] : keys.filter((candidate) => candidate !== key),
+      });
+    },
+    expandAllGroups() {
+      commit({ expandedGroups: true });
+    },
+    collapseAllGroups() {
+      commit({ expandedGroups: [] });
+    },
+    toggleGroupSelection(key, selected) {
+      const group = getSnapshot().getGroup(key);
+      const node = currentGroups()?.byKey.get(key);
+      if (!group || !node) return;
+      const keys = node.leaves.map((row) => row.key);
+      if (selected ?? group.selection !== "all") table.select(keys);
+      else table.deselect(keys);
+    },
 
     toggleColumn(columnId, visible) {
       if (!getSnapshot().getColumn(columnId)) {
@@ -3030,6 +3219,7 @@ export function createTable<TRow, TSignal extends TreeLoadSignal = TreeLoadSigna
       escapeFormulas = true,
       depth = false,
       indent = "",
+      groups = false,
     } = {}) {
       const current = getSnapshot();
       const columns = ids
@@ -3039,13 +3229,35 @@ export function createTable<TRow, TSignal extends TreeLoadSignal = TreeLoadSigna
           })
         : current.columns;
       const rows = pageOnly ? current.rows : current.processedRows;
-      const matrix = rows.map((row) =>
-        columns.map((column, index) => {
-          const display = (index === 0 ? indent.repeat(row.depth) : "") + row.getDisplay(column.id);
-          return escapeFormulas ? escapeFormula(display, row.getValue(column.id)) : display;
-        }),
+      const model = groups ? currentGroups() : undefined;
+      const entries: readonly (TableRow<TRow> | TableGroup)[] = model?.active
+        ? pageOnly
+          ? current.renderItems.flatMap((item): (TableRow<TRow> | TableGroup)[] =>
+              item.kind === "group" ? [item] : item.kind === "row" ? [item.row] : [],
+            )
+          : flattenGroups(model.roots, true).map((entry) =>
+              "original" in entry ? current.getRow(entry.key)! : current.getGroup(entry.key)!,
+            )
+        : rows;
+      const matrix = entries.map((row) =>
+        "kind" in row
+          ? columns.map((column, index) => {
+              const labelColumn = columns.some((candidate) => candidate.id === row.columnId)
+                ? column.id === row.columnId
+                : index === 0;
+              const value = labelColumn ? row.value : row.getAggregate(column.id);
+              const display = labelColumn
+                ? indent.repeat(row.depth) + String(row.value)
+                : row.getAggregateDisplay(column.id);
+              return escapeFormulas ? escapeFormula(display, value) : display;
+            })
+          : columns.map((column, index) => {
+              const display =
+                (index === 0 ? indent.repeat(row.depth) : "") + row.getDisplay(column.id);
+              return escapeFormulas ? escapeFormula(display, row.getValue(column.id)) : display;
+            }),
       );
-      if (depth) matrix.forEach((line, index) => line.unshift(String(rows[index]!.depth)));
+      if (depth) matrix.forEach((line, index) => line.unshift(String(entries[index]!.depth)));
       if (headers) {
         matrix.unshift(
           columns.map((column) => (escapeFormulas ? escapeFormula(column.header) : column.header)),

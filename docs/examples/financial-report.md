@@ -9,10 +9,11 @@ import FinancialReport from "../.vitepress/theme/examples/financial-report/Finan
 # Financial report
 
 A finance team reviews operating expenses each quarter: 60 cost lines across three regions and five
-departments, budget against actual, with subtotals per group and a grand total. The engine has no
-grouping of its own, so this page composes it: `useDataTable` does search, filters, sorting, and
-column visibility, and the page groups the rows it hands back and draws them with the styled
-theme's `VtTable` and `VtHeader`.
+departments, budget against actual, with subtotals per group and a grand total. This example
+composes report-specific grouping over `processedRows`, with subtotal ordering and a grand total.
+The engine now also offers [native grouping and aggregation](/guide/grouping); the
+[row grouping example](/examples/row-grouping) demonstrates its shared expansion, selection,
+pagination and editing model.
 
 <DemoFrame title="FinancialReport.vue">
   <FinancialReport />
@@ -129,13 +130,13 @@ table.filter("region", ["EMEA", "APAC"]);
 table.filter("variance", "over");
 ```
 
-### Why grouping is left to composition
+### Choosing native grouping or report composition
 
-Grouping decisions differ from report to report: which fields nest, how groups are ordered, which
-columns sum and which are ratios, whether a subtotal counts hidden rows, where collapsed state
-lives. Built into the engine, each would need an option. Composed over `processedRows`, they are
-about 60 lines of plain TypeScript that you can read and change, while search, filters, sorting,
-and visibility stay in the engine and its state stays plain, serializable data.
+Use [native grouping](/guide/grouping) for shared grouping state, nested expansion, filtered-leaf
+selection and group pagination. This report retains its custom subtotal ordering and grand-total
+layout as a composition example. A percentage subtotal still needs a ratio of totals; averaging
+row percentages gives a different result. The native API supports that calculation through a
+custom `aggregate`, as shown in the grouping guide.
 
 ## Related
 
