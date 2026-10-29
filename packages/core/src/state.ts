@@ -18,6 +18,12 @@ export interface PaginationState {
   readonly pageSize: number;
 }
 
+/** Logical pin regions, with ids in display order within each region. */
+export interface ColumnPinning {
+  readonly start: readonly string[];
+  readonly end: readonly string[];
+}
+
 /**
  * Everything a user can change about a table, as plain serializable data.
  *
@@ -39,6 +45,7 @@ export interface TableState {
   readonly columnOrder: readonly string[];
   /** Widths in pixels a user gave columns, by column id. Other columns keep their `width`. */
   readonly columnSizing: Readonly<Record<string, number>>;
+  readonly columnPinning: ColumnPinning;
 }
 
 /** A partial state, as accepted by `setState` and `initialState`. */
@@ -62,6 +69,10 @@ export function createInitialState(
     hiddenColumns: patch.hiddenColumns ?? [],
     columnOrder: patch.columnOrder ?? [],
     columnSizing: patch.columnSizing ?? {},
+    columnPinning: normalizeColumnPinning(
+      patch.columnPinning === undefined ? { start: [], end: [] } : patch.columnPinning,
+      onIssue,
+    ),
   });
 }
 
@@ -74,7 +85,11 @@ export function mergeState(
   const next: Record<string, unknown> = { ...state };
   for (const [key, input] of Object.entries(patch)) {
     const value =
-      key === "expanded" && input !== undefined ? normalizeExpanded(input, onIssue) : input;
+      key === "expanded" && input !== undefined
+        ? normalizeExpanded(input, onIssue)
+        : key === "columnPinning" && input !== undefined
+          ? normalizeColumnPinning(input, onIssue)
+          : input;
     if (value === undefined || Object.is(next[key], value)) {
       continue;
     }
@@ -85,6 +100,8 @@ export function mergeState(
       continue;
     }
     if (key === "expanded" && sameExpanded(state.expanded, value as ExpandedState)) continue;
+    if (key === "columnPinning" && samePinning(state.columnPinning, value as ColumnPinning))
+      continue;
     if (
       key === "columnSizing" &&
       sameSizing(state.columnSizing, value as TableState["columnSizing"])
@@ -114,6 +131,39 @@ function normalizeExpanded(value: unknown, onIssue?: (problem: TableIssue) => vo
     ),
   );
   return [];
+}
+
+function normalizeColumnPinning(
+  value: unknown,
+  onIssue?: (problem: TableIssue) => void,
+): ColumnPinning {
+  if (
+    value !== null &&
+    typeof value === "object" &&
+    "start" in value &&
+    "end" in value &&
+    Array.isArray(value.start) &&
+    value.start.every((id: unknown) => typeof id === "string") &&
+    Array.isArray(value.end) &&
+    value.end.every((id: unknown) => typeof id === "string")
+  )
+    return { start: value.start, end: value.end };
+  onIssue?.(
+    issue(
+      "invalid_column_pinning",
+      "Column pinning must contain start and end arrays of column ids; empty regions are used.",
+    ),
+  );
+  return { start: [], end: [] };
+}
+
+function samePinning(left: ColumnPinning, right: ColumnPinning): boolean {
+  return (
+    left.start.length === right.start.length &&
+    left.end.length === right.end.length &&
+    left.start.every((id, index) => id === right.start[index]) &&
+    left.end.every((id, index) => id === right.end[index])
+  );
 }
 
 function sameExpanded(left: ExpandedState, right: ExpandedState): boolean {
@@ -173,5 +223,12 @@ function freezeState(state: TableState, previous?: TableState): TableState {
       state.columnSizing === previous?.columnSizing
         ? previous.columnSizing
         : Object.freeze({ ...state.columnSizing }),
+    columnPinning:
+      state.columnPinning === previous?.columnPinning
+        ? previous.columnPinning
+        : Object.freeze({
+            start: Object.freeze([...state.columnPinning.start]),
+            end: Object.freeze([...state.columnPinning.end]),
+          }),
   });
 }

@@ -76,6 +76,8 @@ carrying the new value:
 | `minWidth`   |                  | Minimum width in pixels.                                                |
 | `maxWidth`   |                  | The widest a user may resize the column, in pixels.                     |
 | `resizable`  | `true`           | Whether a user may give the column another width.                       |
+| `pinned`     |                  | Initial logical pin side: `"start"` or `"end"`.                         |
+| `pinnable`   | `true`           | Whether a user may pin the column.                                      |
 | `sortable`   | `true`           | Whether a user may sort by the column.                                  |
 | `searchable` | `true`           | Whether the free-text search looks at the column.                       |
 | `hidden`     | `false`          | Hidden until a user shows it.                                           |
@@ -118,6 +120,53 @@ other than a positive number, or targets a column that is not resizable is ignor
 On a column, `width` is the width to draw, `defaultWidth` is the definition's `width`, and
 `isResized` tells whether the width came from the state. The components do not draw resize
 handles yet; until they do, call `resizeColumn` from your own header markup.
+
+## Pinning columns
+
+`pinned: "start" | "end"` seeds `state.columnPinning`, whose two arrays store ids in pin order.
+An explicit initial `columnPinning` replaces those defaults, including an empty pair of arrays.
+`pinColumn(id, "start" | "end" | false)` moves a column to a side or unpins it. Repeating the
+same pin is a no-op. A hidden column keeps its pin and uses no pinned width.
+
+```ts
+const table = createTable({
+  data: orders,
+  columns: [
+    { id: "id", width: 108, pinned: "start" },
+    { id: "customer", width: 208 },
+    { id: "total", width: 112, pinned: "end" },
+  ],
+});
+table.pinColumn("customer", "start");
+table.getSnapshot().getColumn("customer")?.pinOffset; // 108
+table.resizeColumn("id", 160);
+table.getSnapshot().getColumn("customer")?.pinOffset; // 160
+table.pinColumn("customer", false);
+```
+
+The snapshot keeps one display order: start pins, centre columns ordered by `columnOrder`, then
+end pins. Grid indices, keyboard navigation, clipboard ranges, and default exports all follow
+that list. `moveColumn(id, toIndex)` uses all-column display indices (including hidden columns)
+and clamps the move to the column's current region; use `pinColumn` to change regions. Pinning,
+moving, hiding and resizing columns do not change the page or rerun the row pipeline.
+
+Renderers read `column.pinned`, `column.pinOffset`, and `column.isPinnedEdge`. A start offset is
+the sum of visible widths before that column; an end offset is the sum after it, measured from
+the logical end. The last visible start pin and first visible end pin carry the edge marker.
+`snapshot.pinnedStartWidth` and `pinnedEndWidth` expose total visible widths. Logical offsets work
+with CSS `inset-inline-start` and `inset-inline-end` in LTR and RTL.
+
+A pinned column without a finite positive width uses a finite positive `minWidth`, then 120px,
+and reports `unsized_pinned_column`. Unknown ids report `unknown_column`; forbidden pins report
+`column_not_pinnable`. Repeated ids on one side keep their first entry with `duplicate_column_pin`;
+an id on both sides is left unpinned with the same issue. The host's state entries are retained,
+so a removed column can regain its pin when its definition returns. Malformed pinning state
+recovers to empty regions with `invalid_column_pinning`. Refused `pinColumn` calls leave state
+unchanged and report the last operation issue until the next valid pin call or `reset()`.
+
+Try the [live example](/examples/column-pinning), which supplies custom sticky cells. Built-in
+component controls and centre-only horizontal virtualization remain follow-up work. The public
+contract is recorded in [ADR 0024](/adr/0024-column-sizing-and-pinning).
 
 ## Formatting
 

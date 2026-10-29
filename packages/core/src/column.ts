@@ -4,6 +4,7 @@ import { createCollator, foldText, type TextNormalizer } from "./text";
 import type { EditorSpec, Validator } from "./validation";
 
 export type ColumnAlign = "start" | "center" | "end";
+export type ColumnPinSide = "start" | "end";
 
 /** How typed or pasted text becomes a value when a column has no `parse`. */
 export type ColumnType = "text" | "number" | "boolean" | "date";
@@ -26,6 +27,10 @@ export interface ColumnOptions<TRow, TValue> {
   readonly maxWidth?: number | undefined;
   /** Whether a user may resize this column. Defaults to `true`. */
   readonly resizable?: boolean | undefined;
+  /** Initial logical pin side, unless initial state supplies columnPinning. */
+  readonly pinned?: ColumnPinSide | undefined;
+  /** Whether a user may pin this column. Defaults to `true`. */
+  readonly pinnable?: boolean | undefined;
   /** Whether a user may sort by this column. Defaults to `true`. */
   readonly sortable?: boolean | undefined;
   /** Whether the free-text search looks at this column. Defaults to `true`. */
@@ -113,6 +118,12 @@ export interface TableColumn<TRow> {
   readonly resizable: boolean;
   /** Whether `width` comes from `state.columnSizing`. */
   readonly isResized: boolean;
+  readonly pinnable: boolean;
+  readonly pinned: ColumnPinSide | undefined;
+  /** Distance from the logical pinned edge, excluding hidden columns. Zero when unpinned. */
+  readonly pinOffset: number;
+  /** Last visible start column or first visible end column. */
+  readonly isPinnedEdge: boolean;
   readonly sortable: boolean;
   readonly searchable: boolean;
   readonly initiallyHidden: boolean;
@@ -394,6 +405,10 @@ export function resolveColumn<TRow>(
     maxWidth: def.maxWidth,
     resizable: def.resizable ?? true,
     isResized: false,
+    pinnable: def.pinnable ?? true,
+    pinned: undefined,
+    pinOffset: 0,
+    isPinnedEdge: false,
     sortable: def.sortable ?? true,
     searchable: def.searchable ?? true,
     initiallyHidden: def.hidden ?? false,

@@ -28,6 +28,7 @@ const state = shallowRef<TableState>({
   hiddenColumns: ["started"],
   columnOrder: [],
   columnSizing: {},
+  columnPinning: { start: [], end: [] },
 });
 const updates = ref(0);
 

@@ -6,6 +6,36 @@ import { defineComponent, effectScope, h, nextTick, ref, shallowRef, watch } fro
 import { people, type Person } from "../fixtures";
 
 describe("useDataTable", () => {
+  it("forwards pinning and follows controlled pin state without echoing it", async () => {
+    const state = ref({ columnPinning: { start: ["city"], end: ["age"] } });
+    const onStateChange = vi.fn<() => void>();
+    const scope = effectScope();
+    const table = scope.run(() =>
+      useDataTable<Person>({
+        data: people,
+        columns: [
+          { id: "name.first", width: 180 },
+          { id: "age", width: 80 },
+          { id: "city", width: 120 },
+        ],
+        state,
+        onStateChange,
+      }),
+    )!;
+    expect(table.columns.map((column) => column.id)).toEqual(["city", "name.first", "age"]);
+    expect(table.pinnedStartWidth).toBe(120);
+    table.pinColumn("name.first", "start");
+    expect(table.pinnedStartWidth).toBe(300);
+    expect(onStateChange).toHaveBeenCalledTimes(1);
+    state.value = { columnPinning: { start: [], end: ["city"] } };
+    await nextTick();
+    expect(table.columns.map((column) => column.id)).toEqual(["name.first", "age", "city"]);
+    expect(table.pinnedStartWidth).toBe(0);
+    expect(table.pinnedEndWidth).toBe(120);
+    expect(onStateChange).toHaveBeenCalledTimes(1);
+    scope.stop();
+  });
+
   it("forwards expansion operations and updates detail items reactively", () => {
     const scope = effectScope();
     const table = scope.run(() =>
@@ -108,6 +138,41 @@ describe("useDataTable", () => {
 });
 
 describe("useDataGrid", () => {
+  it.each(["ltr", "rtl"] as const)(
+    "navigates and edits one display order across pin regions in %s",
+    (direction) => {
+      const scope = effectScope();
+      scope.run(() => {
+        const table = useDataTable<Person>({
+          data: people.slice(0, 1),
+          columns: [
+            { id: "name.first", width: 180, editable: true },
+            { id: "age", width: 80, editable: true },
+            { id: "city", width: 120, editable: true },
+          ],
+          initialState: { columnPinning: { start: ["city"], end: ["age"] } },
+        });
+        const grid = useDataGrid(table);
+        grid.focusCell({ row: 0, column: 0 });
+        expect(grid.cellAt(grid.selection!.focus)?.column.id).toBe("city");
+        const key = direction === "ltr" ? "ArrowRight" : "ArrowLeft";
+        grid.handleKey({ key, direction, shiftKey: true });
+        expect(grid.cellAt(grid.selection!.focus)?.column.id).toBe("name.first");
+        grid.handleKey({ key, direction, shiftKey: true });
+        expect(grid.cellAt(grid.selection!.focus)?.column.id).toBe("age");
+        expect(grid.copy()).toBe("London\tAda\t36");
+        expect(grid.paste("Paris\tAda revised\t40")?.status).toBe("applied");
+        expect(table.getRow(1)?.original).toMatchObject({
+          city: "Paris",
+          name: { first: "Ada revised" },
+          age: 40,
+        });
+        expect(people[0]?.city).toBe("London");
+      });
+      scope.stop();
+    },
+  );
+
   function setup() {
     const scope = effectScope();
     const onDataChange = vi.fn<(data: readonly Person[]) => void>();

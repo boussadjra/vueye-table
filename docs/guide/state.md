@@ -1,6 +1,6 @@
 # State and v-model
 
-Expansion is part of state as `expanded: readonly RowKey[] | true`, defaulting to `[]`. Column widths a user chose are part of state as `columnSizing: Record<string, number>`, defaulting to `{}`. Complete state literals must include both fields. See [row expansion](/guide/expansion) for rendering details and single-row rules, and [column widths](/guide/columns#widths-and-resizing) for sizing.
+Expansion is part of state as `expanded: readonly RowKey[] | true`, defaulting to `[]`. Column widths a user chose are part of state as `columnSizing: Record<string, number>`, defaulting to `{}`. Column pins live in `columnPinning: { start: readonly string[]; end: readonly string[] }`, defaulting to empty arrays. Complete state literals must include all three fields. See [row expansion](/guide/expansion), [column widths](/guide/columns#widths-and-resizing), and [column pinning](/guide/columns#pinning-columns) for their behavior.
 
 Everything a user can change about a table is one plain, serializable object:
 
@@ -15,6 +15,7 @@ interface TableState {
   hiddenColumns: string[];
   columnOrder: string[];
   columnSizing: Record<string, number>; // pixels, by column id
+  columnPinning: { start: string[]; end: string[] }; // logical sides, in pin order
 }
 ```
 

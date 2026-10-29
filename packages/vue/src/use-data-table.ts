@@ -105,6 +105,7 @@ const OPERATIONS = [
   "collapseAll",
   "toggleColumn",
   "moveColumn",
+  "pinColumn",
   "resizeColumn",
   "resetColumnSize",
   "edit",

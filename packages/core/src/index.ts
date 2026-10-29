@@ -11,6 +11,7 @@ export {
   type ColumnAlign,
   type ColumnDef,
   type ColumnOptions,
+  type ColumnPinSide,
   type ColumnType,
   type ComputedColumnDef,
   type PathColumnDef,
@@ -93,6 +94,7 @@ export {
 export { getRowItemKey, type TableRow, type TableRenderItem, type RowItemKind } from "./row";
 export {
   DEFAULT_PAGE_SIZE,
+  type ColumnPinning,
   type ExpandedState,
   type PaginationState,
   type RowKey,
