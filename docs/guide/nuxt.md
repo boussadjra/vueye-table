@@ -6,7 +6,7 @@ Full-component `edit-mode` and `editor.<id>` slots work with the default compone
 see [editing](/guide/editing).
 
 ```bash
-pnpm add @vueye-table/nuxt@3.0.0-beta.3
+pnpm add @vueye-table/nuxt@3.0.0-beta.4
 ```
 
 This is a prerelease for application feedback. Keep directly installed vueye-table packages on
