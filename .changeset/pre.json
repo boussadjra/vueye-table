@@ -30,6 +30,7 @@
     "reactive-tree-filter",
     "rendered-column-coordinates",
     "row-attrs",
+    "row-grouping",
     "tree-data",
     "tree-detail-components",
     "virtual-column-measurements",
