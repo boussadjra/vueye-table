@@ -177,16 +177,20 @@ export function createGroupingStage<TRow>(
       const sortColumn = drafts[0]?.column;
       const rule = sortColumn && sorting.find((sort) => sort.column === sortColumn.id);
       if (rule && sortColumn)
-        drafts.sort(
-          (a, b) =>
+        drafts.sort((a, b) => {
+          const leftEmpty = a.value === "";
+          const rightEmpty = b.value === "";
+          if (leftEmpty !== rightEmpty) return leftEmpty ? 1 : -1;
+          return (
             (rule.direction === "asc" ? 1 : -1) *
             (sortColumn.groupValue
               ? compareValues(a.value, b.value, collator)
               : sortColumn.compare(
                   a.leaves[0]!.getValue(sortColumn.id),
                   b.leaves[0]!.getValue(sortColumn.id),
-                )),
-        );
+                ))
+          );
+        });
       return Object.freeze(
         drafts.map((draft): GroupNode<TRow> => {
           const children = finish(draft.children);

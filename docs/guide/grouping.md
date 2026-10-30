@@ -23,6 +23,7 @@ table.expandAllGroups();
 The pipeline is filter → sort → group → paginate. A group follows its column's sort rule when
 present, otherwise first appearance; leaves retain the table's ordering inside each group. Custom
 buckets use natural number/text ordering in the table locale, separate from raw-cell comparators.
+Empty group labels stay last in either sort direction, matching the leaf sort's empty-last rule.
 Hidden columns can still group or aggregate. Unknown and `groupable: false` ids are ignored
 with issues. A `groupValue(value, row)` callback can bucket dates by month or numbers by range.
 Buckets are strings or finite numbers; `1`, `"1"` and `"__proto__"` remain safe, distinct values.

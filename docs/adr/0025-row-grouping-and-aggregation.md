@@ -29,6 +29,7 @@ coverage and aggregate accessors. Visible leaves alone populate `rows` and grid 
 Groups follow their column's sort direction, otherwise first appearance. Default buckets use the
 column comparator on representative raw values; custom buckets use natural number/text ordering
 in the table locale, so a date comparator never receives a month string.
+Empty group labels stay last in both sort directions.
 Leaf ordering comes from the sort stage. Aggregates read cached column values over the group's
 filtered leaves, including nested and off-page leaves. Numeric aggregates ignore missing,
 non-numeric and non-finite values. `sum` of no numbers is zero; other numeric aggregates are empty.

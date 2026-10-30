@@ -1204,6 +1204,7 @@ export function createTable<TRow, TSignal extends TreeLoadSignal = TreeLoadSigna
     const groupCoverage = grouped ? groupSelection(grouped, state.selection) : undefined;
     const groupHeaders = new Map<string, TableGroup>();
     const expandedGroups = state.expandedGroups;
+    const expandedGroupKeys = expandedGroups === true ? undefined : new Set(expandedGroups);
     const groupHeader = (node: GroupNode<TRow>): TableGroup => {
       const cached = groupHeaders.get(node.key);
       if (cached) return cached;
@@ -1214,7 +1215,7 @@ export function createTable<TRow, TSignal extends TreeLoadSignal = TreeLoadSigna
         value: node.value,
         depth: node.depth,
         leafCount: node.leaves.length,
-        isExpanded: expandedGroups === true || expandedGroups.includes(node.key),
+        isExpanded: expandedGroups === true || expandedGroupKeys!.has(node.key),
         selection: groupCoverage?.get(node.key) ?? "none",
         getAggregate: node.getAggregate,
         getAggregateDisplay: node.getAggregateDisplay,

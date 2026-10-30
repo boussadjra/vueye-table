@@ -85,6 +85,72 @@ describe("grouping", () => {
     expect(table.getSnapshot().processedRows.map((row) => row.key)).toEqual([3, 1, 4, 2]);
   });
 
+  it.each([false, true])(
+    "keeps empty groups last in both sort directions (custom bucket: %s)",
+    (custom) => {
+      const table = createTable({
+        data: [
+          { id: 1, category: null },
+          { id: 2, category: "A" },
+          { id: 3, category: "" },
+          { id: 4, category: "B" },
+        ],
+        columns: [
+          {
+            id: "category",
+            ...(custom ? { groupValue: (value: string | null) => value ?? "" } : {}),
+          },
+        ],
+        initialState: { grouping: ["category"] },
+      });
+      table.sort("category", "desc");
+      expect(
+        table
+          .getSnapshot()
+          .renderItems.flatMap((item) => (item.kind === "group" ? [item.value] : [])),
+      ).toEqual(["B", "A", ""]);
+      expect(table.getSnapshot().rows.map((row) => row.key)).toEqual([4, 2, 1, 3]);
+      table.sort("category", "asc");
+      expect(
+        table
+          .getSnapshot()
+          .renderItems.flatMap((item) => (item.kind === "group" ? [item.value] : [])),
+      ).toEqual(["A", "B", ""]);
+    },
+  );
+
+  it("handles explicit expansion across many distinct groups without repeated linear scans", () => {
+    const table = createTable({
+      data: Array.from({ length: 2000 }, (_, id) => ({ id, category: `Group ${id}` })),
+      columns: [{ id: "category" }],
+      paginate: false,
+      initialState: { grouping: ["category"] },
+    });
+    const first = table.getSnapshot().renderItems[0]!;
+    table.toggleGroup(first.key, false);
+    const expandedGroups = table.getState().expandedGroups;
+    let linearScans = 0;
+    const includes = Array.prototype.includes;
+    const spy = vi.spyOn(Array.prototype, "includes").mockImplementation(function (
+      this: unknown[],
+      value: unknown,
+      fromIndex?: number,
+    ) {
+      if (this === expandedGroups) linearScans++;
+      return includes.call(this, value, fromIndex);
+    });
+    try {
+      const snapshot = table.getSnapshot();
+      expect(snapshot.rows).toHaveLength(1999);
+      expect(snapshot.getGroup(first.key)?.isExpanded).toBe(false);
+      expect(snapshot.renderItems.at(-2)?.kind).toBe("group");
+      expect(snapshot.getGroup(snapshot.renderItems.at(-2)!.key)?.isExpanded).toBe(true);
+      expect(linearScans).toBeLessThanOrEqual(1);
+    } finally {
+      spy.mockRestore();
+    }
+  });
+
   it("counts root groups for pagination and aggregates all filtered leaves", () => {
     const table = make({
       initialState: { grouping: ["region"], pagination: { page: 1, pageSize: 1 } },
