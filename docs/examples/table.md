@@ -29,6 +29,8 @@ const state = shallowRef<TableState>({
   columnOrder: [],
   columnSizing: {},
   columnPinning: { start: [], end: [] },
+  grouping: [],
+  expandedGroups: true,
 });
 const updates = ref(0);
 

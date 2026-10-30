@@ -184,7 +184,9 @@ describe("Vue virtualization", () => {
           return () =>
             h(
               "ul",
-              virtual.items.map((item) => h("li", item.renderItem.row.original.name)),
+              virtual.items.map((item) =>
+                h("li", item.renderItem.kind === "row" ? item.renderItem.row.original.name : ""),
+              ),
             );
         },
       }),
@@ -234,7 +236,11 @@ describe("Vue virtualization", () => {
     expect(f.el.scrollTop).toBe(490);
     f.data.value = [...f.data.value].reverse();
     await nextTick();
-    expect(f.virtual.items.some((item) => item.renderItem.row.key === 10)).toBe(true);
+    expect(
+      f.virtual.items.some(
+        (item) => (item.renderItem.kind === "group" ? undefined : item.renderItem.row.key) === 10,
+      ),
+    ).toBe(true);
     f.table.search("Row 10");
     expect(f.el.scrollTop).toBe(0);
     f.table.search("missing");
@@ -303,7 +309,11 @@ describe("Vue virtualization", () => {
     ).toBe(true);
     expect(f.columns.items.some((item) => item.index === 10)).toBe(true);
     f.grid.handleKey({ key: "ArrowDown" });
-    expect(f.virtual.items.some((item) => item.renderItem.rowIndex === 51)).toBe(true);
+    expect(
+      f.virtual.items.some(
+        (item) => (item.renderItem.kind === "group" ? undefined : item.renderItem.rowIndex) === 51,
+      ),
+    ).toBe(true);
     f.grid.handleKey({ key: "ArrowRight" });
     expect(f.columns.items.some((item) => item.index === 11)).toBe(true);
     f.wrapper.unmount();

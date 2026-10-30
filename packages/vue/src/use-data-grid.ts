@@ -117,14 +117,25 @@ export function useDataGrid<TRow>(
   // Keep the selection on cells that exist, and drop an edit whose cell is gone.
   watch(
     () => table.snapshot,
-    () => {
+    (snapshot, previous) => {
       const next = bounds.value;
       const current = selection.value;
       if (current && (next.rows === 0 || next.columns === 0)) {
         selection.value = undefined;
       } else if (current) {
-        const anchor = clampPosition(current.anchor, next);
-        const focus = clampPosition(current.focus, next);
+        const relocate = (position: CellPosition): CellPosition => {
+          if ((snapshot.grouped || previous.grouped) && snapshot.page === previous.page) {
+            const key = previous.rows[position.row]?.key;
+            const row =
+              key === undefined
+                ? -1
+                : snapshot.rows.findIndex((candidate) => candidate.key === key);
+            if (row >= 0) return clampPosition({ ...position, row }, next);
+          }
+          return clampPosition(position, next);
+        };
+        const anchor = relocate(current.anchor);
+        const focus = relocate(current.focus);
         if (!same(current.anchor, anchor) || !same(current.focus, focus)) {
           selection.value = { anchor, focus };
         }

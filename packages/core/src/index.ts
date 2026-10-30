@@ -9,6 +9,9 @@ export {
   typeOf,
   type AnyColumnDef,
   type ColumnAlign,
+  type Aggregate,
+  type AggregateKind,
+  type GroupValue,
   type ColumnDef,
   type ColumnOptions,
   type ColumnPinSide,
@@ -91,7 +94,14 @@ export {
   sortRows,
   type PageItem,
 } from "./pipeline";
-export { getRowItemKey, type TableRow, type TableRenderItem, type RowItemKind } from "./row";
+export {
+  getRowItemKey,
+  type TableRow,
+  type TableRenderItem,
+  type DataRenderItem,
+  type TableGroup,
+  type RowItemKind,
+} from "./row";
 export {
   DEFAULT_PAGE_SIZE,
   type ColumnPinning,

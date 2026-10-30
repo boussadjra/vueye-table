@@ -26,6 +26,7 @@ const guideItems: DefaultTheme.SidebarItem[] = [
       { text: "State and v-model", link: "/guide/state" },
       { text: "Row expansion", link: "/guide/expansion" },
       { text: "Tree data", link: "/guide/trees" },
+      { text: "Grouping and aggregation", link: "/guide/grouping" },
       { text: "Theming", link: "/guide/theming" },
       { text: "Language, locale and search", link: "/guide/language" },
     ],
@@ -61,6 +62,7 @@ const guideItems: DefaultTheme.SidebarItem[] = [
           { text: "Tree data benchmark", link: "/benchmarks/tree-data" },
           { text: "Validation benchmark", link: "/benchmarks/validation" },
           { text: "Streaming benchmark", link: "/benchmarks/streaming" },
+          { text: "Grouping benchmark", link: "/benchmarks/grouping" },
         ],
       },
       { text: "Ingestion, hierarchy and editing API", link: "/guide/api-reference" },
@@ -94,6 +96,7 @@ const exampleItems: DefaultTheme.SidebarItem[] = [
   { text: "Virtual layout", link: "/examples/virtual-layout" },
   { text: "Virtual grid", link: "/examples/virtual-grid" },
   { text: "Column pinning", link: "/examples/column-pinning" },
+  { text: "Row grouping", link: "/examples/row-grouping" },
   { text: "Virtual components", link: "/examples/virtual-components" },
 ];
 
@@ -114,6 +117,7 @@ const decisionItems: DefaultTheme.SidebarItem[] = [
       },
       { text: "0022 Row attributes", link: "/adr/0022-row-attributes" },
       { text: "0024 Column sizing and pinning", link: "/adr/0024-column-sizing-and-pinning" },
+      { text: "0025 Row grouping and aggregation", link: "/adr/0025-row-grouping-and-aggregation" },
     ],
   },
   {

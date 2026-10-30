@@ -74,3 +74,15 @@ PendingCell[]` describes unresolved work and `completion` resolves its final res
 Read [editing](/guide/editing), [validation](/guide/validation) and [row drafts](/guide/row-drafts)
 before persistence integration. The server validates/authorizes again. Local save events never
 acknowledge backend writes.
+
+## Grouping and aggregation
+
+Flat client tables accept `initialState.grouping` and `initialState.expandedGroups`. Use
+`groupBy(ids)`, `toggleGroup(key, expanded?)`, `expandAllGroups()`, `collapseAllGroups()` and
+`toggleGroupSelection(key, selected?)`. `snapshot.grouped` reports effective grouping and
+`getGroup(key)` retrieves a read-only `TableGroup`, including collapsed groups.
+
+`TableRenderItem` now includes `kind: "group"`; it has no `row` or `rowIndex`. Narrow by kind
+before reading a leaf. `getAggregate(id)` returns a value and `getAggregateDisplay(id)` returns
+subtotal text. `exportRows({groups: true})` includes labels and aggregates. See
+[grouping](/guide/grouping) for pagination units, aggregates, manual/tree limits and migration.

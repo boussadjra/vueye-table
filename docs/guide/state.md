@@ -1,6 +1,10 @@
 # State and v-model
 
-Expansion is part of state as `expanded: readonly RowKey[] | true`, defaulting to `[]`. Column widths a user chose are part of state as `columnSizing: Record<string, number>`, defaulting to `{}`. Column pins live in `columnPinning: { start: readonly string[]; end: readonly string[] }`, defaulting to empty arrays. Complete state literals must include all three fields. See [row expansion](/guide/expansion), [column widths](/guide/columns#widths-and-resizing), and [column pinning](/guide/columns#pinning-columns) for their behavior.
+Expansion, column layout and grouping are part of the serializable state. Group expansion uses
+its own keys, separate from data row expansion. Complete state literals must include every field
+below; partial patches only need the fields being changed. See [row expansion](/guide/expansion),
+[column widths](/guide/columns#widths-and-resizing), [column pinning](/guide/columns#pinning-columns)
+and [grouping](/guide/grouping) for their behavior.
 
 Everything a user can change about a table is one plain, serializable object:
 
@@ -16,6 +20,8 @@ interface TableState {
   columnOrder: string[];
   columnSizing: Record<string, number>; // pixels, by column id
   columnPinning: { start: string[]; end: string[] }; // logical sides, in pin order
+  grouping: string[]; // outer to inner column ids, default []
+  expandedGroups: string[] | true; // group keys, default true
 }
 ```
 
