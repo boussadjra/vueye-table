@@ -22,6 +22,7 @@ interface TableState {
   columnPinning: { start: string[]; end: string[] }; // logical sides, in pin order
   grouping: string[]; // outer to inner column ids, default []
   expandedGroups: string[] | true; // group keys, default true
+  rowPinning: { top: (string | number)[]; bottom: (string | number)[] };
 }
 ```
 

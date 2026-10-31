@@ -27,6 +27,7 @@ const guideItems: DefaultTheme.SidebarItem[] = [
       { text: "Row expansion", link: "/guide/expansion" },
       { text: "Tree data", link: "/guide/trees" },
       { text: "Grouping and aggregation", link: "/guide/grouping" },
+      { text: "Row pinning", link: "/guide/row-pinning" },
       { text: "Theming", link: "/guide/theming" },
       { text: "Language, locale and search", link: "/guide/language" },
     ],
@@ -97,6 +98,7 @@ const exampleItems: DefaultTheme.SidebarItem[] = [
   { text: "Virtual grid", link: "/examples/virtual-grid" },
   { text: "Column pinning", link: "/examples/column-pinning" },
   { text: "Row grouping", link: "/examples/row-grouping" },
+  { text: "Row pinning", link: "/examples/row-pinning" },
   { text: "Virtual components", link: "/examples/virtual-components" },
 ];
 
@@ -118,6 +120,7 @@ const decisionItems: DefaultTheme.SidebarItem[] = [
       { text: "0022 Row attributes", link: "/adr/0022-row-attributes" },
       { text: "0024 Column sizing and pinning", link: "/adr/0024-column-sizing-and-pinning" },
       { text: "0025 Row grouping and aggregation", link: "/adr/0025-row-grouping-and-aggregation" },
+      { text: "0026 Row pinning", link: "/adr/0026-row-pinning" },
     ],
   },
   {

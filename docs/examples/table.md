@@ -31,6 +31,7 @@ const state = shallowRef<TableState>({
   columnPinning: { start: [], end: [] },
   grouping: [],
   expandedGroups: true,
+  rowPinning: {top: [], bottom: []},
 });
 const updates = ref(0);
 

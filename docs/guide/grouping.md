@@ -57,6 +57,8 @@ read-only and have no grid position.
 `rows` contains visible data leaves on the current page. Their `depth` is the number of grouping
 levels. `processedRows` contains all filtered leaves in group order, including collapsed groups.
 Use `getGroup(key)` for a group on any page, and `getRow(rowKey)` for an actual data row.
+With [row pinning](/guide/row-pinning), these grouping rows and aggregates cover only centre
+leaves; pinned rows live in separate regions.
 `grouped` says whether grouping is effective. Row/detail expansion stays in `expanded`;
 group expansion stays in `expandedGroups` (default `true`). New groups open automatically with
 `true`; when using an explicit key array, new keys start collapsed.

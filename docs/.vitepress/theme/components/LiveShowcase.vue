@@ -60,6 +60,7 @@ const initialState: TableState = {
   columnPinning: { start: [], end: [] },
   grouping: [],
   expandedGroups: true,
+  rowPinning: { top: [], bottom: [] },
 };
 const tableState = shallowRef<TableState>(initialState);
 const updates = ref(0);

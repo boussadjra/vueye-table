@@ -108,6 +108,8 @@ export {
   type ExpandedState,
   type PaginationState,
   type RowKey,
+  type RowPinning,
+  type RowPinSide,
   type SortDirection,
   type SortRule,
   type TableState,

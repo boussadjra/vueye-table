@@ -446,7 +446,7 @@ export const DataTableRow = defineComponent({
       const item = virtual ? virtualRow(virtual, row) : undefined;
       const position =
         props.rowIndex ??
-        (item?.renderItem.kind === "row" ? item.renderItem.rowIndex : table.rows.indexOf(row));
+        (item?.renderItem.kind === "row" ? item.renderItem.rowIndex : table.gridRows.indexOf(row));
       return h(
         props.as,
         mergeProps(props.attributes ?? {}, {

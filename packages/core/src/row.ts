@@ -35,7 +35,7 @@ interface RowRenderData<TRow> {
   readonly key: string;
   /** The parent data row, also for detail items. */
   readonly row: TableRow<TRow>;
-  /** Position of the parent in snapshot.rows. */
+  /** Position of the parent in snapshot.gridRows, including top pins. */
   readonly rowIndex: number;
 }
 

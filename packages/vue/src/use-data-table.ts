@@ -111,6 +111,7 @@ const OPERATIONS = [
   "toggleColumn",
   "moveColumn",
   "pinColumn",
+  "pinRow",
   "resizeColumn",
   "resetColumnSize",
   "edit",
