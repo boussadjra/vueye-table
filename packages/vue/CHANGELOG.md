@@ -1,5 +1,24 @@
 # @vueye-table/vue
 
+## 3.0.0-beta.7
+
+### Minor Changes
+
+- bf97b81: Add row pinning with top/bottom key arrays, `pinRow`, separate snapshot regions and a unified
+  `gridRows` visual coordinate space. Pins stay outside centre pagination; `keepPinnedRows`
+  controls filter visibility. Selection, clipboard, edits, drafts, streams and exports preserve
+  row identity across regions. Client stale keys are pruned with issues; manual tables retain
+  unresolved keys until the host supplies their records. Tree pins show alone at their depth.
+
+  Complete TableState literals must add `rowPinning: { top: [], bottom: [] }`. Partial patches
+  remain compatible. Custom renderers use topRows/rows/bottomRows and gridRows; built-in pinned-row
+  components remain follow-up work. In manual tables, rowCount is the server's centre total.
+
+### Patch Changes
+
+- Updated dependencies [bf97b81]
+  - @vueye-table/core@3.0.0-beta.7
+
 ## 3.0.0-beta.6
 
 ### Minor Changes
