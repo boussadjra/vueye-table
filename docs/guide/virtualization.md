@@ -114,7 +114,29 @@ virtualColumns.scrollToKey("customer");
 
 Both bindings expose plain reactive window fields: `items`, `totalSize`, `paddingStart`, `paddingEnd`, `startIndex`, `endIndex`, `offset`, `viewportSize` and `issues`. Watch these fields through getters, as with `useDataTable`.
 
-Row items add `renderItem`, the data/detail item defined by [expansion](/guide/expansion). Read `item.renderItem.row`, `kind` and logical `rowIndex`; `item.index` addresses the flattened render sequence, so it can differ from a data-row index. Column items add `column` and index the visible columns. Details get independent measurement keys and stay outside grid coordinates.
+Row items add `renderItem`, a group, data or detail item. Check `kind` before reading `row` and
+logical `rowIndex`, which only belong to data/detail items. `item.index` addresses the flattened
+render sequence, so it can differ from a data-row index. Group headers and details have independent
+stable measurement keys; collapsing and expanding retains their measured heights. Measure a group
+header using `item.key`, and use `scrollToIndex` for its current render index. Row `scrollToKey`
+continues to accept original data-row keys. Pinned top/bottom rows live outside this centre sequence;
+custom renderers compose `table.topRows`, virtual centre items and `table.bottomRows` separately.
+
+Column items add `column` and retain their index in `table.columns`, including pinned edges.
+`useVirtualColumns` returns a `VirtualColumnBinding` with `centerItems`, `pinnedStartItems`, and
+`pinnedEndItems`. Only centre columns are virtualized. `items` combines all three regions in display
+order; both pinned edges are always included, even with a zero-sized centre viewport or an
+`initialCount` of zero. Before mount, `initialCount` counts centre columns only.
+
+Column `start` and `totalSize` describe the full surface, including pinned widths. `paddingStart`
+and `paddingEnd` describe the omitted centre gaps; they belong between the pinned edges and the
+centre slice. `startIndex`/`endIndex` identify the centre slice in logical display coordinates
+(0 and -1 when empty). `offset` and `viewportSize` describe the centre viewport; both pinned widths
+are subtracted from the available width. `getItem` and `scrollToIndex` use logical display indices.
+Scrolling to a pinned column does nothing because its renderer should keep it visible. Pinned
+measurements use the engine's effective width, preserving agreement with sticky offsets; change
+them with `resizeColumn` or controlled sizing. Custom markup supplies sticky positioning and opaque
+pin backgrounds. The [example](/examples/virtual-grid) demonstrates this composition.
 
 `scrollToIndex(index, { align })` accepts `start`, `center`, `end` or `auto` (default). Row `scrollToKey(key)` accepts the original string/number row key and scrolls to its data item; column keys are column ids. Missing keys do nothing. Scroll offsets clamp to the available extent.
 
@@ -142,9 +164,14 @@ their new widths, keeps the first visible column and inset, and retains measurem
 columns. A column resized while hidden uses its new width when shown again. Further element
 measurements still work after the change.
 
-Observation begins after mount through the supplied element's owner view. SSR and initial hydration render exactly `initialCount` items (default 10), without overscan, limited by the source length. An empty source or initial count zero renders no items. Invalid counts recover to 10 with `invalid_virtual_option`. After mount the actual viewport and overscan determine the slice. Until an element exists the initial window remains available. Use these composables inside a component's setup/effect scope so listeners, watchers and observers are released on disposal.
+Observation begins after mount through the supplied element's owner view. SSR and initial hydration render exactly `initialCount` centre items (default 10), without overscan, limited by the source length, plus any pinned columns. An empty centre source or initial count zero renders no centre items. Invalid counts recover to 10 with `invalid_virtual_option`. After mount the actual viewport and overscan determine the slice. Until an element exists the initial slice remains available. Use these composables inside a component's setup/effect scope so listeners, watchers and observers are released on disposal.
 
 Filtering, replacing or reordering rows retains the first visible key and inset if it survives; otherwise the old offset clamps to the new extent. Measurements are retained by key for the binding lifetime, except when a column's effective width changes as described above ([ADR 0023](/adr/0023-virtual-column-measurement-invalidation)). Set `overflow-anchor: none` on your scroller so native anchoring does not compete. Estimates, overscan, initial count and grid connection are creation options; the element ref and table contents remain reactive.
+
+Source changes use this anchor policy even if they relocate the grid selection. Explicit grid
+navigation scrolls the new focus into view; a group disclosure does not jump to a data cell that
+was relocated during the same source update. Custom markup should expose `aria-activedescendant`
+only while that cell exists in its rendered slice.
 
 Pass the same `grid` in row options to bring logical row focus into view during keyboard navigation; columns automatically follow their grid. `grid.table` exposes the owning table. Supply your own accessible markup, focus handling, row/column counts and indices; these bindings do not render components or change DOM focus. Native tables can use spacer rows; custom grids can use positioned items as in the example. `getItem(index)` reads a frozen offscreen item without scrolling; a missing index returns undefined. Optional `scrollMargin` reserves leading header/gutter space and can be a reactive getter. Invalid margins recover to zero with a TableIssue.
 

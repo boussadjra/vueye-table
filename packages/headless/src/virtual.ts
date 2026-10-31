@@ -139,7 +139,7 @@ export function createComponentVirtual(
           scrollMargin: gutter,
         })
       : undefined;
-  const pinnedRows = computed(() => {
+  const retainedRows = computed(() => {
     const result = [...rows.items];
     const positions = new Set([grid?.selection?.focus.row, grid?.editor?.position.row]);
     for (const position of positions) {
@@ -162,7 +162,7 @@ export function createComponentVirtual(
     }
     return result.sort((a, b) => a.index - b.index);
   });
-  const pinnedColumns = computed(() => {
+  const retainedColumns = computed(() => {
     if (!columns) return undefined;
     const result = [...columns.items];
     const positions = new Set([grid?.selection?.focus.column, grid?.editor?.position.column]);
@@ -178,10 +178,10 @@ export function createComponentVirtual(
     columns,
     gutter,
     get rowItems() {
-      return pinnedRows.value;
+      return retainedRows.value;
     },
     get columnItems() {
-      return pinnedColumns.value;
+      return retainedColumns.value;
     },
   };
   provide(virtualKey, binding);

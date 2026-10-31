@@ -34,11 +34,14 @@ export {
   type UseVirtualColumnsOptions,
   type VirtualRowItem,
   type VirtualColumnItem,
+  type VirtualColumnBinding,
   type VirtualBinding,
 } from "./use-virtual";
 export {
   useDataTable,
   type AnyDataTableBinding,
   type DataTableBinding,
+  type DataTableLayout,
+  type LayoutState,
   type UseDataTableOptions,
 } from "./use-data-table";

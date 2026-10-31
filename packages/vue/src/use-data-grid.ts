@@ -25,7 +25,7 @@ import {
 import { computed, shallowRef, watch, type ComputedRef } from "vue";
 
 import { rejectedDraft } from "./row-draft";
-import type { DataTableBinding } from "./use-data-table";
+import type { DataTableBinding, DataTableLayout } from "./use-data-table";
 
 /** The cell being edited and the text typed so far. */
 export interface GridEditor {
@@ -37,7 +37,7 @@ export interface GridEditor {
  * Spreadsheet interaction over a table: a selected range, keyboard navigation, in-cell editing,
  * copy, paste, and clearing. Positions refer to the current page and the visible columns.
  */
-export interface DataGridBinding<TRow> {
+export interface DataGridBinding<TRow> extends DataTableLayout<TRow> {
   readonly table: DataTableBinding<TRow>;
   readonly selection: GridSelection | undefined;
   readonly range: CellRange | undefined;
@@ -188,6 +188,42 @@ export function useDataGrid<TRow>(
 
   const grid: DataGridBinding<TRow> = {
     table,
+    get columnSizing() {
+      return table.columnSizing;
+    },
+    get columnPinning() {
+      return table.columnPinning;
+    },
+    get grouping() {
+      return table.grouping;
+    },
+    get expandedGroups() {
+      return table.expandedGroups;
+    },
+    get rowPinning() {
+      return table.rowPinning;
+    },
+    get topRows() {
+      return table.topRows;
+    },
+    get bottomRows() {
+      return table.bottomRows;
+    },
+    get pinnedStartWidth() {
+      return table.pinnedStartWidth;
+    },
+    get pinnedEndWidth() {
+      return table.pinnedEndWidth;
+    },
+    resizeColumn: table.resizeColumn,
+    resetColumnSize: table.resetColumnSize,
+    pinColumn: table.pinColumn,
+    pinRow: table.pinRow,
+    groupBy: table.groupBy,
+    setGrouping: table.setGrouping,
+    toggleGroup: table.toggleGroup,
+    expandAllGroups: table.expandAllGroups,
+    collapseAllGroups: table.collapseAllGroups,
     get selection() {
       return selection.value;
     },
