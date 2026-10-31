@@ -75,6 +75,141 @@ function fixture(observer = false, margin = 0) {
 }
 
 describe("Vue virtualization", () => {
+  it("keeps pinned edges outside the centre slice, with full-surface coordinates and logical focus", async () => {
+    const f = fixture();
+    await nextTick();
+    Object.defineProperty(f.el, "clientWidth", { configurable: true, value: 600 });
+    f.table.resizeColumn("c0", 100);
+    f.table.resizeColumn("c19", 100);
+    f.table.pinColumn("c0", "start");
+    f.table.pinColumn("c19", "end");
+    expect(f.columns.viewportSize).toBe(400);
+    expect(f.columns.totalSize).toBe(2000);
+    expect(f.columns.pinnedStartItems[0]).toMatchObject({
+      key: "c0",
+      index: 0,
+      start: 0,
+      size: 100,
+    });
+    expect(f.columns.pinnedEndItems[0]).toMatchObject({
+      key: "c19",
+      index: 19,
+      start: 1900,
+      size: 100,
+    });
+    f.columns.scrollToKey("c10", { align: "start" });
+    expect(f.el.scrollLeft).toBe(900);
+    expect(f.columns.centerItems.map((item) => item.key)).toEqual(["c10", "c11", "c12", "c13"]);
+    expect(f.columns.items.map((item) => item.index)).toEqual([0, 10, 11, 12, 13, 19]);
+    expect(f.columns.getItem(10)).toMatchObject({ key: "c10", start: 1000 });
+    f.el.scrollLeft += 10;
+    f.el.dispatchEvent(new Event("scroll"));
+    f.table.resizeColumn("c1", 250);
+    expect(f.el.scrollLeft).toBe(1060);
+    f.table.resizeColumn("c0", 140);
+    expect(f.el.scrollLeft).toBe(1060);
+    expect(f.columns.viewportSize).toBe(360);
+    expect(f.columns.getItem(10)?.start).toBe(1190);
+    f.grid.focusCell({ row: 0, column: 19 });
+    expect(f.el.scrollLeft).toBe(1060);
+    f.columns.scrollToIndex(0, { align: "start" });
+    expect(f.el.scrollLeft).toBe(1060);
+    f.columns.scrollToIndex(-1);
+    f.columns.scrollToKey("missing");
+    expect(f.columns.getItem(20)).toBeUndefined();
+    f.table.toggleColumn("c0", false);
+    expect(f.columns.pinnedStartItems).toEqual([]);
+    expect(f.columns.getItem(18)?.key).toBe("c19");
+    expect(f.columns.viewportSize).toBe(500);
+    f.table.pinColumn("c19", false);
+    expect(f.columns.pinnedEndItems).toEqual([]);
+    expect(f.columns.viewportSize).toBe(600);
+    f.wrapper.unmount();
+  });
+
+  it("renders pins in SSR even when the centre initial count is zero or every column is pinned", () => {
+    const scope = effectScope();
+    scope.run(() => {
+      const table = useDataTable({
+        data: rows,
+        columns: [
+          { id: "name", width: 160 },
+          { id: "id", width: 80 },
+          { id: "other", accessor: () => "other", width: 90 },
+        ],
+        columnPinning: { start: ["name"], end: ["other"] },
+      });
+      const virtual = useVirtualColumns(useDataGrid(table), {
+        scrollElement: null,
+        initialCount: 0,
+      });
+      expect(virtual.items.map((item) => item.key)).toEqual(["name", "other"]);
+      expect(virtual.centerItems).toEqual([]);
+      expect(virtual.getItem(1)).toMatchObject({ key: "id", start: 160, size: 80 });
+      table.pinColumn("id", "start");
+      expect(virtual.items.map((item) => item.key)).toEqual(["name", "id", "other"]);
+      expect(virtual.items.map((item) => item.start)).toEqual([0, 160, 240]);
+      expect(virtual.totalSize).toBe(330);
+      table.toggleColumn("name", false);
+      expect(virtual.items.map((item) => item.start)).toEqual([0, 80]);
+      expect(virtual.totalSize).toBe(170);
+    });
+    scope.stop();
+  });
+
+  it("retains independently measured group headers across collapse, expansion and row pinning", async () => {
+    const f = fixture(true);
+    await nextTick();
+    f.table.groupBy(["c0"]);
+    const group = f.table.renderItems[0]!;
+    if (group.kind !== "group") throw Error("Expected group");
+    const header = document.createElement("div");
+    vi.spyOn(header, "getBoundingClientRect").mockReturnValue({
+      height: 70,
+      width: 100,
+    } as DOMRect);
+    f.virtual.measureElement(header, group.key);
+    await nextTick();
+    expect(f.virtual.getItem(0)).toMatchObject({ key: group.key, size: 70 });
+    expect(f.virtual.totalSize).toBe(8030);
+    f.table.toggleGroup(group.key, false);
+    expect(f.virtual.totalSize).toBe(7990);
+    expect(f.virtual.getItem(0)?.size).toBe(70);
+    f.table.toggleGroup(group.key, true);
+    expect(f.virtual.totalSize).toBe(8030);
+    f.table.pinRow(0, "top");
+    expect(f.virtual.totalSize).toBe(7920);
+    f.table.pinRow(0, false);
+    expect(f.virtual.getItem(0)).toMatchObject({ key: group.key, size: 70 });
+    f.virtual.scrollToKey(20, { align: "start" });
+    expect(
+      f.virtual.items.some(
+        (item) => item.renderItem.kind === "row" && item.renderItem.row.key === 20,
+      ),
+    ).toBe(true);
+    f.wrapper.unmount();
+  });
+  it("anchors group disclosures using the latest physical scroll, without scrolling a relocated selection against stale items", async () => {
+    const f = fixture();
+    await nextTick();
+    f.table.setColumns([{ id: "team", accessor: (row) => (row.id < 50 ? "A" : "B") }]);
+    f.table.groupBy(["team"]);
+    f.grid.focusCell({ row: 0, column: 0 });
+    const group = f.table.renderItems[0]!;
+    if (group.kind !== "group") throw Error("Expected group");
+    // Focusing the disclosure can update scrollTop before the browser delivers a scroll event.
+    f.el.scrollTop = 40;
+    f.el.dispatchEvent(new Event("scroll"));
+    f.el.scrollTop = 0;
+    f.table.toggleGroup(group.key, false);
+    expect(f.el.scrollTop).toBe(0);
+    expect(f.grid.cellAt(f.grid.selection!.focus)?.row.key).toBe(50);
+    f.table.toggleGroup(group.key, true);
+    expect(f.grid.selection?.focus.row).toBe(50);
+    expect(f.el.scrollTop).toBe(0);
+    expect(f.virtual.items[0]?.key).toBe(group.key);
+    f.wrapper.unmount();
+  });
   it("uses effective widths before mount, clamps controlled sizes, and resets to definitions", () => {
     const scope = effectScope();
     scope.run(() => {

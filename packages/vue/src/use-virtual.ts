@@ -49,6 +49,11 @@ export interface VirtualRowItem<TRow> extends VirtualItem {
 export interface VirtualColumnItem<TRow> extends VirtualItem {
   readonly column: TableColumn<TRow>;
 }
+export interface VirtualColumnBinding<TRow> extends VirtualBinding<VirtualColumnItem<TRow>> {
+  readonly centerItems: readonly VirtualColumnItem<TRow>[];
+  readonly pinnedStartItems: readonly VirtualColumnItem<TRow>[];
+  readonly pinnedEndItems: readonly VirtualColumnItem<TRow>[];
+}
 export interface VirtualBinding<TItem extends VirtualItem> extends Omit<VirtualWindow, "items"> {
   readonly items: readonly TItem[];
   getItem(index: number): TItem | undefined;
@@ -66,6 +71,7 @@ function useVirtualAxis<TSource, TItem extends VirtualItem>(
   horizontal: boolean,
   project: (item: VirtualItem, source: TSource) => TItem,
   sizeOf?: (item: TSource) => number | undefined,
+  viewportInset: () => number = () => 0,
 ): VirtualBinding<TItem> {
   let items = source();
   const knownSizes = new Map<RowKey, number | undefined>(
@@ -131,7 +137,10 @@ function useVirtualAxis<TSource, TItem extends VirtualItem>(
   }
   function viewportSize(): number {
     return element
-      ? Math.max(0, (horizontal ? element.clientWidth : element.clientHeight) - margin())
+      ? Math.max(
+          0,
+          (horizontal ? element.clientWidth : element.clientHeight) - margin() - viewportInset(),
+        )
       : virtual.getWindow().viewportSize;
   }
   function move(offset: number): void {
@@ -157,6 +166,7 @@ function useVirtualAxis<TSource, TItem extends VirtualItem>(
     }
   }
   function measure(target: Element, key: RowKey): void {
+    readViewport();
     const saved = anchor();
     const offset = virtual.getWindow().offset;
     const box = target.getBoundingClientRect();
@@ -179,6 +189,8 @@ function useVirtualAxis<TSource, TItem extends VirtualItem>(
   const stopSource = watch(
     source,
     (next) => {
+      // A focus or disclosure can scroll the element before its scroll event is delivered.
+      readViewport();
       const saved = anchor();
       const offset = virtual.getWindow().offset;
       const resetMeasurements: RowKey[] = [];
@@ -312,7 +324,7 @@ function useVirtualAxis<TSource, TItem extends VirtualItem>(
   return Object.freeze(binding) as unknown as VirtualBinding<TItem>;
 }
 
-/** Virtualize data and detail render items. scrollToKey accepts the parent data-row key. */
+/** Virtualize group, data and detail items. scrollToKey accepts the parent data-row key. */
 export function useVirtualRows<TRow>(
   table: DataTableBinding<TRow>,
   options: UseVirtualRowsOptions<TRow>,
@@ -326,9 +338,11 @@ export function useVirtualRows<TRow>(
     (item, renderItem) => ({ ...item, renderItem }),
   );
   const stopFocus = watch(
-    () => options.grid?.selection?.focus.row,
-    (row) => {
-      if (row === undefined) return;
+    [() => options.grid?.selection?.focus.row, () => table.renderItems],
+    ([row, items], [, previousItems]) => {
+      // Source changes already restore the visible anchor. A relocated selection must not
+      // scroll against the previous layout during the same synchronous publication.
+      if (row === undefined || items !== previousItems) return;
       const direct = table.renderItems[row];
       const index =
         direct?.kind === "row" && direct.rowIndex === row
@@ -353,27 +367,135 @@ export function useVirtualRows<TRow>(
   return Object.freeze(binding) as VirtualBinding<VirtualRowItem<TRow>>;
 }
 
-/** Virtualize visible columns and bring the active logical column into view. */
+/** Virtualize centre columns, retaining both pinned edges and logical display indices. */
 export function useVirtualColumns<TRow>(
   grid: DataGridBinding<TRow>,
   options: UseVirtualColumnsOptions,
-): VirtualBinding<VirtualColumnItem<TRow>> {
+): VirtualColumnBinding<TRow> {
+  const table = grid.table;
+  const visibleColumns = computed(() => table.columns);
+  const layout = computed(() => {
+    const columns = visibleColumns.value;
+    const center = columns.filter((column) => !column.pinned);
+    return {
+      center,
+      indices: new Map(columns.map((column, index) => [column.id, index])),
+      centerIndices: new Map(center.map((column, index) => [column.id, index])),
+    };
+  });
+  const estimate = options.estimateColumnWidth ?? 120;
   const virtual = useVirtualAxis(
-    () => grid.table.columns,
+    () => layout.value.center,
     (column) => column.id,
-    options.estimateColumnWidth ?? 120,
+    (index) =>
+      typeof estimate === "number"
+        ? estimate
+        : estimate(layout.value.indices.get(layout.value.center[index]!.id)!),
     options,
     true,
-    (item, column) => ({ ...item, column }),
+    (item, column) => ({
+      ...item,
+      column,
+      index: layout.value.indices.get(column.id)!,
+      start: item.start + table.pinnedStartWidth,
+    }),
     (column) => column.width,
+    () => table.pinnedStartWidth + table.pinnedEndWidth,
   );
+  const pinnedItems = (side: "start" | "end"): readonly VirtualColumnItem<TRow>[] =>
+    Object.freeze(
+      visibleColumns.value
+        .filter((column) => column.pinned === side)
+        .map((column) =>
+          Object.freeze({
+            key: column.id,
+            index: layout.value.indices.get(column.id)!,
+            size: column.width!,
+            start:
+              side === "start"
+                ? column.pinOffset
+                : table.pinnedStartWidth +
+                  virtual.totalSize +
+                  table.pinnedEndWidth -
+                  column.pinOffset -
+                  column.width!,
+            column,
+          }),
+        ),
+    );
+  const start = computed(() => pinnedItems("start"));
+  const end = computed(() => pinnedItems("end"));
+  const all = computed(() => Object.freeze([...start.value, ...virtual.items, ...end.value]));
+  const binding: VirtualColumnBinding<TRow> = Object.freeze({
+    get items() {
+      return all.value;
+    },
+    get centerItems() {
+      return virtual.items;
+    },
+    get pinnedStartItems() {
+      return start.value;
+    },
+    get pinnedEndItems() {
+      return end.value;
+    },
+    get totalSize() {
+      return table.pinnedStartWidth + virtual.totalSize + table.pinnedEndWidth;
+    },
+    get paddingStart() {
+      return virtual.paddingStart;
+    },
+    get paddingEnd() {
+      return virtual.paddingEnd;
+    },
+    get startIndex() {
+      return virtual.items[0]?.index ?? 0;
+    },
+    get endIndex() {
+      return virtual.items.at(-1)?.index ?? -1;
+    },
+    get offset() {
+      return virtual.offset;
+    },
+    get viewportSize() {
+      return virtual.viewportSize;
+    },
+    get issues() {
+      return virtual.issues;
+    },
+    getItem(index: number): VirtualColumnItem<TRow> | undefined {
+      const column = table.columns[index];
+      if (!column) return undefined;
+      if (column.pinned)
+        return (column.pinned === "start" ? start.value : end.value).find(
+          (item) => item.key === column.id,
+        );
+      return virtual.getItem(layout.value.centerIndices.get(column.id)!);
+    },
+    scrollToIndex(index: number, align?: { readonly align?: VirtualAlign | undefined }): void {
+      const column = table.columns[index];
+      if (!column || column.pinned) return;
+      virtual.scrollToIndex(layout.value.centerIndices.get(column.id)!, align);
+    },
+    scrollToKey(key: RowKey, align?: { readonly align?: VirtualAlign | undefined }): void {
+      if (typeof key !== "string") return;
+      const index = layout.value.indices.get(key);
+      if (index !== undefined) binding.scrollToIndex(index, align);
+    },
+    measureElement(target: Element | ComponentPublicInstance | null, key: RowKey): void {
+      // Pinned widths come from the engine so sticky offsets and the virtual surface agree.
+      if (typeof key === "string" && layout.value.centerIndices.has(key))
+        virtual.measureElement(target, key);
+      else virtual.measureElement(null, key);
+    },
+  });
   const stopFocus = watch(
-    () => grid.selection?.focus.column,
-    (column) => {
-      if (column !== undefined) virtual.scrollToIndex(column);
+    [() => grid.selection?.focus.column, () => table.columns],
+    ([column, columns], [, previousColumns]) => {
+      if (column !== undefined && columns === previousColumns) binding.scrollToIndex(column);
     },
     { flush: "sync" },
   );
   if (getCurrentScope()) onScopeDispose(stopFocus);
-  return virtual;
+  return binding;
 }

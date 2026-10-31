@@ -5,6 +5,7 @@ import {
   type TableOptions,
   type TableSnapshot,
   type TableStatePatch,
+  type TableState,
   type TreeLoadSignal,
   type TreeLoadController,
   type ExpandedState,
@@ -26,11 +27,45 @@ import {
 import { createRowDraft, type RowDraft } from "./row-draft";
 import { createSource, type SourceOptions, type SourceBinding } from "./source";
 
+/** Layout fields shared by table and grid bindings. Read through a getter when watching. */
+export type LayoutState = Pick<
+  TableState,
+  "columnSizing" | "columnPinning" | "grouping" | "expandedGroups" | "rowPinning"
+>;
+export type DataTableLayout<TRow> = LayoutState &
+  Pick<TableSnapshot<TRow>, "topRows" | "bottomRows" | "pinnedStartWidth" | "pinnedEndWidth"> &
+  Pick<
+    DataTable<TRow>,
+    | "resizeColumn"
+    | "resetColumnSize"
+    | "pinColumn"
+    | "pinRow"
+    | "groupBy"
+    | "toggleGroup"
+    | "expandAllGroups"
+    | "collapseAllGroups"
+  > & {
+    /** Vue alias for groupBy. */
+    setGrouping: DataTable<TRow>["groupBy"];
+  };
+
+type ReactiveLayoutOptions = {
+  readonly [Key in keyof LayoutState]?: MaybeRefOrGetter<LayoutState[Key] | undefined> | undefined;
+};
+const LAYOUT_FIELDS = [
+  "columnSizing",
+  "columnPinning",
+  "grouping",
+  "expandedGroups",
+  "rowPinning",
+] as const satisfies readonly (keyof LayoutState)[];
+
 /** Options accepted by {@link useDataTable}. Data, columns, and state may be refs or getters. */
 export interface UseDataTableOptions<TRow, TSignal extends TreeLoadSignal = AbortSignal>
   extends
     Omit<TableOptions<TRow, TSignal>, "data" | "columns" | "rowCount" | "treeFilter">,
-    SourceOptions<TRow> {
+    SourceOptions<TRow>,
+    ReactiveLayoutOptions {
   /** Initial rows for a source, or the caller-owned array for an ordinary table. */
   readonly data?: MaybeRefOrGetter<readonly TRow[]> | undefined;
   readonly columns: MaybeRefOrGetter<readonly ColumnDef<TRow>[]>;
@@ -52,6 +87,7 @@ type TableOperations<TRow> = Omit<DataTable<TRow>, "getSnapshot" | "getState" | 
  * Watching a field needs a getter: `watch(() => table.page, ...)`.
  */
 export type DataTableBinding<TRow> = TableSnapshot<TRow> &
+  DataTableLayout<TRow> &
   SourceBinding &
   TableOperations<TRow> & {
     /** The engine behind the binding. */
@@ -145,6 +181,8 @@ export function useDataTable<TRow, TSignal extends TreeLoadSignal = AbortSignal>
 ): DataTableBinding<TRow> {
   const empty: readonly TRow[] = Object.freeze([]);
   const seed = (): readonly TRow[] => toRaw(toValue(options.data) ?? empty);
+  const layoutState = (): TableStatePatch =>
+    definedEntries(Object.fromEntries(LAYOUT_FIELDS.map((key) => [key, toValue(options[key])])));
   const table = createTable<TRow, TSignal>({
     ...options,
     manual: options.manual ?? !!unref(options.loadMore),
@@ -152,7 +190,11 @@ export function useDataTable<TRow, TSignal extends TreeLoadSignal = AbortSignal>
     columns: toValue(options.columns),
     rowCount: toValue(options.rowCount),
     treeFilter: toValue(options.treeFilter),
-    initialState: { ...options.initialState, ...definedEntries(toValue(options.state)) },
+    initialState: {
+      ...options.initialState,
+      ...layoutState(),
+      ...definedEntries(toValue(options.state)),
+    },
     // Public overloads require custom signals to provide their matching factory.
     createChildLoadController:
       options.createChildLoadController ??
@@ -190,12 +232,8 @@ export function useDataTable<TRow, TSignal extends TreeLoadSignal = AbortSignal>
       },
     ),
     watch(
-      () => toValue(options.state),
-      (state) => {
-        if (state) {
-          table.setState(state);
-        }
-      },
+      () => ({ ...layoutState(), ...definedEntries(toValue(options.state)) }),
+      (state) => table.setState(state),
       { deep: true },
     ),
   ];
@@ -231,6 +269,13 @@ export function useDataTable<TRow, TSignal extends TreeLoadSignal = AbortSignal>
     enumerable: true,
     get: () => snapshot.value.state.expanded,
   });
+  for (const key of LAYOUT_FIELDS) {
+    Object.defineProperty(binding, key, {
+      enumerable: true,
+      get: () => snapshot.value.state[key],
+    });
+  }
+  binding["setGrouping"] = (columnIds: readonly string[]): void => table.groupBy(columnIds);
   Object.defineProperty(binding, "pendingChanges", {
     enumerable: true,
     get: () => {

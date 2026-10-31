@@ -251,6 +251,44 @@ const table = useDataTable({
 
 Import `ExpandedState` from `vueye-table`. Outside changes to the prop reach `setState`; disclosure operations emit the new expansion state. Both full components expose `v-model:expanded` directly; see [row expansion](/guide/expansion) for their disclosure props, events and slots.
 
+## Reactive layout controls
+
+Both `useDataTable` and `useDataGrid` expose `columnSizing`, `columnPinning`, `grouping`,
+`expandedGroups`, and `rowPinning` as plain readonly reactive accessors. They also expose
+`topRows`, `bottomRows`, `pinnedStartWidth`, and `pinnedEndWidth`. Use getters when watching:
+`watch(() => grid.columnSizing, saveWidths)`.
+
+The table accepts each layout field as a value, ref, or getter, alongside reactive `columns`.
+Changes apply through `setState` and do not echo `onStateChange`. Named operations still report
+changes, so wrappers can forward their matching `v-model` events:
+
+```ts
+const table = useDataTable({
+  data,
+  columns: () => props.columns,
+  grouping: () => props.grouping,
+  columnSizing: () => props.columnSizing,
+  onStateChange: (state) => {
+    emit("update:grouping", state.grouping);
+    emit("update:columnSizing", state.columnSizing);
+  },
+});
+const grid = useDataGrid(table);
+grid.setGrouping(["team"]);
+grid.resizeColumn("name", 240);
+```
+
+Initial precedence is `initialState`, then individual layout options, then defined fields of
+`state`. Later layout-option or controlled-state changes apply the same merged patch. Undefined
+fields leave the current state alone; use an empty array/object or explicit empty pin regions to
+clear a field. Local operations remain visible until the caller changes its controlled inputs.
+
+Both bindings forward `resizeColumn`, `resetColumnSize`, `pinColumn`, `pinRow`, `toggleGroup`,
+`expandAllGroups`, and `collapseAllGroups`. `setGrouping` is a Vue alias for core `groupBy`;
+both names remain available. These composable controls do not add component props or events.
+
+See [ADR 0027](/adr/0027-vue-layout-bindings) for the layout and virtualization contract.
+
 ## Issues
 
 Invalid state never breaks a table. A page size that is not a positive whole number falls back to
