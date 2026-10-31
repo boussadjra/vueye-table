@@ -105,7 +105,7 @@ export function useDataGrid<TRow>(
     return result;
   };
   const bounds = computed<GridBounds>(() => ({
-    rows: table.rows.length,
+    rows: table.gridRows.length,
     columns: table.columns.length,
   }));
   const range = computed(() => (selection.value ? selectionRange(selection.value) : undefined));
@@ -124,12 +124,17 @@ export function useDataGrid<TRow>(
         selection.value = undefined;
       } else if (current) {
         const relocate = (position: CellPosition): CellPosition => {
-          if ((snapshot.grouped || previous.grouped) && snapshot.page === previous.page) {
-            const key = previous.rows[position.row]?.key;
+          if (
+            (snapshot.grouped ||
+              previous.grouped ||
+              snapshot.state.rowPinning !== previous.state.rowPinning) &&
+            snapshot.page === previous.page
+          ) {
+            const key = previous.gridRows[position.row]?.key;
             const row =
               key === undefined
                 ? -1
-                : snapshot.rows.findIndex((candidate) => candidate.key === key);
+                : snapshot.gridRows.findIndex((candidate) => candidate.key === key);
             if (row >= 0) return clampPosition({ ...position, row }, next);
           }
           return clampPosition(position, next);
@@ -142,7 +147,7 @@ export function useDataGrid<TRow>(
       }
       const active = editing;
       if (active && editor.value) {
-        const row = table.rows.findIndex((candidate) => candidate.key === active.key);
+        const row = table.gridRows.findIndex((candidate) => candidate.key === active.key);
         const column = table.columns.findIndex((candidate) => candidate.id === active.column.id);
         if (
           row < 0 ||
@@ -168,7 +173,7 @@ export function useDataGrid<TRow>(
   );
 
   const cellAt: DataGridBinding<TRow>["cellAt"] = (position) => {
-    const row = table.rows[position.row];
+    const row = table.gridRows[position.row];
     const column = table.columns[position.column];
     return row && column ? { row, column } : undefined;
   };
@@ -407,7 +412,7 @@ export function useDataGrid<TRow>(
         return false;
       }
       const current = selection.value?.focus ?? { row: 0, column: 0 };
-      const row = table.rows[current.row];
+      const row = table.gridRows[current.row];
       const treeColumn =
         table.columns.find((column) => column.id === gridOptions.treeColumn?.()) ??
         table.columns[0];
@@ -424,14 +429,16 @@ export function useDataGrid<TRow>(
           if (command.action === "expand" || command.action === "collapse")
             table.toggleExpanded(key, command.action === "expand");
           else if (command.action === "siblings") {
-            for (const sibling of table.processedRows.filter(
-              (candidate) => candidate.parentKey === row.parentKey && candidate.canExpand,
-            ))
+            for (const sibling of [
+              ...table.topRows,
+              ...table.processedRows,
+              ...table.bottomRows,
+            ].filter((candidate) => candidate.parentKey === row.parentKey && candidate.canExpand))
               table.toggleExpanded(sibling.key, true);
           } else if (command.action === "child")
-            key = table.rows.find((candidate) => candidate.parentKey === row.key)?.key ?? key;
+            key = table.gridRows.find((candidate) => candidate.parentKey === row.key)?.key ?? key;
           else key = row.parentKey ?? key;
-          const index = table.rows.findIndex((candidate) => candidate.key === key);
+          const index = table.gridRows.findIndex((candidate) => candidate.key === key);
           if (index >= 0) grid.focusCell({ row: index, column: current.column });
           return true;
         }

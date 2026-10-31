@@ -45,11 +45,13 @@ import {
   type DataRenderItem,
 } from "./row";
 import { appendList, mapList } from "./row-list";
+import { centreRows, joinRowRegions, resolveRowPins } from "./row-pinning";
 import {
   DEFAULT_PAGE_SIZE,
   createInitialState,
   mergeState,
   type RowKey,
+  type RowPinSide,
   type ExpandedState,
   type SortDirection,
   type TableState,
@@ -105,6 +107,8 @@ export interface TableOptions<
   readonly initialState?: TableStatePatch | undefined;
   /** Present all processed rows rather than a page. Defaults to true. */
   readonly paginate?: boolean | undefined;
+  /** Keep resolved pins visible when search or filters exclude them. Defaults to true. */
+  readonly keepPinnedRows?: boolean | undefined;
   readonly getRowCanExpand?: ((row: TRow) => boolean) | undefined;
   readonly expandMode?: ExpandMode | undefined;
   /** Defaults to `"multiple"`. */
@@ -116,7 +120,7 @@ export interface TableOptions<
    * with the current state. The table only presents it; `rowCount` gives the total.
    */
   readonly manual?: boolean | undefined;
-  /** The total number of rows across all pages, for `manual` tables. */
+  /** The centre total across all pages, excluding pins, for `manual` tables. */
   readonly rowCount?: number | undefined;
   /**
    * The BCP 47 locale text is ordered in, such as `"fr"` or `"ar-DZ"`. Defaults to the runtime's.
@@ -179,10 +183,14 @@ export interface TableSnapshot<TRow> {
   readonly pinnedEndWidth: number;
   /** Visible data leaves on the current page; group headers have no grid coordinate. */
   readonly rows: readonly TableRow<TRow>[];
+  readonly topRows: readonly TableRow<TRow>[];
+  readonly bottomRows: readonly TableRow<TRow>[];
+  /** Top pins, centre page, bottom pins: the coordinate space for editing and clipboard. */
+  readonly gridRows: readonly TableRow<TRow>[];
   /** Group headers, visible data leaves and open details. Details never consume page slots. */
   readonly renderItems: readonly TableRenderItem<TRow>[];
   readonly paginate: boolean;
-  /** Rows on every page, filtered and sorted. For `manual` tables this is the current page. */
+  /** Centre rows on every page, filtered and sorted. For `manual` tables this is the current centre page. */
   readonly processedRows: readonly TableRow<TRow>[];
   /** The current page, clamped into range. */
   readonly page: number;
@@ -363,6 +371,7 @@ export interface DataTable<TRow> {
   moveColumn(columnId: string, toIndex: number): void;
   /** Pin to a logical side, or unpin with false. Pinning does not change pagination. */
   pinColumn(columnId: string, side: ColumnPinSide | false): void;
+  pinRow(key: RowKey, side: RowPinSide | false): void;
   /**
    * Give a column a width in pixels, kept within its `minWidth` and `maxWidth`. A width equal to
    * the column's own `width` removes its entry from `state.columnSizing`. Unknown and
@@ -417,6 +426,10 @@ function validSize(width: unknown): width is number {
 
 function validPinSide(side: unknown): side is ColumnPinSide | false {
   return side === "start" || side === "end" || side === false;
+}
+
+function validRowPinSide(side: unknown): side is RowPinSide | false {
+  return side === "top" || side === "bottom" || side === false;
 }
 
 /** The width a state entry gives a column, or `undefined` when the entry is absent or unusable. */
@@ -557,11 +570,17 @@ export function createTable<TRow, TSignal extends TreeLoadSignal = TreeLoadSigna
   let pinOperationIssue: TableIssue | undefined;
   let groupingIssue: TableIssue | undefined;
   let expandedGroupsIssue: TableIssue | undefined;
+  let rowPinStateIssues: readonly TableIssue[] = [];
+  let rowPinResolutionIssues: readonly TableIssue[] = [];
+  let rowPinIssueVersion = 0;
   const recordStateIssue = (problem: TableIssue): void => {
     if (problem.code === "invalid_column_pinning") columnPinningIssue = problem;
     else if (problem.code === "invalid_grouping") groupingIssue = problem;
     else if (problem.code === "invalid_expanded_groups") expandedGroupsIssue = problem;
-    else expandedIssue = problem;
+    else if (problem.code === "invalid_row_pinning" || problem.code === "duplicate_row_pin") {
+      rowPinStateIssues = [...rowPinStateIssues, problem];
+      rowPinIssueVersion++;
+    } else expandedIssue = problem;
   };
   let initialState = createInitialState(
     {
@@ -584,6 +603,8 @@ export function createTable<TRow, TSignal extends TreeLoadSignal = TreeLoadSigna
     recordStateIssue,
   );
   let state = initialState;
+  let pinData = data;
+  let pinDataVersion = lazyVersion;
   let snapshot: TableSnapshot<TRow> | undefined;
   let loadState: LoadState = "idle";
   let expectedRowCount = sourceExpected;
@@ -854,15 +875,45 @@ export function createTable<TRow, TSignal extends TreeLoadSignal = TreeLoadSigna
         : sortRows(rows, columns, sorting),
   );
   const groupStage = memo(createGroupingStage<TRow>(textContext.collator));
+  const rowPinStage = memo((indexed: IndexedRows<TRow>, pinning: TableState["rowPinning"]) =>
+    resolveRowPins(pinning, indexed.byKey, manual),
+  );
+  const unpinStage = memo(centreRows<TRow>);
+  function canonicalRowPins(candidate: TableState): TableState {
+    if (!candidate.rowPinning.top.length && !candidate.rowPinning.bottom.length) {
+      if (rowPinResolutionIssues.length) {
+        rowPinResolutionIssues = [];
+        rowPinIssueVersion++;
+      }
+      return candidate;
+    }
+    const resolved = rowPinStage(sourceRows(), candidate.rowPinning);
+    if (resolved.issues.length || rowPinResolutionIssues.length) {
+      rowPinResolutionIssues = resolved.issues;
+      rowPinIssueVersion++;
+    }
+    return mergeState(candidate, { rowPinning: resolved.pinning });
+  }
+  function reconcileDataPins(publish = true): void {
+    if (pinData === data && pinDataVersion === lazyVersion) return;
+    pinData = data;
+    pinDataVersion = lazyVersion;
+    const previous = state;
+    state = canonicalRowPins(state);
+    if (publish && previous !== state) options.onStateChange?.(state, previous);
+  }
   function currentGroups(): GroupModel<TRow> | undefined {
     if (treeEnabled || manual || !state.grouping.length) return undefined;
     const { columns, byId } = resolveColumns(definitions);
     const indexed = indexRows(data, byId);
     return groupStage(
-      sortStage(
-        filterStage(indexed.rows, columns, state.search, state.filters),
-        columns,
-        state.sorting,
+      unpinStage(
+        sortStage(
+          filterStage(indexed.rows, columns, state.search, state.filters),
+          columns,
+          state.sorting,
+        ),
+        rowPinStage(indexed, state.rowPinning).keys,
       ),
       columns,
       state.grouping,
@@ -928,6 +979,7 @@ export function createTable<TRow, TSignal extends TreeLoadSignal = TreeLoadSigna
     if (pinOperationIssue) issues.push(pinOperationIssue);
     if (groupingIssue) issues.push(groupingIssue);
     if (expandedGroupsIssue) issues.push(expandedGroupsIssue);
+    issues.push(...rowPinStateIssues, ...rowPinResolutionIssues);
     if (treeEnabled && state.grouping.length)
       issues.push(issue("grouping_with_tree", "Grouping is ignored for tree tables."));
     const referenced = new Set([
@@ -996,10 +1048,9 @@ export function createTable<TRow, TSignal extends TreeLoadSignal = TreeLoadSigna
         : row;
     const { columns, byId, issues: columnIssues } = resolveColumns(definitions);
     const model = treeEnabled ? treeStage(data, byId, lazyVersion) : undefined;
-    const indexed = model ? { rows: model.rows, issues: model.issues } : indexRows(data, byId);
-    const expanded = model
-      ? undefined
-      : expansionStage(indexed as IndexedRows<TRow>, state.expanded, state.selection);
+    const indexed = model ? treeIndex(model) : indexRows(data, byId);
+    const pinned = rowPinStage(indexed, state.rowPinning);
+    const expanded = model ? undefined : expansionStage(indexed, state.expanded, state.selection);
     const sized = sizeColumns(columns, byId, state.columnSizing);
     const ordered = orderColumns(
       sized.columns,
@@ -1032,6 +1083,7 @@ export function createTable<TRow, TSignal extends TreeLoadSignal = TreeLoadSigna
     let grouped: GroupModel<TRow> | undefined;
     let groupEntries: readonly GroupEntry<TRow>[] | undefined;
     let groupRootPagination = false;
+    let pinMatches: ReadonlySet<RowKey> | undefined;
     let totalCount = indexed.rows.length;
     if (model) {
       const processed = processedTreeStage(
@@ -1045,6 +1097,16 @@ export function createTable<TRow, TSignal extends TreeLoadSignal = TreeLoadSigna
       const ancestors =
         expandMode === "single" ? singleTreePath(model, state.expanded) : emptyAncestors;
       const visible = flattenTree(processed, state.expanded, ancestors);
+      if (options.keepPinnedRows === false && pinned.keys.size) {
+        const included = new Set<RowKey>();
+        const stack = [...processed.roots];
+        while (stack.length) {
+          const node = stack.pop()!;
+          included.add(node.row.key);
+          for (const child of processed.children.get(node) ?? []) stack.push(child);
+        }
+        pinMatches = included;
+      }
       const expandedState = state.expanded;
       const keys = state.expanded === true ? undefined : new Set(state.expanded);
       const selected = treeSelection(model, state.selection);
@@ -1085,37 +1147,52 @@ export function createTable<TRow, TSignal extends TreeLoadSignal = TreeLoadSigna
         projected.set(key, result);
         return result;
       };
-      processedRows = visible.map((node) => treeRow!(node.row.key)!);
+      const centre = pinned.keys.size
+        ? visible.filter((node) => !pinned.keys.has(node.row.key))
+        : visible;
+      processedRows = centre.map((node) => treeRow!(node.row.key)!);
+      const unitByNode = new Map<TreeNode<TRow>, TreeNode<TRow> | undefined>();
+      const unitRoots: TreeNode<TRow>[] = [];
+      const processedRoots = new Set(processed.roots);
+      for (const node of visible) {
+        const parentUnit = processedRoots.has(node)
+          ? undefined
+          : node.parent
+            ? unitByNode.get(node.parent)
+            : undefined;
+        const unit = parentUnit ?? (pinned.keys.has(node.row.key) ? undefined : node);
+        unitByNode.set(node, unit);
+        if (unit === node) unitRoots.push(node);
+      }
       filteredCount = manual
-        ? (rowCount ?? model.roots.length)
+        ? (rowCount ?? (rootPagination ? unitRoots.length : centre.length))
         : rootPagination
-          ? processed.roots.length
-          : visible.length;
-      totalCount = rootPagination ? model.roots.length : model.nodes.length;
+          ? unitRoots.length
+          : centre.length;
+      totalCount = rootPagination && !pinned.keys.size ? model.roots.length : model.nodes.length;
       pageCount = countPages(filteredCount, pageSize);
       page = clampPage(state.pagination.page, pageCount);
       if (manual) rows = processedRows;
       else if (rootPagination) {
-        const roots = new Set(processed.roots.slice((page - 1) * pageSize, page * pageSize));
-        const allRoots = new Set(processed.roots);
-        let root: TreeNode<TRow> | undefined;
+        const roots = new Set(unitRoots.slice((page - 1) * pageSize, page * pageSize));
         rows = processedRows.filter((_row, index) => {
-          const node = visible[index]!;
-          if (allRoots.has(node)) root = node;
+          const root = unitByNode.get(centre[index]!);
           return root !== undefined && roots.has(root);
         });
       } else rows = paginateRows(processedRows, { page, pageSize });
     } else if (manual) {
-      processedRows = expanded!.rows;
-      rows = expanded!.rows;
-      filteredCount = rowCount ?? indexed.rows.length;
+      processedRows = unpinStage(expanded!.rows, pinned.keys);
+      rows = processedRows;
+      filteredCount = rowCount ?? processedRows.length;
       pageCount = countPages(filteredCount, pageSize);
       page = clampPage(state.pagination.page, pageCount);
     } else {
       const filtered = filterStage(indexed.rows, columns, state.search, state.filters);
       const sorted = sortStage(filtered, columns, state.sorting);
+      if (options.keepPinnedRows === false && pinned.keys.size) pinMatches = membership(filtered);
+      const centre = unpinStage(sorted, pinned.keys);
       const grouping = state.grouping.length
-        ? groupStage(sorted, columns, state.grouping, state.sorting)
+        ? groupStage(centre, columns, state.grouping, state.sorting)
         : undefined;
       if (grouping) issues.push(...grouping.issues);
       if (grouping?.active) {
@@ -1142,7 +1219,7 @@ export function createTable<TRow, TSignal extends TreeLoadSignal = TreeLoadSigna
           .filter((entry): entry is TableRow<TRow> => "original" in entry)
           .map((row) => expanded!.byKey.get(row.key)!);
       } else {
-        processedRows = expandedOrder(sorted, expanded!.byKey);
+        processedRows = expandedOrder(centre, expanded!.byKey);
         filteredCount = processedRows.length;
         pageCount = countPages(filteredCount, pageSize);
         page = clampPage(state.pagination.page, pageCount);
@@ -1176,23 +1253,44 @@ export function createTable<TRow, TSignal extends TreeLoadSignal = TreeLoadSigna
       rows = shared ? processedRows : rows.map(project);
     }
 
+    const pinProjected = new Map<RowKey, TableRow<TRow>>();
+    const projectPins = (keys: readonly RowKey[]): readonly TableRow<TRow>[] =>
+      Object.freeze(
+        keys.flatMap((key) => {
+          if (pinMatches && !pinMatches.has(key)) return [];
+          const base = treeRow ? treeRow(key) : expanded!.byKey.get(key);
+          if (!base) return [];
+          const row = metadata(base);
+          pinProjected.set(key, row);
+          return [row];
+        }),
+      );
+    const topRows = projectPins(state.rowPinning.top);
+    const bottomRows = projectPins(state.rowPinning.bottom);
+    const gridRows = joinRowRegions(topRows, rows, bottomRows);
+    const allGridRows = joinRowRegions(topRows, processedRows, bottomRows);
+
     const selected = selectedSet(state.selection);
-    const allData = model ? model.byKey : (indexed as IndexedRows<TRow>).byKey;
+    const allData = model ? model.byKey : indexed.byKey;
     const allProcessedKeys = model
       ? undefined
       : manual
         ? undefined
         : membership(filterStage(indexed.rows, columns, state.search, state.filters));
     const selectedInProcessed = state.selection.filter(
-      (key) => allData.has(key) && (!allProcessedKeys || allProcessedKeys.has(key)),
+      (key) =>
+        allData.has(key) &&
+        (pinned.keys.has(key)
+          ? pinProjected.has(key)
+          : !allProcessedKeys || allProcessedKeys.has(key)),
     ).length;
     const pageSelected =
-      rows === processedRows
+      gridRows === processedRows
         ? selectedInProcessed
-        : rows.filter((row) => selected.has(row.key)).length;
-    const scopeRows = selectScope === "page" || manual ? rows : processedRows;
+        : gridRows.filter((row) => selected.has(row.key)).length;
+    const scopeRows = selectScope === "page" || manual ? gridRows : allGridRows;
     const scopeSelected =
-      scopeRows === rows
+      scopeRows === gridRows
         ? pageSelected
         : model
           ? scopeRows.filter((row) => selected.has(row.key)).length
@@ -1224,6 +1322,7 @@ export function createTable<TRow, TSignal extends TreeLoadSignal = TreeLoadSigna
       return value;
     };
     const dataItems = (row: TableRow<TRow>, rowIndex: number): DataRenderItem<TRow>[] => {
+      rowIndex += topRows.length;
       const item: DataRenderItem<TRow> = Object.freeze({
         kind: "row",
         key: getRowItemKey(row.key),
@@ -1253,6 +1352,9 @@ export function createTable<TRow, TSignal extends TreeLoadSignal = TreeLoadSigna
       pinnedStartWidth: ordered.pinnedStartWidth,
       pinnedEndWidth: ordered.pinnedEndWidth,
       rows,
+      topRows,
+      bottomRows,
+      gridRows,
       renderItems: groupEntries
         ? Object.freeze(
             groupEntries.flatMap((entry): TableRenderItem<TRow>[] =>
@@ -1263,10 +1365,16 @@ export function createTable<TRow, TSignal extends TreeLoadSignal = TreeLoadSigna
           )
         : !model && state.expanded !== true && state.expanded.length === 0
           ? mapList(rows, (row, rowIndex) =>
-              Object.freeze({ kind: "row" as const, key: getRowItemKey(row.key), row, rowIndex }),
+              Object.freeze({
+                kind: "row" as const,
+                key: getRowItemKey(row.key),
+                row,
+                rowIndex: rowIndex + topRows.length,
+              }),
             )
           : Object.freeze(
               rows.flatMap((row, rowIndex): TableRenderItem<TRow>[] => {
+                rowIndex += topRows.length;
                 const item = Object.freeze({
                   kind: "row" as const,
                   key: getRowItemKey(row.key),
@@ -1308,7 +1416,7 @@ export function createTable<TRow, TSignal extends TreeLoadSignal = TreeLoadSigna
       selectedCount: model
         ? state.selection.filter((key) => model.byKey.has(key)).length
         : state.selection.length,
-      pageSelection: coverage(pageSelected, rows.length),
+      pageSelection: coverage(pageSelected, gridRows.length),
       allSelection: coverage(scopeSelected, scopeRows.length),
       canUndo: undoStack.canUndo,
       canRedo: undoStack.canRedo,
@@ -1318,10 +1426,15 @@ export function createTable<TRow, TSignal extends TreeLoadSignal = TreeLoadSigna
       getSort: (columnId: string): SortInfo | undefined => sortIndex.get(columnId),
       getColumn: (columnId: string): TableColumn<TRow> | undefined => ordered.byId.get(columnId),
       getRow: (key: RowKey): TableRow<TRow> | undefined =>
-        treeRow
+        pinProjected.get(key) ??
+        (treeRow
           ? treeRow(key)
           : (flatProjected.get(key) ??
-            (expanded!.byKey.get(key) ? flatMetadata(expanded!.byKey.get(key)!) : undefined)),
+            (expanded!.byKey.get(key)
+              ? pinned.keys.has(key)
+                ? metadata(expanded!.byKey.get(key)!)
+                : flatMetadata(expanded!.byKey.get(key)!)
+              : undefined))),
       getGroup: (key: string): TableGroup | undefined => {
         const node = grouped?.byKey.get(key);
         return node ? groupHeader(node) : undefined;
@@ -1335,6 +1448,7 @@ export function createTable<TRow, TSignal extends TreeLoadSignal = TreeLoadSigna
   }
 
   function notify(): void {
+    reconcileDataPins();
     snapshot = undefined;
     if (deferValidationNotify) {
       validationNotifyRequested = true;
@@ -1355,7 +1469,10 @@ export function createTable<TRow, TSignal extends TreeLoadSignal = TreeLoadSigna
       const row = all ? undefined : getSnapshot().getRow(key);
       // Closing an ancestor also makes an in-flight descendant unnecessary.
       const visible =
-        !all && getSnapshot().processedRows.some((candidate) => candidate.key === key);
+        !all &&
+        (getSnapshot().processedRows.some((candidate) => candidate.key === key) ||
+          getSnapshot().topRows.some((candidate) => candidate.key === key) ||
+          getSnapshot().bottomRows.some((candidate) => candidate.key === key));
       if (all || !row?.isExpanded || !visible) {
         pendingLoads.delete(key);
         childStatuses.delete(key);
@@ -1470,7 +1587,7 @@ export function createTable<TRow, TSignal extends TreeLoadSignal = TreeLoadSigna
   function startVisibleLoads(): void {
     if (!treeEnabled || !options.loadChildren || destroyed) return;
     const current = getSnapshot();
-    for (const row of current.rows)
+    for (const row of current.gridRows)
       if (row.isExpanded && row.childStatus === "idle") requestChildren(row);
   }
 
@@ -1500,13 +1617,15 @@ export function createTable<TRow, TSignal extends TreeLoadSignal = TreeLoadSigna
     const previousPinningIssue = columnPinningIssue;
     const previousGroupingIssue = groupingIssue;
     const previousGroupsIssue = expandedGroupsIssue;
+    const previousRowPinIssues = rowPinIssueVersion;
     const next = mergePatch(patch);
     if (
       next === previous &&
       previousIssue === expandedIssue &&
       previousPinningIssue === columnPinningIssue &&
       previousGroupingIssue === groupingIssue &&
-      previousGroupsIssue === expandedGroupsIssue
+      previousGroupsIssue === expandedGroupsIssue &&
+      previousRowPinIssues === rowPinIssueVersion
     ) {
       return;
     }
@@ -1560,7 +1679,16 @@ export function createTable<TRow, TSignal extends TreeLoadSignal = TreeLoadSigna
     if (patch.columnPinning !== undefined) columnPinningIssue = undefined;
     if (patch.grouping !== undefined) groupingIssue = undefined;
     if (patch.expandedGroups !== undefined) expandedGroupsIssue = undefined;
-    const next = mergeState(state, patch, recordStateIssue);
+    if (patch.rowPinning !== undefined && rowPinStateIssues.length) {
+      rowPinStateIssues = [];
+      rowPinIssueVersion++;
+    }
+    const merged = mergeState(state, patch, recordStateIssue);
+    const canonical =
+      patch.rowPinning === undefined || merged.rowPinning === state.rowPinning
+        ? merged
+        : canonicalRowPins(merged);
+    const next = canonical === merged ? merged : mergeState(state, canonical);
     return expandMode === "single" && patch.expanded !== undefined
       ? mergeState(next, { expanded: canonicalExpanded(next.expanded, next) })
       : next;
@@ -1622,7 +1750,11 @@ export function createTable<TRow, TSignal extends TreeLoadSignal = TreeLoadSigna
     const samples = new Map<string, unknown>();
     const sampleOf = (columnId: string): unknown => {
       if (!samples.has(columnId)) {
-        const other = current.processedRows.find((candidate) => {
+        const other = joinRowRegions(
+          current.topRows,
+          current.processedRows,
+          current.bottomRows,
+        ).find((candidate) => {
           const value = candidate.getValue(columnId);
           return value !== null && value !== undefined;
         });
@@ -1806,7 +1938,10 @@ export function createTable<TRow, TSignal extends TreeLoadSignal = TreeLoadSigna
           positionOf(key),
           group,
         );
-      if (!transaction) options.onDataChange?.(data, changes);
+      if (!transaction) {
+        reconcileDataPins();
+        options.onDataChange?.(data, changes);
+      }
       notify();
     }
     if (issues.length > 0 && !transaction) {
@@ -1925,6 +2060,7 @@ export function createTable<TRow, TSignal extends TreeLoadSignal = TreeLoadSigna
     const rowChanges = recordRows(previous, keys, positions, baselines);
     if (!transaction) {
       undoStack.record({ kind: "rows", before, after: scene(), keys });
+      reconcileDataPins();
       options.onDataChange?.(data, []);
       if (issues.length) options.onEditIssues?.(issues);
     }
@@ -1949,6 +2085,7 @@ export function createTable<TRow, TSignal extends TreeLoadSignal = TreeLoadSigna
     }
     lazyVersion++;
     recordRows(previous, entry.keys, positions, baselines);
+    reconcileDataPins();
     options.onDataChange?.(data, []);
     notify();
   }
@@ -2271,6 +2408,7 @@ export function createTable<TRow, TSignal extends TreeLoadSignal = TreeLoadSigna
           ? [{ kind: "removed", rowKey: key, row: old.original, position: positions.get(key)! }]
           : [];
     });
+    reconcileDataPins();
     if (before.data !== after.data) options.onDataChange?.(data, cells);
     if (problems.length) options.onEditIssues?.(problems);
     notify();
@@ -2278,7 +2416,7 @@ export function createTable<TRow, TSignal extends TreeLoadSignal = TreeLoadSigna
   }
 
   function rangeEdits(origin: CellPosition, matrix: readonly (readonly string[])[]): CellEdit[] {
-    const { rows, columns } = getSnapshot();
+    const { gridRows: rows, columns } = getSnapshot();
     const edits: CellEdit[] = [];
     matrix.forEach((line, rowOffset) => {
       const row = rows[origin.row + rowOffset];
@@ -2651,6 +2789,7 @@ export function createTable<TRow, TSignal extends TreeLoadSignal = TreeLoadSigna
         issue("invalid_ingestion", error instanceof Error ? error.message : String(error)),
       );
     }
+    reconcileDataPins(false);
     if (state !== previousState) options.onStateChange?.(state, previousState);
     options.onDataChange?.(data, []);
     notify();
@@ -2735,6 +2874,7 @@ export function createTable<TRow, TSignal extends TreeLoadSignal = TreeLoadSigna
       notify();
       return ingestionResult(0, 0, 0, ingestionIssues);
     }
+    reconcileDataPins(false);
     if (state !== previousState) options.onStateChange?.(state, previousState);
     if (removed.size) options.onDataChange?.(data, []);
     notify();
@@ -2747,6 +2887,8 @@ export function createTable<TRow, TSignal extends TreeLoadSignal = TreeLoadSigna
     state = initialState;
     snapshot = undefined;
   }
+  state = canonicalRowPins(state);
+  initialState = state;
 
   const table: DataTable<TRow> = {
     appendData: (rows) => ingestData(rows, "append"),
@@ -2788,13 +2930,15 @@ export function createTable<TRow, TSignal extends TreeLoadSignal = TreeLoadSigna
       const previousPinningIssue = columnPinningIssue;
       const previousGroupingIssue = groupingIssue;
       const previousGroupsIssue = expandedGroupsIssue;
+      const previousRowPinIssues = rowPinIssueVersion;
       const next = mergePatch(patch);
       if (
         next !== state ||
         previousIssue !== expandedIssue ||
         previousPinningIssue !== columnPinningIssue ||
         previousGroupingIssue !== groupingIssue ||
-        previousGroupsIssue !== expandedGroupsIssue
+        previousGroupsIssue !== expandedGroupsIssue ||
+        previousRowPinIssues !== rowPinIssueVersion
       ) {
         state = next;
         snapshot = undefined;
@@ -2938,7 +3082,10 @@ export function createTable<TRow, TSignal extends TreeLoadSignal = TreeLoadSigna
         return;
       }
       const current = getSnapshot();
-      const rows = scope === "page" || manual ? current.rows : current.processedRows;
+      const rows =
+        scope === "page" || manual
+          ? current.gridRows
+          : joinRowRegions(current.topRows, current.processedRows, current.bottomRows);
       const keys = rows.map((row) => row.key);
       const allSelected = keys.length > 0 && keys.every((key) => current.isSelected(key));
       if (allSelected) {
@@ -3108,6 +3255,35 @@ export function createTable<TRow, TSignal extends TreeLoadSignal = TreeLoadSigna
       commit({ columnPinning: { start, end } });
       if (hadIssue && previous === state) notify();
     },
+    pinRow(key, side) {
+      if (
+        (typeof key !== "string" && (typeof key !== "number" || !Number.isFinite(key))) ||
+        !validRowPinSide(side)
+      ) {
+        rowPinStateIssues = [
+          issue(
+            "invalid_row_pinning",
+            "A row pin needs a string or finite number key and a top/bottom side or false; the operation is ignored.",
+            { rowKey: key },
+          ),
+        ];
+        rowPinIssueVersion++;
+        notify();
+        return;
+      }
+      const pinning = state.rowPinning;
+      if (
+        (side === "top" && pinning.top.includes(key)) ||
+        (side === "bottom" && pinning.bottom.includes(key)) ||
+        (!side && !pinning.top.includes(key) && !pinning.bottom.includes(key))
+      )
+        return;
+      const top = pinning.top.filter((candidate) => candidate !== key);
+      const bottom = pinning.bottom.filter((candidate) => candidate !== key);
+      if (side === "top") top.push(key);
+      if (side === "bottom") bottom.push(key);
+      commit({ rowPinning: { top, bottom } });
+    },
     resizeColumn(columnId, width) {
       const column = resolveColumns(definitions).byId.get(columnId);
       if (!column?.resizable || !validSize(width)) return;
@@ -3149,7 +3325,7 @@ export function createTable<TRow, TSignal extends TreeLoadSignal = TreeLoadSigna
       return true;
     },
     copy(range, { escapeFormulas = false } = {}) {
-      const { rows, columns } = getSnapshot();
+      const { gridRows: rows, columns } = getSnapshot();
       const matrix: string[][] = [];
       rows.forEach((row, rowIndex) => {
         const line: string[] = [];
@@ -3182,7 +3358,7 @@ export function createTable<TRow, TSignal extends TreeLoadSignal = TreeLoadSigna
           ],
         );
       }
-      const { rows, columns } = getSnapshot();
+      const { gridRows: rows, columns } = getSnapshot();
       const parsed = readDelimited(text, {
         maxRows: Math.max(0, rows.length - origin.row),
         maxColumns: Math.max(0, columns.length - origin.column),
@@ -3229,9 +3405,11 @@ export function createTable<TRow, TSignal extends TreeLoadSignal = TreeLoadSigna
             return column ? [column] : [];
           })
         : current.columns;
-      const rows = pageOnly ? current.rows : current.processedRows;
+      const rows = pageOnly
+        ? current.gridRows
+        : joinRowRegions(current.topRows, current.processedRows, current.bottomRows);
       const model = groups ? currentGroups() : undefined;
-      const entries: readonly (TableRow<TRow> | TableGroup)[] = model?.active
+      const centreEntries: readonly (TableRow<TRow> | TableGroup)[] = model?.active
         ? pageOnly
           ? current.renderItems.flatMap((item): (TableRow<TRow> | TableGroup)[] =>
               item.kind === "group" ? [item] : item.kind === "row" ? [item.row] : [],
@@ -3240,6 +3418,9 @@ export function createTable<TRow, TSignal extends TreeLoadSignal = TreeLoadSigna
               "original" in entry ? current.getRow(entry.key)! : current.getGroup(entry.key)!,
             )
         : rows;
+      const entries = model?.active
+        ? [...current.topRows, ...centreEntries, ...current.bottomRows]
+        : centreEntries;
       const matrix = entries.map((row) =>
         "kind" in row
           ? columns.map((column, index) => {
@@ -3269,11 +3450,18 @@ export function createTable<TRow, TSignal extends TreeLoadSignal = TreeLoadSigna
     },
 
     reset() {
-      const hadIssue = pinOperationIssue !== undefined;
+      const hadRowPinIssue = rowPinStateIssues.length > 0 || rowPinResolutionIssues.length > 0;
+      const hadIssue = pinOperationIssue !== undefined || hadRowPinIssue;
       pinOperationIssue = undefined;
+      if (hadRowPinIssue) {
+        rowPinStateIssues = [];
+        rowPinResolutionIssues = [];
+        rowPinIssueVersion++;
+      }
+      const resetIssueVersion = rowPinIssueVersion;
       const previous = state;
       commit(initialState);
-      if (hadIssue && previous === state) notify();
+      if (hadIssue && previous === state && resetIssueVersion === rowPinIssueVersion) notify();
     },
     destroy() {
       destroyed = true;

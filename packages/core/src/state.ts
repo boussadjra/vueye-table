@@ -24,6 +24,12 @@ export interface ColumnPinning {
   readonly end: readonly string[];
 }
 
+export type RowPinSide = "top" | "bottom";
+export interface RowPinning {
+  readonly top: readonly RowKey[];
+  readonly bottom: readonly RowKey[];
+}
+
 /**
  * Everything a user can change about a table, as plain serializable data.
  *
@@ -50,6 +56,7 @@ export interface TableState {
   readonly grouping: readonly string[];
   /** Group keys, separate from row/detail expansion. Defaults to every group open. */
   readonly expandedGroups: readonly string[] | true;
+  readonly rowPinning: RowPinning;
 }
 
 /** A partial state, as accepted by `setState` and `initialState`. */
@@ -73,6 +80,10 @@ export function createInitialState(
     hiddenColumns: patch.hiddenColumns ?? [],
     columnOrder: patch.columnOrder ?? [],
     columnSizing: patch.columnSizing ?? {},
+    rowPinning: normalizeRowPinning(
+      patch.rowPinning === undefined ? { top: [], bottom: [] } : patch.rowPinning,
+      onIssue,
+    ),
     grouping: normalizeGrouping(patch.grouping === undefined ? [] : patch.grouping, onIssue),
     expandedGroups: normalizeGroupsExpanded(
       patch.expandedGroups === undefined ? true : patch.expandedGroups,
@@ -94,15 +105,17 @@ export function mergeState(
   const next: Record<string, unknown> = { ...state };
   for (const [key, input] of Object.entries(patch)) {
     const value =
-      key === "grouping" && input !== undefined
-        ? normalizeGrouping(input, onIssue)
-        : key === "expandedGroups" && input !== undefined
-          ? normalizeGroupsExpanded(input, onIssue)
-          : key === "expanded" && input !== undefined
-            ? normalizeExpanded(input, onIssue)
-            : key === "columnPinning" && input !== undefined
-              ? normalizeColumnPinning(input, onIssue)
-              : input;
+      key === "rowPinning" && input !== undefined
+        ? normalizeRowPinning(input, onIssue)
+        : key === "grouping" && input !== undefined
+          ? normalizeGrouping(input, onIssue)
+          : key === "expandedGroups" && input !== undefined
+            ? normalizeGroupsExpanded(input, onIssue)
+            : key === "expanded" && input !== undefined
+              ? normalizeExpanded(input, onIssue)
+              : key === "columnPinning" && input !== undefined
+                ? normalizeColumnPinning(input, onIssue)
+                : input;
     if (value === undefined || Object.is(next[key], value)) {
       continue;
     }
@@ -113,6 +126,7 @@ export function mergeState(
       continue;
     }
     if (key === "expanded" && sameExpanded(state.expanded, value as ExpandedState)) continue;
+    if (key === "rowPinning" && sameRowPinning(state.rowPinning, value as RowPinning)) continue;
     if (key === "grouping" && sameExpanded(state.grouping, value as readonly string[])) continue;
     if (key === "expandedGroups" && sameExpanded(state.expandedGroups, value as ExpandedState))
       continue;
@@ -127,6 +141,50 @@ export function mergeState(
     changed = true;
   }
   return changed ? freezeState(next as unknown as TableState, state) : state;
+}
+
+function normalizeRowPinning(value: unknown, onIssue?: (problem: TableIssue) => void): RowPinning {
+  const validKeys = (keys: unknown): keys is RowKey[] =>
+    Array.isArray(keys) &&
+    keys.every(
+      (key: unknown) =>
+        typeof key === "string" || (typeof key === "number" && Number.isFinite(key)),
+    );
+  if (
+    value === null ||
+    typeof value !== "object" ||
+    !("top" in value) ||
+    !("bottom" in value) ||
+    !validKeys(value.top) ||
+    !validKeys(value.bottom)
+  ) {
+    onIssue?.(
+      issue(
+        "invalid_row_pinning",
+        "Row pinning must contain top and bottom arrays of string or finite number keys; empty regions are used.",
+      ),
+    );
+    return { top: [], bottom: [] };
+  }
+  const seen = new Set<RowKey>();
+  const unique = (keys: readonly RowKey[]): RowKey[] =>
+    keys.filter((key) => {
+      if (seen.has(key)) {
+        onIssue?.(
+          issue("duplicate_row_pin", "A repeated row pin is ignored; the first region wins.", {
+            rowKey: key,
+          }),
+        );
+        return false;
+      }
+      seen.add(key);
+      return true;
+    });
+  return { top: unique(value.top), bottom: unique(value.bottom) };
+}
+
+function sameRowPinning(left: RowPinning, right: RowPinning): boolean {
+  return sameExpanded(left.top, right.top) && sameExpanded(left.bottom, right.bottom);
 }
 
 function normalizeGrouping(
@@ -284,5 +342,12 @@ function freezeState(state: TableState, previous?: TableState): TableState {
         : state.expandedGroups === true
           ? true
           : Object.freeze([...state.expandedGroups]),
+    rowPinning:
+      state.rowPinning === previous?.rowPinning
+        ? previous.rowPinning
+        : Object.freeze({
+            top: Object.freeze([...state.rowPinning.top]),
+            bottom: Object.freeze([...state.rowPinning.bottom]),
+          }),
   });
 }

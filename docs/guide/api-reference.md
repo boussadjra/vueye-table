@@ -86,3 +86,11 @@ Flat client tables accept `initialState.grouping` and `initialState.expandedGrou
 before reading a leaf. `getAggregate(id)` returns a value and `getAggregateDisplay(id)` returns
 subtotal text. `exportRows({groups: true})` includes labels and aggregates. See
 [grouping](/guide/grouping) for pagination units, aggregates, manual/tree limits and migration.
+
+## Row pinning
+
+`pinRow(key, "top" | "bottom" | false)` changes the ordered `state.rowPinning` regions.
+Snapshots expose `topRows`, centre `rows`/`renderItems`, `bottomRows`, and visual-order `gridRows`.
+Client pagination counts the centre; `keepPinnedRows` controls filter visibility.
+Grid navigation, ranges and clipboard operations use `gridRows`. See [row pinning](/guide/row-pinning)
+for manual-page supply, stale-key recovery, tree behaviour and migration.

@@ -163,7 +163,7 @@ export const DataGridRoot = defineComponent({
         grid.focusCell(
           event.key === "Home"
             ? { row: 0, column: 0 }
-            : { row: props.table.rows.length - 1, column: props.table.columns.length - 1 },
+            : { row: props.table.gridRows.length - 1, column: props.table.columns.length - 1 },
           { extend: event.shiftKey },
         );
         event.preventDefault();
@@ -235,7 +235,10 @@ export const DataGridRoot = defineComponent({
               ? props.table.processedRows.length
               : binding
                 ? props.table.rowCount
-                : props.table.rows.length) + 1,
+                : props.table.rows.length) +
+            props.table.topRows.length +
+            props.table.bottomRows.length +
+            1,
           "aria-colcount": props.table.columns.length + props.leadingColumns,
           "aria-busy":
             props.table.loadState === "loading" || props.table.loadState === "streaming"
@@ -497,7 +500,7 @@ export const DataGridCell = defineComponent({
     const element = ref<HTMLElement>();
     const issueId = useEditorId();
     const position = () => ({
-      row: props.rowIndex ?? table.rows.indexOf(props.row),
+      row: props.rowIndex ?? table.gridRows.indexOf(props.row),
       column: props.columnIndex ?? table.columns.indexOf(props.column),
     });
 

@@ -2,6 +2,7 @@ import type { TableColumn } from "./column";
 import { issue, type TableIssue } from "./issues";
 import { isSafePath } from "./path";
 import type { TableRow } from "./row";
+import { joinRowRegions } from "./row-pinning";
 import type { RowKey } from "./state";
 import type {
   CellChange,
@@ -280,7 +281,7 @@ export function createEditValidation<TRow>(host: ValidationHost<TRow>): {
             if (!samples.has(column.id))
               samples.set(
                 column.id,
-                snapshot.processedRows
+                joinRowRegions(snapshot.topRows, snapshot.processedRows, snapshot.bottomRows)
                   .find(
                     (candidate) =>
                       candidate.getValue(column.id) !== null &&
