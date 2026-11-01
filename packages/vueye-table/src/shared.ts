@@ -19,8 +19,9 @@ import {
   type TableMessages,
   type TextNormalizer,
   type ColumnPinning,
+  type RowPinning,
 } from "@vueye-table/core";
-import { virtualProps } from "@vueye-table/headless";
+import { virtualProps, groupingProps } from "@vueye-table/headless";
 import { hierarchyProps, type AnyRowAttrs } from "@vueye-table/headless";
 import type { Density } from "@vueye-table/styled";
 import type { TableSource, LoadMore } from "@vueye-table/vue";
@@ -80,6 +81,15 @@ export const commonProps = {
   addRow: { type: Boolean, default: false },
   removeRows: { type: Boolean, default: false },
   ...virtualProps,
+  ...groupingProps,
+  groupable: { type: Boolean, default: false },
+  rowPinningControls: { type: Boolean, default: false },
+  grouping: { type: Array as PropType<readonly string[] | undefined>, default: undefined },
+  expandedGroups: {
+    type: [Boolean, Array] as PropType<TableState["expandedGroups"] | undefined>,
+    default: undefined,
+  },
+  rowPinning: { type: Object as PropType<RowPinning | undefined>, default: undefined },
   resizableColumns: { type: Boolean, default: false },
   columnSizing: { type: Object as PropType<ColumnSizing | undefined>, default: undefined },
   columnPinning: { type: Object as PropType<ColumnPinning | undefined>, default: undefined },
@@ -190,6 +200,9 @@ export function editingOptions(
 
 /** The `v-model` events of table state, typed by the value each carries. */
 export const stateEmitValidators = {
+  "update:grouping": (_grouping: readonly string[]) => true,
+  "update:expandedGroups": (_expanded: TableState["expandedGroups"]) => true,
+  "update:rowPinning": (_pinning: RowPinning) => true,
   "update:columnSizing": (_sizing: ColumnSizing) => true,
   "update:columnPinning": (_pinning: ColumnPinning) => true,
   "update:page": (_page: number) => true,
@@ -207,6 +220,9 @@ export const stateEmits = Object.keys(
 ) as readonly (keyof typeof stateEmitValidators)[];
 
 interface ControlledProps {
+  readonly grouping?: readonly string[] | undefined;
+  readonly expandedGroups?: TableState["expandedGroups"] | undefined;
+  readonly rowPinning?: RowPinning | undefined;
   readonly columnSizing?: ColumnSizing | undefined;
   readonly columnPinning?: ColumnPinning | undefined;
   readonly page: number | undefined;
@@ -222,6 +238,9 @@ interface ControlledProps {
 /** The state a parent controls through `v-model`, as a table state patch. */
 export function controlledState(props: ControlledProps, current: PaginationState): TableStatePatch {
   return {
+    grouping: props.grouping,
+    expandedGroups: props.expandedGroups,
+    rowPinning: props.rowPinning,
     columnSizing: props.columnSizing,
     columnPinning: props.columnPinning,
     sorting: props.sorting,
@@ -246,6 +265,10 @@ export function emitStateChanges(
   state: TableState,
   previous: TableState,
 ): void {
+  if (state.grouping !== previous.grouping) emit("update:grouping", state.grouping);
+  if (state.expandedGroups !== previous.expandedGroups)
+    emit("update:expandedGroups", state.expandedGroups);
+  if (state.rowPinning !== previous.rowPinning) emit("update:rowPinning", state.rowPinning);
   if (state.columnSizing !== previous.columnSizing) emit("update:columnSizing", state.columnSizing);
   if (state.columnPinning !== previous.columnPinning)
     emit("update:columnPinning", state.columnPinning);

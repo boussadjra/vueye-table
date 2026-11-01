@@ -4,6 +4,7 @@ import {
   computed,
   defineComponent,
   h,
+  mergeProps,
   inject,
   onScopeDispose,
   provide,
@@ -15,6 +16,7 @@ import {
   type SlotsType,
 } from "vue";
 
+import { injectRowLayout, injectPinnedRow } from "./row-layout";
 import { asProp, directionOf, flag } from "./shared";
 
 export const resizingProps = {
@@ -174,9 +176,23 @@ export const DataTableLeadingCell = defineComponent({
   name: "DataTableLeadingCell",
   props: { as: asProp("td"), index: { type: Number, default: 0 } },
   slots: Object as SlotsType<{ default?: () => VNode[] }>,
-  setup(props, { slots }) {
+  setup(props, { slots, attrs }) {
     const layout = injectColumnLayout();
-    return () => h(props.as, layout?.leading(props.index, props.as === "th"), slots.default?.());
+    const rows = injectRowLayout();
+    const pin = injectPinnedRow();
+    return () => {
+      const header = props.as === "th" && attrs["scope"] !== "row";
+      const leading = layout?.leading(props.index, header) ?? {};
+      return h(
+        props.as,
+        mergeProps(
+          leading,
+          { style: header ? rows?.headerStyle(!!leading["data-pinned"]) : undefined },
+          pin?.attrs(!!leading["data-pinned"]) ?? {},
+        ),
+        slots.default?.(),
+      );
+    };
   },
 });
 

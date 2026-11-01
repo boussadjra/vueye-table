@@ -24,6 +24,8 @@
   --vt-resizer-hover: var(--vt-accent);
   --vt-pinned-bg: var(--vt-bg);
   --vt-pinned-shadow: 0 2px 8px rgb(0 0 0 / 0.18);
+  --vt-group-bg: var(--vt-header-bg);
+  --vt-pinned-row-shadow: 0 3px 8px rgb(0 0 0 / 0.16);
 }
 
 :where(.vt-surface, .vt-theme):where(:not(:is(.vt-surface, .vt-theme) *)):where(
@@ -258,6 +260,80 @@
 .vt-pin-select:focus-visible {
   outline: 2px solid var(--vt-focus);
   outline-offset: 2px;
+}
+
+.vt-table .vt-group-row > td {
+  background: var(--vt-group-bg);
+  color: var(--vt-fg);
+}
+.vt-table .vt-group-label-content {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding-inline-start: calc(var(--vt-group-depth, 0) * var(--vt-tree-indent));
+  position: sticky;
+  inset-inline-start: var(--vt-cell-x);
+  width: fit-content;
+  max-width: 100%;
+}
+.vt-table [data-group-label] {
+  position: sticky;
+  inset-inline-start: 0;
+  z-index: 2;
+}
+.vt-group-label-content button {
+  padding: 0;
+  border: 0;
+  color: inherit;
+  background: transparent;
+  font: inherit;
+  font-weight: 600;
+  text-align: start;
+  cursor: pointer;
+}
+.vt-group-label-content button:focus-visible {
+  outline: 2px solid var(--vt-focus);
+  outline-offset: 3px;
+}
+.vt-group-row [data-aggregate] {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.vt-group-row[data-aggregate-footer] > td {
+  border-top: 1px solid var(--vt-border);
+}
+.vt-table tbody [data-row-pinned] {
+  background: var(--vt-pinned-bg);
+  box-shadow: var(--vt-pinned-row-shadow);
+}
+.vt-table tbody [data-row-pinned][data-selected] {
+  background: var(--vt-selected);
+}
+.vt-group-by .vt-menu-panel {
+  min-width: min(18rem, 80vw);
+}
+.vt-group-by select {
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px solid var(--vt-border);
+  border-radius: var(--vt-control-radius);
+  background: var(--vt-bg);
+  color: var(--vt-fg);
+  font: inherit;
+}
+.vt-group-by ol {
+  list-style: none;
+  margin: 0.5rem 0 0;
+  padding: 0;
+}
+.vt-group-by li {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding-block: 0.35rem;
+}
+.vt-group-by li > span {
+  flex: 1;
 }
 
 .vt-surface[data-sticky-header] thead th {
@@ -542,7 +618,8 @@
   position: absolute;
   inset-inline-end: 0;
   top: calc(100% + 0.25rem);
-  z-index: 3;
+  /* Menus sit above sticky row/column intersections, whose highest layer is 6. */
+  z-index: 7;
   display: grid;
   gap: 0.25rem;
   min-width: 11rem;

@@ -32,6 +32,19 @@ export type SortStep = "ascending" | "descending" | "unsorted";
  * default. Functions receive counts already written in the table's locale.
  */
 export interface TableMessages {
+  readonly groupLabel: (header: string, value: string, count: Count) => string;
+  readonly expandGroup: (label: string) => string;
+  readonly collapseGroup: (label: string) => string;
+  readonly selectGroup: (label: string) => string;
+  readonly groupTotals: (label: string) => string;
+  readonly groupBy: string;
+  readonly addGroup: string;
+  readonly removeGroup: (header: string) => string;
+  readonly moveGroupEarlier: (header: string) => string;
+  readonly moveGroupLater: (header: string) => string;
+  readonly pinRowTop: string;
+  readonly pinRowBottom: string;
+  readonly unpinRow: string;
   readonly resizeColumn: (header: string) => string;
   readonly resizeColumnHelp: string;
   readonly pinColumnStart: string;
@@ -93,6 +106,20 @@ const rows = (count: Count): string => `${count.text} ${count.value === 1 ? "row
 
 /** The English words, the default of every table. */
 export const defaultTableMessages: TableMessages = Object.freeze({
+  groupLabel: (header: string, value: string, count: Count) =>
+    `${header}: ${value}, ${rows(count)}`,
+  expandGroup: (label: string) => `Expand ${label}`,
+  collapseGroup: (label: string) => `Collapse ${label}`,
+  selectGroup: (label: string) => `Select ${label}`,
+  groupTotals: (label: string) => `Totals for ${label}`,
+  groupBy: "Group by",
+  addGroup: "Add a grouping column",
+  removeGroup: (header: string) => `Remove ${header} grouping`,
+  moveGroupEarlier: (header: string) => `Group by ${header} earlier`,
+  moveGroupLater: (header: string) => `Group by ${header} later`,
+  pinRowTop: "Pin to top",
+  pinRowBottom: "Pin to bottom",
+  unpinRow: "Unpin row",
   resizeColumn: (header: string) => `Resize ${header}`,
   resizeColumnHelp:
     "Use arrow keys to resize. Hold Shift for larger steps. Enter resets the width.",

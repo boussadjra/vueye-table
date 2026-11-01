@@ -1,4 +1,4 @@
-import type { SortInfo, TableColumn, TableRow } from "@vueye-table/core";
+import { getRowItemKey, type SortInfo, type TableColumn, type TableRow } from "@vueye-table/core";
 import {
   injectDataTable,
   provideDataTable,
@@ -12,6 +12,8 @@ import {
   Fragment,
   h,
   mergeProps,
+  isVNode,
+  cloneVNode,
   shallowRef,
   type PropType,
   type ShallowRef,
@@ -29,6 +31,7 @@ import {
   DataTableColumnResizer,
 } from "./column-layout";
 import { injectEditingGrid } from "./editing";
+import { groupRow, type GroupSlots } from "./grouped-rows";
 import {
   createDetails,
   DataTableTreeCell,
@@ -41,6 +44,13 @@ import {
   type DetailSlotProps,
 } from "./hierarchy";
 import { loadSentinel } from "./loading";
+import {
+  provideRowLayout,
+  injectRowLayout,
+  injectPinnedRow,
+  groupingProps,
+  DataTablePinnedRow,
+} from "./row-layout";
 import {
   asProp,
   columnProp,
@@ -60,6 +70,7 @@ import {
   virtualOptions,
   virtualRow,
   virtualColgroup,
+  physicalColumnCount,
   VirtualContent,
   type ComponentVirtualBinding,
 } from "./virtual";
@@ -80,6 +91,7 @@ export const DataTableRoot = defineComponent({
     ...hierarchyProps,
     ...columnLayoutProps,
     ...resizingProps,
+    ...groupingProps,
   },
   setup(props, { slots }) {
     provideDataTable(props.table);
@@ -87,6 +99,7 @@ export const DataTableRoot = defineComponent({
     const hierarchy = provideHierarchy(props.table, props);
     const element = shallowRef<HTMLElement>();
     const layout = provideColumnLayout(props.table, props, () => element.value);
+    const rowLayout = provideRowLayout(props.table, props, () => element.value);
     const editingGrid = injectEditingGrid();
     const virtualGrid = props.virtualColumns
       ? (editingGrid ?? useDataGrid(props.table))
@@ -100,15 +113,20 @@ export const DataTableRoot = defineComponent({
             virtual?.columns ? virtual.columns.totalSize + virtual.gutter : undefined,
           ),
           "data-column-layout": flag(layout.enabled()),
-          role: props.table.tree ? "treegrid" : undefined,
+          role: props.table.tree || props.table.grouped ? "treegrid" : undefined,
           "aria-rowcount":
+            rowLayout.count ??
             (props.table.tree ? props.table.processedRows.length : props.table.rowCount) + 1,
           "aria-colcount": props.table.columns.length + props.leadingColumns,
           "aria-busy":
             props.table.loadState === "loading" || props.table.loadState === "streaming"
               ? "true"
               : undefined,
-          "data-empty": flag(props.table.rowCount === 0),
+          "data-empty": flag(
+            props.table.renderItems.length === 0 &&
+              props.table.topRows.length === 0 &&
+              props.table.bottomRows.length === 0,
+          ),
           onKeydown: (event: KeyboardEvent) => treeKeydown(event, hierarchy, virtual),
           ...(virtual ? { "data-virtual": "" } : {}),
         },
@@ -220,6 +238,7 @@ export const DataTableHeaderCell = defineComponent({
     const table = injectDataTable("<DataTableHeaderCell>");
     const columnOffset = injectColumnOffset();
     const layout = injectColumnLayout();
+    const rows = injectRowLayout();
     provideHeaderColumn(() => props.column);
     return () => {
       const { column } = props;
@@ -247,8 +266,12 @@ export const DataTableHeaderCell = defineComponent({
           "data-align": column.align,
           "data-sortable": flag(column.sortable),
           "data-sort": sort?.direction,
-          style: columnStyle(column),
           ...layout?.attrs(column, true),
+          style: [
+            columnStyle(column),
+            layout?.attrs(column, true)["style"],
+            rows?.headerStyle(!!column.pinned),
+          ],
           "aria-colindex": table.columns.indexOf(column) + columnOffset() + 1,
         },
         [content, layout?.resizable() && column.resizable ? h(DataTableColumnResizer) : null],
@@ -306,44 +329,70 @@ export const DataTableSortButton = defineComponent({
  */
 export const DataTableBody = defineComponent({
   name: "DataTableBody",
-  slots: Object as SlotsType<{
-    default?: (props: { rows: readonly TableRow<unknown>[] }) => VNode[];
-    empty?: () => VNode[];
-    detail?: (props: { row: TableRow<unknown>; rowIndex: number }) => VNode[];
-    row?: (props: DetailSlotProps) => VNodeChild;
-  }>,
+  inheritAttrs: false,
+  slots: Object as SlotsType<
+    {
+      default?: (props: { rows: readonly TableRow<unknown>[] }) => VNode[];
+      empty?: () => VNode[];
+      detail?: (props: { row: TableRow<unknown>; rowIndex: number }) => VNode[];
+      row?: (props: DetailSlotProps) => VNodeChild;
+    } & GroupSlots
+  >,
   props: {
     as: asProp("tbody"),
     ...virtualProps,
     colspan: { type: Number as PropType<number | undefined>, default: undefined },
   },
-  setup(props, { slots }) {
+  setup(props, { slots, attrs }) {
     const table = injectDataTable("<DataTableBody>");
     const locale = useTableLocale();
     const virtual = injectVirtual();
+    const rowLayout = injectRowLayout();
     const details = createDetails(
       table,
       () => slots.detail,
       () => props.colspan ?? table.columns.length,
     );
     return () => {
-      if (props.virtual && !virtual) return h(VirtualDataTableBody, props, slots);
-      if (virtual) return renderTableBody(table, virtual, props.as, props.colspan, slots, details);
+      if (props.virtual && !virtual)
+        return h(VirtualDataTableBody, mergeProps(props, attrs), slots);
+      if (virtual)
+        return pinnedTableSections(
+          table,
+          renderTableBody(
+            table,
+            virtual,
+            props.as,
+            props.colspan,
+            slots,
+            details,
+            undefined,
+            rowLayout,
+          ),
+          props.as,
+          slots,
+          attrs,
+        );
       let content: VNodeChild[] | VNode | undefined = slots.default?.({ rows: table.rows });
       if (!content) {
         content =
-          table.rows.length === 0 && slots.empty
+          table.renderItems.length === 0 && slots.empty
             ? h("tr", { "data-empty": "" }, [
                 h("td", { colspan: Math.max(1, table.columns.length) }, slots.empty()),
               ])
-            : table.renderItems.map((item) =>
+            : (rowLayout?.items ?? table.renderItems).map((item) =>
                 item.kind === "row"
                   ? slots.row
                     ? h(Fragment, { key: item.key }, [slots.row(item)])
                     : h(DataTableRow, { key: item.key, row: item.row, rowIndex: item.rowIndex })
                   : item.kind === "detail"
                     ? details.render(item.row, item.rowIndex)
-                    : null,
+                    : groupRow(
+                        item,
+                        slots,
+                        rowLayout?.aggregatePosition ?? "group",
+                        rowLayout?.footer(item.key),
+                      ),
               );
       }
       const visibleDetails = new Set(
@@ -351,21 +400,63 @@ export const DataTableBody = defineComponent({
       );
       const retained = slots.default ? [] : details.retained(visibleDetails);
       const sentinel = loadSentinel(table, props.colspan ?? table.columns.length, locale());
-      return h(props.as, [
-        ...(Array.isArray(content) ? content : content ? [content] : []),
-        ...retained,
-        ...(sentinel ? [sentinel] : []),
-      ]);
+      return pinnedTableSections(
+        table,
+        h(props.as, { "data-row-region": "centre" }, [
+          ...(Array.isArray(content) ? content : content ? [content] : []),
+          ...retained,
+          ...(sentinel ? [sentinel] : []),
+        ]),
+        props.as,
+        slots,
+        attrs,
+      );
     };
   },
 });
 
-type TableBodySlots = {
+type TableBodySlots = GroupSlots & {
   default?: (props: { rows: readonly TableRow<unknown>[] }) => VNode[];
   empty?: () => VNode[];
   detail?: (props: { row: TableRow<unknown>; rowIndex: number }) => VNode[];
   row?: (props: DetailSlotProps) => VNodeChild;
 };
+function pinnedTableSections(
+  table: DataTableBinding<unknown>,
+  centre: VNode,
+  as: string,
+  slots: TableBodySlots,
+  attrs: Record<string, unknown> = {},
+): VNode {
+  const body = cloneVNode(centre, { ...attrs, "data-row-region": "centre" });
+  const region = (side: "top" | "bottom"): VNode | null => {
+    const rows = side === "top" ? table.topRows : table.bottomRows;
+    return rows.length
+      ? h(
+          as,
+          { "data-row-region": side, class: attrs["class"] },
+          rows.map((row, index) => {
+            const rowIndex =
+              side === "top" ? index : table.topRows.length + table.rows.length + index;
+            return h(
+              DataTablePinnedRow,
+              { key: getRowItemKey(row.key), row, side },
+              {
+                default: () => {
+                  const child =
+                    slots.row?.({ row, rowIndex }) ?? h(DataTableRow, { row, rowIndex });
+                  return [isVNode(child) ? child : h(Fragment, null, [child])];
+                },
+              },
+            );
+          }),
+        )
+      : null;
+  };
+  return table.topRows.length || table.bottomRows.length
+    ? h(Fragment, [region("top"), body, region("bottom")])
+    : body;
+}
 function renderTableBody(
   table: DataTableBinding<unknown>,
   virtual: ComponentVirtualBinding,
@@ -374,15 +465,20 @@ function renderTableBody(
   slots: TableBodySlots,
   details: ReturnType<typeof createDetails>,
   element?: ShallowRef<HTMLElement | undefined>,
+  rowLayout?: ReturnType<typeof injectRowLayout>,
 ): VNode {
-  const width = colspan ?? table.columns.length;
-  const attrs = element ? { ref: element } : {};
+  const width = physicalColumnCount(
+    virtual,
+    table.columns.length,
+    Math.max(0, (colspan ?? table.columns.length) - table.columns.length),
+  );
+  const attrs = { "data-row-region": "centre", ...(element ? { ref: element } : {}) };
   const content = slots.default?.({
     rows: virtual.rowItems.flatMap((item) =>
       item.renderItem.kind === "row" ? [item.renderItem.row] : [],
     ),
   });
-  if (table.rows.length === 0 && slots.empty)
+  if (table.renderItems.length === 0 && slots.empty)
     return h(
       as,
       attrs,
@@ -407,8 +503,22 @@ function renderTableBody(
             })
         : item.renderItem.kind === "detail"
           ? details.render(item.renderItem.row, item.renderItem.rowIndex)
-          : null,
+          : groupRow(
+              item.renderItem,
+              slots,
+              rowLayout?.aggregatePosition ?? "group",
+              rowLayout?.footer(item.key),
+            ),
     ),
+    ...(table.bottomRows.length
+      ? [
+          rowSpacer(
+            Math.max(0, virtual.rows.viewportSize - virtual.rows.totalSize),
+            width,
+            "pin-fill",
+          ),
+        ]
+      : []),
     ...details.retained(
       new Set(
         virtual.rowItems.flatMap((item) =>
@@ -421,14 +531,16 @@ function renderTableBody(
 }
 const VirtualDataTableBody = defineComponent({
   name: "DataTableVirtualBody",
+  inheritAttrs: false,
   props: {
     as: asProp("tbody"),
     ...virtualProps,
     colspan: { type: Number as PropType<number | undefined>, default: undefined },
   },
   slots: Object as SlotsType<TableBodySlots>,
-  setup(props, { slots }) {
+  setup(props, { slots, attrs }) {
     const table = injectDataTable("<DataTableBody>");
+    const rowLayout = injectRowLayout();
     const element = shallowRef<HTMLElement>();
     const virtual = createComponentVirtual(table, virtualOptions(props), () =>
       element.value?.closest("table"),
@@ -438,7 +550,23 @@ const VirtualDataTableBody = defineComponent({
       () => slots.detail,
       () => props.colspan ?? table.columns.length,
     );
-    return () => renderTableBody(table, virtual, props.as, props.colspan, slots, details, element);
+    return () =>
+      pinnedTableSections(
+        table,
+        renderTableBody(
+          table,
+          virtual,
+          props.as,
+          props.colspan,
+          slots,
+          details,
+          element,
+          rowLayout,
+        ),
+        props.as,
+        slots,
+        attrs,
+      );
   },
 });
 
@@ -469,6 +597,7 @@ export const DataTableRow = defineComponent({
     const table = injectDataTable("<DataTableRow>");
     const virtual = injectVirtual();
     const hierarchy = injectHierarchy();
+    const rowLayout = injectRowLayout();
     return () => {
       const { row } = props;
       const selected = table.isSelected(row.key);
@@ -479,14 +608,17 @@ export const DataTableRow = defineComponent({
       return h(
         props.as,
         mergeProps(props.attributes ?? {}, {
-          "aria-rowindex": position === -1 ? undefined : table.pageStart + position + 1,
+          "aria-rowindex":
+            rowLayout?.index(row.key) ??
+            (position === -1 ? undefined : table.pageStart + position + 1),
           "aria-selected": table.selectionMode === "none" ? undefined : String(selected),
+          "aria-level": rowLayout?.level(row.key),
           "data-selected": flag(selected),
           "data-key": String(row.key),
           "data-dirty": flag(row.isDirty),
           ...hierarchyRowAttrs(table, row, hierarchy),
           tabindex: table.tree
-            ? (hierarchy?.focusKey ?? table.rows[0]?.key) === row.key
+            ? (hierarchy?.focusKey ?? table.gridRows[0]?.key) === row.key
               ? 0
               : -1
             : undefined,
@@ -535,6 +667,7 @@ export const DataTableCell = defineComponent({
     const columnOffset = injectColumnOffset();
     const hierarchy = injectHierarchy();
     const layout = injectColumnLayout();
+    const pin = injectPinnedRow();
     return () => {
       const { row, column } = props;
       const value = row.getValue(column.id);
@@ -546,6 +679,7 @@ export const DataTableCell = defineComponent({
           "data-column": column.id,
           "data-align": column.align,
           ...layout?.attrs(column),
+          ...(pin ? mergeProps(layout?.attrs(column) ?? {}, pin.attrs(!!column.pinned)) : {}),
           "aria-colindex": table.columns.indexOf(column) + columnOffset() + 1,
         },
         props.tree && table.tree && column.id === resolveTreeColumn(table, hierarchy?.treeColumn)

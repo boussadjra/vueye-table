@@ -36,6 +36,12 @@ export interface VirtualViewportOptions {
   readonly scrollMargin?: MaybeRefOrGetter<number> | undefined;
 }
 export interface UseVirtualRowsOptions<TRow> extends VirtualViewportOptions {
+  /** A custom presentation sequence, for example headers with aggregate footers. */
+  readonly renderItems?: MaybeRefOrGetter<readonly TableRenderItem<TRow>[]> | undefined;
+  /** Measured non-scrolling row regions. They reserve space around the virtual centre. */
+  readonly pinnedRowHeights?:
+    | MaybeRefOrGetter<{ readonly top: number; readonly bottom: number }>
+    | undefined;
   readonly estimateRowHeight?: number | ((index: number) => number) | undefined;
   /** Connect logical grid focus to the rendered data row, skipping details. */
   readonly grid?: DataGridBinding<TRow> | undefined;
@@ -124,6 +130,19 @@ function useVirtualAxis<TSource, TItem extends VirtualItem>(
     view.value = next;
   });
   const marginIssue = shallowRef<TableIssue>();
+  const insetIssue = shallowRef<TableIssue>();
+  function inset(): number {
+    const value = viewportInset();
+    if (Number.isFinite(value) && value >= 0) {
+      insetIssue.value = undefined;
+      return value;
+    }
+    insetIssue.value ??= Object.freeze({
+      code: "invalid_virtual_option",
+      message: "Reserved row/column space must be non-negative and finite; 0 is used.",
+    });
+    return 0;
+  }
 
   function margin(): number {
     const value = toValue(options.scrollMargin) ?? 0;
@@ -139,10 +158,7 @@ function useVirtualAxis<TSource, TItem extends VirtualItem>(
   }
   function viewportSize(): number {
     return element
-      ? Math.max(
-          0,
-          (horizontal ? element.clientWidth : element.clientHeight) - margin() - viewportInset(),
-        )
+      ? Math.max(0, (horizontal ? element.clientWidth : element.clientHeight) - margin() - inset())
       : virtual.getWindow().viewportSize;
   }
   function move(offset: number): void {
@@ -150,7 +166,7 @@ function useVirtualAxis<TSource, TItem extends VirtualItem>(
       if (horizontal)
         element.scrollLeft =
           scrollSign() * (offset === 0 ? 0 : offset + (stickyMargin() ? 0 : margin()));
-      else element.scrollTop = offset === 0 ? 0 : offset + margin();
+      else element.scrollTop = offset === 0 ? 0 : offset + (stickyMargin() ? 0 : margin());
     }
     virtual.setViewport(offset, viewportSize());
   }
@@ -168,7 +184,7 @@ function useVirtualAxis<TSource, TItem extends VirtualItem>(
       if (horizontal)
         element.scrollLeft =
           scrollSign() * (offset === 0 ? 0 : offset + (stickyMargin() ? 0 : margin()));
-      else element.scrollTop = offset === 0 ? 0 : offset + margin();
+      else element.scrollTop = offset === 0 ? 0 : offset + (stickyMargin() ? 0 : margin());
     }
   }
   function measure(target: Element, key: RowKey): void {
@@ -191,7 +207,7 @@ function useVirtualAxis<TSource, TItem extends VirtualItem>(
         Math.max(
           0,
           (horizontal ? element.scrollLeft * scrollSign() : element.scrollTop) -
-            (horizontal && stickyMargin() ? 0 : margin()),
+            (stickyMargin() ? 0 : margin()),
         ),
         viewportSize(),
       );
@@ -223,6 +239,13 @@ function useVirtualAxis<TSource, TItem extends VirtualItem>(
       else seed();
     },
     { flush: "sync" },
+  );
+  const stopInsets = watch(
+    () => [toValue(options.scrollMargin), viewportInset(), stickyMargin()] as const,
+    () => {
+      if (mounted) readViewport();
+    },
+    { flush: "post" },
   );
   let stopElement: (() => void) | undefined;
   if (getCurrentInstance())
@@ -270,6 +293,7 @@ function useVirtualAxis<TSource, TItem extends VirtualItem>(
     onScopeDispose(() => {
       disposed = true;
       stopSource();
+      stopInsets();
       stopElement?.();
       detach?.();
       observer?.disconnect();
@@ -280,6 +304,7 @@ function useVirtualAxis<TSource, TItem extends VirtualItem>(
       element = undefined;
     });
   margin();
+  inset();
   const binding = {
     getItem(index: number): TItem | undefined {
       // Reading the revision connects offscreen lookups to reactive measurements and layout.
@@ -326,11 +351,12 @@ function useVirtualAxis<TSource, TItem extends VirtualItem>(
       get: () =>
         key === "items"
           ? projected.value
-          : key === "issues" && (initialIssue || marginIssue.value)
+          : key === "issues" && (initialIssue || marginIssue.value || insetIssue.value)
             ? Object.freeze([
                 ...view.value.issues,
                 ...(initialIssue ? [initialIssue] : []),
                 ...(marginIssue.value ? [marginIssue.value] : []),
+                ...(insetIssue.value ? [insetIssue.value] : []),
               ])
             : view.value[key as keyof VirtualWindow],
     });
@@ -342,25 +368,40 @@ export function useVirtualRows<TRow>(
   table: DataTableBinding<TRow>,
   options: UseVirtualRowsOptions<TRow>,
 ): VirtualBinding<VirtualRowItem<TRow>> {
+  const renderItems = (): readonly TableRenderItem<TRow>[] =>
+    options.renderItems ? toValue(options.renderItems) : table.renderItems;
+  const reserved = (): number => {
+    const heights = toValue(options.pinnedRowHeights);
+    if (!heights) return 0;
+    return heights.top >= 0 &&
+      heights.bottom >= 0 &&
+      Number.isFinite(heights.top) &&
+      Number.isFinite(heights.bottom)
+      ? heights.top + heights.bottom
+      : Number.NaN;
+  };
   const virtual = useVirtualAxis(
-    () => table.renderItems,
+    renderItems,
     (item) => item.key,
     options.estimateRowHeight ?? 40,
     options,
     false,
     (item, renderItem) => ({ ...item, renderItem }),
+    undefined,
+    reserved,
+    () => reserved() > 0,
   );
   const stopFocus = watch(
-    [() => options.grid?.selection?.focus.row, () => table.renderItems],
+    [() => options.grid?.selection?.focus.row, renderItems],
     ([row, items], [, previousItems]) => {
       // Source changes already restore the visible anchor. A relocated selection must not
       // scroll against the previous layout during the same synchronous publication.
       if (row === undefined || items !== previousItems) return;
-      const direct = table.renderItems[row];
+      const direct = items[row];
       const index =
         direct?.kind === "row" && direct.rowIndex === row
           ? row
-          : table.renderItems.findIndex((item) => item.kind === "row" && item.rowIndex === row);
+          : items.findIndex((item) => item.kind === "row" && item.rowIndex === row);
       if (index >= 0) virtual.scrollToIndex(index);
     },
     { flush: "sync" },
