@@ -9,6 +9,7 @@ export {
   DataTableStatus,
 } from "./controls";
 export { DataTableLoadMore } from "./loading";
+export { DataTableColumnResizer, DataTableLeadingCell } from "./column-layout";
 export { DataCellEditor, cellEditorProps, type CellEditorSlotProps } from "./editor";
 export { DataTableEditRoot, DataTableEditCell, DataTableRowActions } from "./editing";
 export {

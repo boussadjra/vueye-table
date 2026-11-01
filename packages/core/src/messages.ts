@@ -32,6 +32,12 @@ export type SortStep = "ascending" | "descending" | "unsorted";
  * default. Functions receive counts already written in the table's locale.
  */
 export interface TableMessages {
+  readonly resizeColumn: (header: string) => string;
+  readonly resizeColumnHelp: string;
+  readonly pinColumnStart: string;
+  readonly pinColumnEnd: string;
+  readonly unpinColumn: string;
+  readonly columnPinPosition: (header: string) => string;
   readonly search: string;
   readonly searchPlaceholder: string;
   readonly columns: string;
@@ -87,6 +93,13 @@ const rows = (count: Count): string => `${count.text} ${count.value === 1 ? "row
 
 /** The English words, the default of every table. */
 export const defaultTableMessages: TableMessages = Object.freeze({
+  resizeColumn: (header: string) => `Resize ${header}`,
+  resizeColumnHelp:
+    "Use arrow keys to resize. Hold Shift for larger steps. Enter resets the width.",
+  pinColumnStart: "Pin to start",
+  pinColumnEnd: "Pin to end",
+  unpinColumn: "Unpin",
+  columnPinPosition: (header: string) => `Pin position for ${header}`,
   search: "Search",
   searchPlaceholder: "Search…",
   columns: "Columns",

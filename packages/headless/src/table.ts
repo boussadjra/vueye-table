@@ -3,6 +3,7 @@ import {
   injectDataTable,
   provideDataTable,
   useTableLocale,
+  useDataGrid,
   type AnyDataTableBinding,
   type DataTableBinding,
 } from "@vueye-table/vue";
@@ -20,6 +21,13 @@ import {
   type VNodeChild,
 } from "vue";
 
+import {
+  provideColumnLayout,
+  injectColumnLayout,
+  provideHeaderColumn,
+  resizingProps,
+  DataTableColumnResizer,
+} from "./column-layout";
 import { injectEditingGrid } from "./editing";
 import {
   createDetails,
@@ -51,6 +59,7 @@ import {
   virtualProps,
   virtualOptions,
   virtualRow,
+  virtualColgroup,
   VirtualContent,
   type ComponentVirtualBinding,
 } from "./virtual";
@@ -70,17 +79,27 @@ export const DataTableRoot = defineComponent({
     ...virtualProps,
     ...hierarchyProps,
     ...columnLayoutProps,
+    ...resizingProps,
   },
   setup(props, { slots }) {
     provideDataTable(props.table);
     provideColumnOffset(() => props.leadingColumns);
     const hierarchy = provideHierarchy(props.table, props);
     const element = shallowRef<HTMLElement>();
+    const layout = provideColumnLayout(props.table, props, () => element.value);
     const editingGrid = injectEditingGrid();
+    const virtualGrid = props.virtualColumns
+      ? (editingGrid ?? useDataGrid(props.table))
+      : editingGrid;
     const render = (virtual?: ComponentVirtualBinding) =>
       h(
         props.as,
         {
+          ref: element,
+          style: layout.style(
+            virtual?.columns ? virtual.columns.totalSize + virtual.gutter : undefined,
+          ),
+          "data-column-layout": flag(layout.enabled()),
           role: props.table.tree ? "treegrid" : undefined,
           "aria-rowcount":
             (props.table.tree ? props.table.processedRows.length : props.table.rowCount) + 1,
@@ -91,15 +110,22 @@ export const DataTableRoot = defineComponent({
               : undefined,
           "data-empty": flag(props.table.rowCount === 0),
           onKeydown: (event: KeyboardEvent) => treeKeydown(event, hierarchy, virtual),
-          ...(virtual ? { ref: element, "data-virtual": "" } : {}),
+          ...(virtual ? { "data-virtual": "" } : {}),
         },
-        slots.default?.({ table: props.table }) ?? [h(DataTableHeader), h(DataTableBody)],
+        [
+          virtual?.columns
+            ? virtualColgroup(props.table.columns, virtual, layout.width, layout.leadingWidths())
+            : layout.colgroup(),
+          slots.default?.({ table: props.table }) ?? [h(DataTableHeader), h(DataTableBody)],
+        ],
       );
     return () =>
       props.virtual
         ? h(VirtualContent, {
             table: props.table,
-            ...(editingGrid ? { grid: editingGrid } : {}),
+            ...(virtualGrid ? { grid: virtualGrid } : {}),
+            virtualColumns: props.virtualColumns,
+            gutter: layout.leadingWidths().reduce((sum, width) => sum + width, 0),
             options: virtualOptions(props),
             tableElement: () => element.value,
             render,
@@ -193,6 +219,8 @@ export const DataTableHeaderCell = defineComponent({
   setup(props, { slots }) {
     const table = injectDataTable("<DataTableHeaderCell>");
     const columnOffset = injectColumnOffset();
+    const layout = injectColumnLayout();
+    provideHeaderColumn(() => props.column);
     return () => {
       const { column } = props;
       const sort = table.getSort(column.id);
@@ -220,9 +248,10 @@ export const DataTableHeaderCell = defineComponent({
           "data-sortable": flag(column.sortable),
           "data-sort": sort?.direction,
           style: columnStyle(column),
+          ...layout?.attrs(column, true),
           "aria-colindex": table.columns.indexOf(column) + columnOffset() + 1,
         },
-        content,
+        [content, layout?.resizable() && column.resizable ? h(DataTableColumnResizer) : null],
       );
     };
   },
@@ -473,7 +502,12 @@ export const DataTableRow = defineComponent({
             : {}),
         }),
         slots.default?.({ row, selected, columns: table.columns }) ??
-          table.columns.map((column) => h(DataTableCell, { key: column.id, row, column })),
+          renderColumns(
+            table.columns,
+            virtual,
+            (column) => h(DataTableCell, { key: column.id, row, column }),
+            "td",
+          ),
       );
     };
   },
@@ -500,6 +534,7 @@ export const DataTableCell = defineComponent({
     const table = injectDataTable("<DataTableCell>");
     const columnOffset = injectColumnOffset();
     const hierarchy = injectHierarchy();
+    const layout = injectColumnLayout();
     return () => {
       const { row, column } = props;
       const value = row.getValue(column.id);
@@ -510,6 +545,7 @@ export const DataTableCell = defineComponent({
         {
           "data-column": column.id,
           "data-align": column.align,
+          ...layout?.attrs(column),
           "aria-colindex": table.columns.indexOf(column) + columnOffset() + 1,
         },
         props.tree && table.tree && column.id === resolveTreeColumn(table, hierarchy?.treeColumn)

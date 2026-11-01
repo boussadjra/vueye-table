@@ -3,6 +3,7 @@ import type {
   RowKey,
   SortInfo,
   TableRow,
+  TableColumn,
   TableState,
   EditResult,
 } from "@vueye-table/core";
@@ -14,6 +15,8 @@ import {
   DataTableSelectAll,
   DataTableSelectRow,
   DataTableRoot,
+  DataTableLeadingCell,
+  DataTableVirtualColumns,
   DataTableViewport,
   type TableStatusSlotProps,
   type DetailSlotProps,
@@ -258,38 +261,59 @@ export const VueyeTable = defineComponent({
       const result = [
         hasActions()
           ? h(
-              "td",
+              DataTableLeadingCell,
               {
                 class: "vt-row-controls",
+                index: 0,
                 "aria-colindex": 1,
                 onClick: (event: Event) => event.stopPropagation(),
               },
-              [
-                h(VtRowActions, {
-                  row,
-                  editable: props.editMode === "row",
-                  removable: props.removeRows,
-                }),
-              ],
+              {
+                default: () => [
+                  h(VtRowActions, {
+                    row,
+                    editable: props.editMode === "row",
+                    removable: props.removeRows,
+                  }),
+                ],
+              },
             )
           : null,
         hasDetails()
-          ? h("td", { class: "vt-expansion-cell", "aria-colindex": Number(hasActions()) + 1 }, [
-              h(VtExpandToggle, { row }),
-            ])
+          ? h(
+              DataTableLeadingCell,
+              {
+                index: Number(hasActions()),
+                class: "vt-expansion-cell",
+                "aria-colindex": Number(hasActions()) + 1,
+              },
+              { default: () => [h(VtExpandToggle, { row })] },
+            )
           : null,
         selectable()
           ? h(
-              "td",
+              DataTableLeadingCell,
               {
                 class: "vt-selection-cell",
+                index: Number(hasActions()) + Number(hasDetails()),
                 "aria-colindex": Number(hasActions()) + Number(hasDetails()) + 1,
                 onClick: (event: Event) => event.stopPropagation(),
               },
-              [h(DataTableSelectRow, { row })],
+              { default: () => [h(DataTableSelectRow, { row })] },
             )
           : null,
-        ...table.columns.map((column) => cell(row, column, rowIndex)),
+        ...(props.virtual && props.virtualColumns
+          ? [
+              h(
+                DataTableVirtualColumns,
+                { as: "td" },
+                {
+                  default: ({ column }: { column: TableColumn<unknown> }) =>
+                    cell(row, column, rowIndex),
+                },
+              ),
+            ]
+          : table.columns.map((column) => cell(row, column, rowIndex))),
       ];
       return result;
     };
@@ -313,13 +337,15 @@ export const VueyeTable = defineComponent({
         before: () => [
           hasActions()
             ? h(
-                "th",
-                { class: "vt-row-controls", scope: "col", "aria-colindex": 1 },
-                locale().messages.rowActions,
+                DataTableLeadingCell,
+                { as: "th", index: 0, class: "vt-row-controls", scope: "col", "aria-colindex": 1 },
+                { default: () => locale().messages.rowActions },
               )
             : null,
           hasDetails()
-            ? h("th", {
+            ? h(DataTableLeadingCell, {
+                as: "th",
+                index: Number(hasActions()),
                 class: "vt-expansion-cell",
                 scope: "col",
                 "aria-colindex": Number(hasActions()) + 1,
@@ -328,13 +354,18 @@ export const VueyeTable = defineComponent({
             : null,
           selectable()
             ? h(
-                "th",
+                DataTableLeadingCell,
                 {
                   class: "vt-selection-cell",
+                  as: "th",
+                  index: Number(hasActions()) + Number(hasDetails()),
                   scope: "col",
                   "aria-colindex": Number(hasActions()) + Number(hasDetails()) + 1,
                 },
-                selectionMode.value === "multiple" ? [h(DataTableSelectAll)] : [],
+                {
+                  default: () =>
+                    selectionMode.value === "multiple" ? [h(DataTableSelectAll)] : [],
+                },
               )
             : null,
         ],
@@ -373,7 +404,14 @@ export const VueyeTable = defineComponent({
                     table,
                     class: "vt-table",
                     leadingColumns: leadingColumns(),
+                    leadingColumnWidths: [
+                      ...(hasActions() ? [120] : []),
+                      ...(hasDetails() ? [44] : []),
+                      ...(selectable() ? [44] : []),
+                    ],
+                    resizableColumns: props.resizableColumns,
                     virtual: props.virtual,
+                    virtualColumns: props.virtualColumns,
                     rowHeight: props.rowHeight,
                     overscan: props.overscan,
                     treeColumn: props.treeColumn,
@@ -392,6 +430,12 @@ export const VueyeTable = defineComponent({
                 keepAliveDetail: props.keepAliveDetail,
                 class: "vt-table",
                 leadingColumns: leadingColumns(),
+                leadingColumnWidths: [
+                  ...(hasActions() ? [120] : []),
+                  ...(hasDetails() ? [44] : []),
+                  ...(selectable() ? [44] : []),
+                ],
+                resizableColumns: props.resizableColumns,
                 "aria-busy": busy() ? "true" : undefined,
               },
               children,

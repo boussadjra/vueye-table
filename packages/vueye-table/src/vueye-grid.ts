@@ -216,6 +216,7 @@ export const VueyeGrid = defineComponent({
             label: props.label ?? locale().messages.spreadsheet,
             "aria-describedby": attrs["aria-describedby"],
             rowNumbers: props.rowNumbers,
+            resizableColumns: props.resizableColumns,
             rowAttrs: props.rowAttrs,
             rowActions: props.editable || props.removeRows,
             removable: props.removeRows,

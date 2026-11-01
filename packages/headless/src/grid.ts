@@ -27,6 +27,7 @@ import {
   type VNodeChild,
 } from "vue";
 
+import { provideColumnLayout, injectColumnLayout, resizingProps } from "./column-layout";
 import {
   DataCellEditor,
   editorIssues,
@@ -111,6 +112,7 @@ export const DataGridRoot = defineComponent({
     ...virtualProps,
     ...hierarchyProps,
     ...columnLayoutProps,
+    ...resizingProps,
     /** Width reserved before data columns, for a row-number/header column. */
     gutter: { type: Number, default: 0 },
   },
@@ -122,6 +124,7 @@ export const DataGridRoot = defineComponent({
     provideDataGrid(grid);
     provideHierarchy(props.table, props);
     const element = ref<HTMLElement>();
+    const layout = provideColumnLayout(props.table, props, () => element.value);
     const id = `vt-grid-${useId()}`;
     const focus = (): void => {
       void nextTick(() => {
@@ -252,30 +255,38 @@ export const DataGridRoot = defineComponent({
           onCopy: (event: ClipboardEvent) => onCopy(event),
           onCut: (event: ClipboardEvent) => onCopy(event, true),
           onPaste,
+          "data-column-layout": flag(layout.enabled()),
+          style: layout.style(
+            binding?.columns ? binding.columns.totalSize + binding.gutter : undefined,
+          ),
           ...(binding
             ? {
                 "data-virtual": "",
-                style: binding.columns
-                  ? {
-                      tableLayout: "fixed",
-                      width: `${binding.columns.totalSize + binding.gutter}px`,
-                    }
-                  : undefined,
               }
             : {}),
         },
         binding
           ? [
-              virtualColgroup(props.table.columns, binding),
+              binding.columns
+                ? virtualColgroup(
+                    props.table.columns,
+                    binding,
+                    layout.width,
+                    layout.leadingWidths(),
+                  )
+                : layout.colgroup(),
               slots.default?.({ table: props.table, grid }) ?? [
                 h(DataTableHeader),
                 h(DataGridBody),
               ],
             ]
-          : (slots.default?.({ table: props.table, grid }) ?? [
-              h(DataTableHeader),
-              h(DataGridBody),
-            ]),
+          : [
+              layout.colgroup(),
+              slots.default?.({ table: props.table, grid }) ?? [
+                h(DataTableHeader),
+                h(DataGridBody),
+              ],
+            ],
       );
     };
     return () =>
@@ -495,6 +506,7 @@ export const DataGridCell = defineComponent({
     const table = injectDataTable("<DataGridCell>");
     const columnOffset = injectColumnOffset();
     const { grid, context } = useGrid("<DataGridCell>");
+    const layout = injectColumnLayout();
     const virtual = injectVirtual();
     const hierarchy = injectHierarchy();
     const element = ref<HTMLElement>();
@@ -606,6 +618,7 @@ export const DataGridCell = defineComponent({
           "data-dirty": flag(row.isDirty),
           ...issueAttrs(issueId, issues, pending),
           style: columnStyle(column),
+          ...layout?.attrs(column),
           onMousedown: (event: MouseEvent) => {
             if (editing || event.button !== 0) {
               return;

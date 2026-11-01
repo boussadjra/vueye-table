@@ -20,6 +20,10 @@
   --vt-cell-x: 0.75rem;
   --vt-cell-y: 0.625rem;
   --vt-tree-indent: 1.25rem;
+  --vt-resizer-color: var(--vt-border);
+  --vt-resizer-hover: var(--vt-accent);
+  --vt-pinned-bg: var(--vt-bg);
+  --vt-pinned-shadow: 0 2px 8px rgb(0 0 0 / 0.18);
 }
 
 :where(.vt-surface, .vt-theme):where(:not(:is(.vt-surface, .vt-theme) *)):where(
@@ -189,6 +193,71 @@
   color: var(--vt-muted);
   font-weight: 600;
   white-space: nowrap;
+}
+
+.vt-table th[data-resizable] {
+  position: relative;
+  padding-inline-end: 1.25rem;
+}
+.vt-table [data-column-resizer] {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-end: -5px;
+  width: 11px;
+  z-index: 5;
+}
+.vt-table [data-column-resizer]::after {
+  content: "";
+  position: absolute;
+  inset-block: 25%;
+  inset-inline-start: 5px;
+  width: 1px;
+  background: var(--vt-resizer-color);
+}
+.vt-table [data-column-resizer]:hover::after,
+.vt-table [data-column-resizer]:focus-visible::after,
+.vt-table [data-column-resizer][data-resizing]::after {
+  background: var(--vt-resizer-hover);
+  width: 2px;
+}
+.vt-table [data-column-resizer]:focus-visible {
+  outline: 2px solid var(--vt-focus);
+  outline-offset: -2px;
+}
+.vt-table[data-column-layout] th,
+.vt-table[data-column-layout] td {
+  overflow-wrap: anywhere;
+}
+.vt-table [data-pinned] {
+  background: var(--vt-pinned-bg);
+}
+.vt-table [data-pinned-edge] {
+  box-shadow: var(--vt-pinned-shadow);
+}
+.vt-table thead [data-pinned] {
+  background: var(--vt-header-bg);
+}
+.vt-table tbody [data-pinned][data-selected] {
+  background: var(--vt-selected);
+}
+.vt-column-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+.vt-pin-select {
+  max-width: 9rem;
+  border: 1px solid var(--vt-border);
+  border-radius: var(--vt-control-radius);
+  padding: 0.25rem;
+  color: var(--vt-fg);
+  background: var(--vt-bg);
+  font: inherit;
+}
+.vt-pin-select:focus-visible {
+  outline: 2px solid var(--vt-focus);
+  outline-offset: 2px;
 }
 
 .vt-surface[data-sticky-header] thead th {

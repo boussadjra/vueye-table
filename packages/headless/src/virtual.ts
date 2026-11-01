@@ -286,15 +286,19 @@ export function renderRows(
 export function virtualColgroup(
   tableColumns: readonly TableColumn<unknown>[],
   binding: ComponentVirtualBinding,
+  width?: (column: TableColumn<unknown>, fallback: number) => string,
+  leadingWidths?: readonly number[],
 ): VNode | null {
   if (!binding.columns || !binding.columnItems) return null;
-  const cols: VNodeChild[] = binding.gutter
-    ? [h("col", { style: { width: `${binding.gutter}px` } })]
-    : [];
+  const cols: VNodeChild[] = leadingWidths?.length
+    ? leadingWidths.map((size) => h("col", { style: { width: `${size}px` } }))
+    : binding.gutter
+      ? [h("col", { style: { width: `${binding.gutter}px` } })]
+      : [];
   let end = 0;
   for (const item of binding.columnItems) {
     if (item.start > end) cols.push(h("col", { style: { width: `${item.start - end}px` } }));
-    cols.push(h("col", { style: { width: `${item.size}px` } }));
+    cols.push(h("col", { style: { width: width?.(item.column, item.size) ?? `${item.size}px` } }));
     end = item.start + item.size;
   }
   if (binding.columns.totalSize > end)

@@ -14,7 +14,7 @@ import { createSSRApp } from "vue";
 import { renderToString } from "vue/server-renderer";
 
 const rows = Array.from({ length: 100 }, (_, id) => ({ id, name: `Row ${id}` }));
-function fixture(observer = false, margin = 0) {
+function fixture(observer = false, margin = 0, columnMargin = 0) {
   const scroll = shallowRef<HTMLElement | null>();
   const data = shallowRef(rows);
   const observers: {
@@ -60,6 +60,7 @@ function fixture(observer = false, margin = 0) {
         scrollElement: scroll,
         estimateColumnWidth: 100,
         overscan: 0,
+        scrollMargin: columnMargin,
       });
       return () => h("div", { ref: scroll });
     },
@@ -75,6 +76,26 @@ function fixture(observer = false, margin = 0) {
 }
 
 describe("Vue virtualization", () => {
+  it("normalizes RTL scroll and reserves a sticky utility gutter without shifting the centre offset", async () => {
+    const f = fixture(false, 0, 40);
+    await nextTick();
+    f.el.setAttribute("dir", "rtl");
+    Object.defineProperty(f.el, "clientWidth", { configurable: true, value: 600 });
+    f.table.resizeColumn("c0", 100);
+    f.table.resizeColumn("c19", 100);
+    f.table.pinColumn("c0", "start");
+    f.table.pinColumn("c19", "end");
+    f.el.scrollLeft = -900;
+    f.el.dispatchEvent(new Event("scroll"));
+    expect(f.columns.offset).toBe(900);
+    expect(f.columns.viewportSize).toBe(360);
+    expect(f.columns.centerItems[0]?.key).toBe("c10");
+    f.columns.scrollToKey("c15", { align: "end" });
+    expect(f.el.scrollLeft).toBe(-1140);
+    f.columns.scrollToKey("c0");
+    expect(f.el.scrollLeft).toBe(-1140);
+    f.wrapper.unmount();
+  });
   it("keeps pinned edges outside the centre slice, with full-surface coordinates and logical focus", async () => {
     const f = fixture();
     await nextTick();

@@ -61,15 +61,17 @@ const selected = ref<readonly RowKey[]>([]);
 </template>
 ```
 
-| v-model                  | Type                      |
-| ------------------------ | ------------------------- |
-| `v-model:page`           | `number`, from 1          |
-| `v-model:page-size`      | `number`                  |
-| `v-model:sorting`        | `readonly SortRule[]`     |
-| `v-model:search`         | `string`                  |
-| `v-model:filters`        | `Record<string, unknown>` |
-| `v-model:hidden-columns` | `readonly string[]`       |
-| `v-model:selected`       | `readonly RowKey[]`       |
+| v-model                  | Type                                                     |
+| ------------------------ | -------------------------------------------------------- |
+| `v-model:page`           | `number`, from 1                                         |
+| `v-model:page-size`      | `number`                                                 |
+| `v-model:sorting`        | `readonly SortRule[]`                                    |
+| `v-model:search`         | `string`                                                 |
+| `v-model:filters`        | `Record<string, unknown>`                                |
+| `v-model:hidden-columns` | `readonly string[]`                                      |
+| `v-model:selected`       | `readonly RowKey[]`                                      |
+| `v-model:column-sizing`  | `Readonly<Record<string, number>>`, e.g. `{ name: 240 }` |
+| `v-model:column-pinning` | `ColumnPinning`, e.g. `{ start: ['name'], end: [] }`     |
 
 State you leave unbound stays inside the table. `@state-change` delivers the whole state after
 every change a user makes, which is the easiest way to persist all of it.
@@ -285,7 +287,9 @@ clear a field. Local operations remain visible until the caller changes its cont
 
 Both bindings forward `resizeColumn`, `resetColumnSize`, `pinColumn`, `pinRow`, `toggleGroup`,
 `expandAllGroups`, and `collapseAllGroups`. `setGrouping` is a Vue alias for core `groupBy`;
-both names remain available. These composable controls do not add component props or events.
+both names remain available. Full components expose sizing and column-pinning models; see
+[column controls](/guide/columns#widths-and-resizing). Grouping and pinned-row component controls
+remain separate follow-up work.
 
 See [ADR 0027](/adr/0027-vue-layout-bindings) for the layout and virtualization contract.
 

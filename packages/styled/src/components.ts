@@ -6,6 +6,7 @@ import {
   DataTableColumnVisibility,
   DataTableHeader,
   DataTableHeaderCell,
+  DataTableLeadingCell,
   DataTableHeaderRow,
   DataTablePageSize,
   DataTablePagination,
@@ -58,6 +59,7 @@ export type Density = "compact" | "comfortable" | "spacious";
 /** Visual options shared by the styled table and grid. */
 const surfaceProps = {
   ...virtualProps,
+  resizableColumns: { type: Boolean, default: false },
   ...hierarchyProps,
   density: { type: String as PropType<Density>, default: "comfortable" },
   striped: { type: Boolean, default: false },
@@ -220,6 +222,10 @@ export const VtTable = defineComponent({
   props: {
     table: { type: Object as PropType<AnyDataTableBinding>, required: true },
     leadingColumns: { type: Number, default: 0 },
+    leadingColumnWidths: {
+      type: Array as PropType<readonly number[] | undefined>,
+      default: undefined,
+    },
     ...surfaceProps,
   },
   setup(props, { slots }) {
@@ -242,7 +248,10 @@ export const VtTable = defineComponent({
                 table: props.table,
                 class: "vt-table",
                 leadingColumns: props.leadingColumns,
+                leadingColumnWidths: props.leadingColumnWidths,
+                resizableColumns: props.resizableColumns,
                 virtual: props.virtual,
+                virtualColumns: props.virtualColumns,
                 rowHeight: props.rowHeight,
                 overscan: props.overscan,
                 treeColumn: props.treeColumn,
@@ -376,6 +385,7 @@ export const VtColumnVisibility = defineComponent({
   props: { label: { type: String as PropType<string | undefined>, default: undefined } },
   setup(props) {
     const locale = useTableLocale();
+    const table = injectDataTable("<VtColumnVisibility>");
     const close = (menu: HTMLDetailsElement, refocus: boolean): void => {
       if (!menu.open) {
         return;
@@ -411,7 +421,54 @@ export const VtColumnVisibility = defineComponent({
             icon("columns"),
             props.label ?? locale().messages.columns,
           ]),
-          h(DataTableColumnVisibility, { as: "div", class: "vt-menu-panel" }),
+          h(
+            DataTableColumnVisibility,
+            { as: "div", class: "vt-menu-panel" },
+            {
+              default: ({
+                columns,
+                toggle,
+              }: {
+                columns: readonly { column: TableColumn<unknown>; visible: boolean }[];
+                toggle: (id: string) => void;
+              }) =>
+                columns.map(({ column, visible }) =>
+                  h("div", { key: column.id, class: "vt-column-option" }, [
+                    h("label", [
+                      h("input", {
+                        type: "checkbox",
+                        checked: visible,
+                        disabled: visible && table.columns.length === 1,
+                        onChange: () => toggle(column.id),
+                      }),
+                      column.header,
+                    ]),
+                    column.pinnable
+                      ? h(
+                          "select",
+                          {
+                            class: "vt-pin-select",
+                            "aria-label": locale().messages.columnPinPosition(column.header),
+                            value: column.pinned ?? "",
+                            onChange: (event: Event) => {
+                              const value = (event.target as HTMLSelectElement).value;
+                              table.pinColumn(
+                                column.id,
+                                value === "start" || value === "end" ? value : false,
+                              );
+                            },
+                          },
+                          [
+                            h("option", { value: "" }, locale().messages.unpinColumn),
+                            h("option", { value: "start" }, locale().messages.pinColumnStart),
+                            h("option", { value: "end" }, locale().messages.pinColumnEnd),
+                          ],
+                        )
+                      : null,
+                  ]),
+                ),
+            },
+          ),
         ],
       );
   },
@@ -516,17 +573,23 @@ const GridBody = defineComponent({
           detail: props.detail,
           rowHeader: ({ index }: { index: number }) =>
             props.rowNumbers || details || props.rowActions
-              ? h("th", { class: "vt-row-number", scope: "row", "aria-colindex": 1 }, [
-                  details ? h(VtExpandToggle, { row: table.rows[index]! }) : null,
-                  props.rowNumbers ? String(table.pageStart + index) : null,
-                  props.rowActions
-                    ? h(VtRowActions, {
-                        row: table.rows[index]!,
-                        editable: false,
-                        removable: props.removable,
-                      })
-                    : null,
-                ])
+              ? h(
+                  DataTableLeadingCell,
+                  { as: "th", class: "vt-row-number", scope: "row", "aria-colindex": 1 },
+                  {
+                    default: () => [
+                      details ? h(VtExpandToggle, { row: table.rows[index]! }) : null,
+                      props.rowNumbers ? String(table.pageStart + index) : null,
+                      props.rowActions
+                        ? h(VtRowActions, {
+                            row: table.rows[index]!,
+                            editable: false,
+                            removable: props.removable,
+                          })
+                        : null,
+                    ],
+                  },
+                )
               : null,
           cell: (cellProps: GridCellSlotProps) => {
             const slot = cellSlots[cellProps.column.id];
@@ -597,7 +660,8 @@ export const VtGrid = defineComponent({
       h(VtHeader, null, {
         before: () =>
           props.rowNumbers || details() || props.rowActions
-            ? h("th", {
+            ? h(DataTableLeadingCell, {
+                as: "th",
                 class: "vt-row-number",
                 "aria-colindex": 1,
                 "aria-label": props.rowActions
@@ -638,6 +702,7 @@ export const VtGrid = defineComponent({
                 table: props.table,
                 label: props.label,
                 leadingColumns: props.rowNumbers || details() || props.rowActions ? 1 : 0,
+                resizableColumns: props.resizableColumns,
                 "aria-describedby": attrs["aria-describedby"],
                 class: "vt-table vt-grid",
                 virtual: props.virtual,

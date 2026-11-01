@@ -1,5 +1,6 @@
 import {
   createVirtualizer,
+  clampColumnWidth,
   getRowItemKey,
   type RowKey,
   type TableColumn,
@@ -72,6 +73,7 @@ function useVirtualAxis<TSource, TItem extends VirtualItem>(
   project: (item: VirtualItem, source: TSource) => TItem,
   sizeOf?: (item: TSource) => number | undefined,
   viewportInset: () => number = () => 0,
+  stickyMargin: () => boolean = () => false,
 ): VirtualBinding<TItem> {
   let items = source();
   const knownSizes = new Map<RowKey, number | undefined>(
@@ -145,7 +147,9 @@ function useVirtualAxis<TSource, TItem extends VirtualItem>(
   }
   function move(offset: number): void {
     if (element) {
-      if (horizontal) element.scrollLeft = offset === 0 ? 0 : offset + margin();
+      if (horizontal)
+        element.scrollLeft =
+          scrollSign() * (offset === 0 ? 0 : offset + (stickyMargin() ? 0 : margin()));
       else element.scrollTop = offset === 0 ? 0 : offset + margin();
     }
     virtual.setViewport(offset, viewportSize());
@@ -161,7 +165,9 @@ function useVirtualAxis<TSource, TItem extends VirtualItem>(
     // Reflect the clamp in the scroll element after shrink or removal.
     if (element) {
       const offset = virtual.getWindow().offset;
-      if (horizontal) element.scrollLeft = offset === 0 ? 0 : offset + margin();
+      if (horizontal)
+        element.scrollLeft =
+          scrollSign() * (offset === 0 ? 0 : offset + (stickyMargin() ? 0 : margin()));
       else element.scrollTop = offset === 0 ? 0 : offset + margin();
     }
   }
@@ -182,9 +188,16 @@ function useVirtualAxis<TSource, TItem extends VirtualItem>(
   function readViewport(): void {
     if (element)
       virtual.setViewport(
-        Math.max(0, (horizontal ? element.scrollLeft : element.scrollTop) - margin()),
+        Math.max(
+          0,
+          (horizontal ? element.scrollLeft * scrollSign() : element.scrollTop) -
+            (horizontal && stickyMargin() ? 0 : margin()),
+        ),
         viewportSize(),
       );
+  }
+  function scrollSign(): number {
+    return element?.closest("[dir]")?.getAttribute("dir")?.toLowerCase() === "rtl" ? -1 : 1;
   }
   const stopSource = watch(
     source,
@@ -399,8 +412,14 @@ export function useVirtualColumns<TRow>(
       index: layout.value.indices.get(column.id)!,
       start: item.start + table.pinnedStartWidth,
     }),
-    (column) => column.width,
+    (column) =>
+      column.width ??
+      clampColumnWidth(
+        column,
+        typeof estimate === "number" ? estimate : estimate(layout.value.indices.get(column.id)!),
+      ),
     () => table.pinnedStartWidth + table.pinnedEndWidth,
+    () => table.pinnedStartWidth + table.pinnedEndWidth > 0,
   );
   const pinnedItems = (side: "start" | "end"): readonly VirtualColumnItem<TRow>[] =>
     Object.freeze(
