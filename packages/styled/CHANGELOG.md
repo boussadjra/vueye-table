@@ -1,5 +1,29 @@
 # @vueye-table/styled
 
+## 3.0.0-beta.7
+
+### Minor Changes
+
+- 2729011: Add opt-in accessible column resize handles with CSS preview and one commit on pointer release.
+  Render sticky pinned cells and leading utility columns, expose sizing/pinning models on full
+  components, and add pin choices and theme tokens. Support pinned virtual columns in native tables
+  and normalize RTL horizontal scrolling.
+- af9d1ce: Render accessible group rows, aligned aggregate cells/footers and sticky pinned row regions.
+  Add grouping/expansion/pinning models, group ordering controls, pin actions and inherited theme
+  tokens. Keep grid coordinates on data cells while virtualized presentation rows are keyed,
+  measured and counted separately from engine rows.
+  Keep toolbar dropdowns above sticky headers, pinned rows and pinned-column intersections.
+
+### Patch Changes
+
+- Updated dependencies [2729011]
+- Updated dependencies [af9d1ce]
+- Updated dependencies [bf97b81]
+- Updated dependencies [4d2821d]
+  - @vueye-table/core@3.0.0-beta.7
+  - @vueye-table/vue@3.0.0-beta.7
+  - @vueye-table/headless@3.0.0-beta.7
+
 ## 3.0.0-beta.6
 
 ### Patch Changes

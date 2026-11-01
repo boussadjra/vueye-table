@@ -1,5 +1,13 @@
 # @vueye-table/nuxt
 
+## 3.0.0-beta.7
+
+### Patch Changes
+
+- Updated dependencies [2729011]
+- Updated dependencies [af9d1ce]
+  - vueye-table@3.0.0-beta.7
+
 ## 3.0.0-beta.6
 
 ### Patch Changes

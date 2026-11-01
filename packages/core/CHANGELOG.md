@@ -1,5 +1,28 @@
 # @vueye-table/core
 
+## 3.0.0-beta.7
+
+### Minor Changes
+
+- 2729011: Add opt-in accessible column resize handles with CSS preview and one commit on pointer release.
+  Render sticky pinned cells and leading utility columns, expose sizing/pinning models on full
+  components, and add pin choices and theme tokens. Support pinned virtual columns in native tables
+  and normalize RTL horizontal scrolling.
+- af9d1ce: Render accessible group rows, aligned aggregate cells/footers and sticky pinned row regions.
+  Add grouping/expansion/pinning models, group ordering controls, pin actions and inherited theme
+  tokens. Keep grid coordinates on data cells while virtualized presentation rows are keyed,
+  measured and counted separately from engine rows.
+  Keep toolbar dropdowns above sticky headers, pinned rows and pinned-column intersections.
+- bf97b81: Add row pinning with top/bottom key arrays, `pinRow`, separate snapshot regions and a unified
+  `gridRows` visual coordinate space. Pins stay outside centre pagination; `keepPinnedRows`
+  controls filter visibility. Selection, clipboard, edits, drafts, streams and exports preserve
+  row identity across regions. Client stale keys are pruned with issues; manual tables retain
+  unresolved keys until the host supplies their records. Tree pins show alone at their depth.
+
+  Complete TableState literals must add `rowPinning: { top: [], bottom: [] }`. Partial patches
+  remain compatible. Custom renderers use topRows/rows/bottomRows and gridRows; built-in pinned-row
+  components remain follow-up work. In manual tables, rowCount is the server's centre total.
+
 ## 3.0.0-beta.6
 
 ### Minor Changes
