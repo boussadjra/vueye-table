@@ -18,12 +18,15 @@ import {
   type CellChange,
   type TableMessages,
   type TextNormalizer,
+  type ColumnPinning,
 } from "@vueye-table/core";
 import { virtualProps } from "@vueye-table/headless";
 import { hierarchyProps, type AnyRowAttrs } from "@vueye-table/headless";
 import type { Density } from "@vueye-table/styled";
 import type { TableSource, LoadMore } from "@vueye-table/vue";
 import { defineComponent, type PropType, type VNodeChild } from "vue";
+
+type ColumnSizing = TableState["columnSizing"];
 
 interface ContentProps {
   readonly item: unknown;
@@ -77,6 +80,9 @@ export const commonProps = {
   addRow: { type: Boolean, default: false },
   removeRows: { type: Boolean, default: false },
   ...virtualProps,
+  resizableColumns: { type: Boolean, default: false },
+  columnSizing: { type: Object as PropType<ColumnSizing | undefined>, default: undefined },
+  columnPinning: { type: Object as PropType<ColumnPinning | undefined>, default: undefined },
   ...hierarchyProps,
   rowCanExpand: {
     type: Function as PropType<((row: any) => boolean) | undefined>,
@@ -184,6 +190,8 @@ export function editingOptions(
 
 /** The `v-model` events of table state, typed by the value each carries. */
 export const stateEmitValidators = {
+  "update:columnSizing": (_sizing: ColumnSizing) => true,
+  "update:columnPinning": (_pinning: ColumnPinning) => true,
   "update:page": (_page: number) => true,
   "update:pageSize": (_pageSize: number) => true,
   "update:sorting": (_sorting: readonly SortRule[]) => true,
@@ -199,6 +207,8 @@ export const stateEmits = Object.keys(
 ) as readonly (keyof typeof stateEmitValidators)[];
 
 interface ControlledProps {
+  readonly columnSizing?: ColumnSizing | undefined;
+  readonly columnPinning?: ColumnPinning | undefined;
   readonly page: number | undefined;
   readonly pageSize: number | undefined;
   readonly sorting: readonly SortRule[] | undefined;
@@ -212,6 +222,8 @@ interface ControlledProps {
 /** The state a parent controls through `v-model`, as a table state patch. */
 export function controlledState(props: ControlledProps, current: PaginationState): TableStatePatch {
   return {
+    columnSizing: props.columnSizing,
+    columnPinning: props.columnPinning,
     sorting: props.sorting,
     search: props.search,
     filters: props.filters,
@@ -234,6 +246,9 @@ export function emitStateChanges(
   state: TableState,
   previous: TableState,
 ): void {
+  if (state.columnSizing !== previous.columnSizing) emit("update:columnSizing", state.columnSizing);
+  if (state.columnPinning !== previous.columnPinning)
+    emit("update:columnPinning", state.columnPinning);
   if (state.pagination.page !== previous.pagination.page) {
     emit("update:page", state.pagination.page);
   }

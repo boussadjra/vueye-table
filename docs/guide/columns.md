@@ -118,8 +118,19 @@ other than a positive number, or targets a column that is not resizable is ignor
 `snapshot.issues`.
 
 On a column, `width` is the width to draw, `defaultWidth` is the definition's `width`, and
-`isResized` tells whether the width came from the state. The components do not draw resize
-handles yet; until they do, call `resizeColumn` from your own header markup.
+`isResized` tells whether the width came from the state. Enable `resizable-columns` on
+`VueyeTable`, `VueyeGrid`, `VtTable`, `VtGrid`, or a headless root to draw header resize separators.
+Columns with `resizable: false` have no handle. Defaults keep resize UI off.
+
+Drag an edge to preview its width; release commits one `resizeColumn` operation and one model
+update. Cancellation, lost capture, Escape, and replacing the columns discard the preview. Arrow
+keys change by 10 pixels, Shift by 50, Home reaches the minimum, End reaches a defined maximum,
+and Enter or double-click resets. Left/right follow the host's `dir` attribute. Unsized resizable
+columns begin at 120px, constrained by their limits. Widths are positive (minimum 1px).
+
+Both full components accept `v-model:column-sizing` and `v-model:column-pinning` without emitting
+callbacks for outside updates. The roots use a fixed native table layout and colgroup whenever
+resizing is enabled or pins are visible; an ordinary table keeps its previous layout.
 
 ## Pinning columns
 
@@ -164,9 +175,20 @@ so a removed column can regain its pin when its definition returns. Malformed pi
 recovers to empty regions with `invalid_column_pinning`. Refused `pinColumn` calls leave state
 unchanged and report the last operation issue until the next valid pin call or `reset()`.
 
-Try the [live example](/examples/column-pinning), which supplies custom sticky cells. Built-in
-component controls and centre-only horizontal virtualization remain follow-up work. The public
-contract is recorded in [ADR 0024](/adr/0024-column-sizing-and-pinning).
+Try the [live example](/examples/column-pinning) with the full table/grid or custom sticky markup.
+The full components render pinned header/body cells and keep selection, disclosure, actions and
+row numbers in the start region. The table's Columns menu can pin to start/end or unpin. With virtual
+columns, only the centre is sliced; both pinned edges stay rendered.
+
+For headless composition, `DataTableLeadingCell` marks utility cells (`as="th"` for headers,
+`index` is zero-based). Set the root's `leading-columns` count and optional
+`leading-column-widths` pixel array; unspecified utility widths use 48px. Grid roots can instead
+reserve their existing `gutter`, split evenly among leading cells. The sum is included before
+data-column pin offsets. Custom raw utility cells need equivalent sticky styles. Styled cells
+use opaque backgrounds, with pinned headers layered above the sticky header and body.
+
+See [ADR 0024](/adr/0024-column-sizing-and-pinning) for core state and
+[ADR 0028](/adr/0028-component-column-layout) for component gestures and layout.
 
 ## Formatting
 

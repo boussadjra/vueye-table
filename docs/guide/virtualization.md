@@ -177,12 +177,18 @@ Pass the same `grid` in row options to bring logical row focus into view during 
 
 ## Component props
 
+Both full components now support `virtual-columns` with `virtual`. Pinned columns remain outside
+the centre slice, including header/body cells and leading utility columns. In RTL, the binding
+normalizes the native horizontal scroll value into a positive logical centre offset. When a
+pinned region makes the leading gutter sticky, `scrollMargin` reserves its width without
+subtracting it from that logical offset. Without pins the existing scroll-margin convention holds.
+
 ```vue
 <VueyeTable :data="rows" :columns="columns" virtual height="560px" :row-height="40" />
 <VueyeGrid v-model:data="rows" :columns="columns" virtual virtual-columns height="560px" />
 ```
 
-`virtual` is opt-in. Both components accept `height` (viewport height, default `24rem`), `rowHeight` (estimate, default 40) and `overscan` (default 5). Grids additionally accept `virtualColumns` and `columnWidth` (fallback 120); explicit column widths win. Headers are sticky, and grid headers/cells share the same column slice. Rendered rows are measured and may grow beyond the estimate. CSS `--vt-row-height` controls the styled row height; `maxHeight` can additionally cap the viewport.
+`virtual` is opt-in. Both components accept `height` (viewport height, default `24rem`), `rowHeight` (estimate, default 40), `overscan` (default 5) and `virtualColumns`. Grids additionally accept `columnWidth` (fallback 120); explicit column widths win. Headers are sticky, and headers/cells share the same column slice. Rendered rows are measured and may grow beyond the estimate. CSS `--vt-row-height` controls the styled row height; `maxHeight` can additionally cap the viewport.
 
 An options object can override the estimates and initial SSR counts:
 

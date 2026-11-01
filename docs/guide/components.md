@@ -14,6 +14,7 @@ line, loading and empty states, and theming.
 | `load-more`           | `LoadMore<Row>`                            |                                            |
 | `end-threshold`       | non-negative integer                       | `5`                                        |
 | `columns`             | `ColumnDef<Row>[]`                         | inferred                                   |
+| `resizable-columns`   | `boolean`                                  | `false`                                    |
 | `row-key`             | path or `(row, index) => RowKey`           | `id`, then index                           |
 | `selectable`          | `boolean \| "single" \| "multiple"`        | `false`                                    |
 | `select-scope`        | `"page" \| "all"`                          | `"all"`                                    |
@@ -65,11 +66,13 @@ The `expanded` slot receives `{ row, rowIndex }`; `v-model:expanded` accepts rea
 
 Choose `source` or `load-more`; both full components accept them and show loaded counts and retry controls. They default to no pagination with either option. Supply explicit columns for an empty initial dataset. See [Vue sources and cursor loading](/guide/streaming#manage-a-source-in-vue).
 
-`virtual`, `height`, `row-height`, `overscan`, `paginate`, and grid `virtual-columns`/`column-width` are described in the [virtualization guide](/guide/virtualization#component-props). Virtualization is opt-in; full virtual tables default to no paging and a sticky header. Its renderer options are creation options, while data and state stay reactive.
+`virtual`, `height`, `row-height`, `overscan`, `paginate`, and `virtual-columns`/`column-width` are described in the [virtualization guide](/guide/virtualization#component-props). Virtualization is opt-in; full virtual tables default to no paging and a sticky header. Its renderer options are creation options, while data and state stay reactive.
 
 ### v-model
 
-`page`, `page-size`, `sorting`, `search`, `filters`, `hidden-columns`, and `selected`. See
+`page`, `page-size`, `sorting`, `search`, `filters`, `hidden-columns`, `selected`, `column-sizing`,
+and `column-pinning`. Both full components accept the layout models. `column-sizing` maps column
+ids to pixel widths; `column-pinning` has ordered `start`/`end` arrays of ids. See
 [State and v-model](/guide/state).
 
 ### Events
@@ -144,7 +147,7 @@ provided by `<VtTable>`, `<VtGrid>`, or `provideDataTable`.
 | `VtGrid`             | The spreadsheet surface. Props: `table`, `label`, `row-numbers`, `column-letters`, `row-attrs`, and surface options. Slots: `cell.<id>`. |
 | `VtToolbar`          | A bar for controls above or below a table.                                                                                               |
 | `VtSearch`           | A search field with an icon.                                                                                                             |
-| `VtColumnVisibility` | A "Columns" menu of checkboxes.                                                                                                          |
+| `VtColumnVisibility` | A "Columns" menu with visibility checkboxes and pin-position choices.                                                                    |
 | `VtPageSize`         | "Rows per page" with a picker. Prop: `options`.                                                                                          |
 | `VtPagination`       | Previous, numbered, and next buttons.                                                                                                    |
 | `VtStatus`           | "1–10 of 57 rows, 3 selected", announced politely.                                                                                       |
@@ -212,6 +215,8 @@ full grid with row numbers and actions.
 | `DataTablePagination`                   | Page buttons with `aria-current`. Slot: `{ page, pageCount, items, … }`.                                                   |
 | `DataTablePageSize`                     | The page size `<select>`.                                                                                                  |
 | `DataTableColumnVisibility`             | A checkbox per column. Slot: `{ columns, toggle }`.                                                                        |
+| `DataTableColumnResizer`                | A separator inside a header cell; optional `column` prop. Pointer preview, commit on release, keyboard resizing and reset. |
+| `DataTableLeadingCell`                  | Utility cell, `as="th"` or `"td"`, with a zero-based `index`; shares the start pinned region.                              |
 | `DataTableStatus`                       | A polite live region. Slot: `{ start, end, rowCount, … }`.                                                                 |
 | `DataTableLoadMore`                     | A keyboard-accessible cursor load-more or source retry button.                                                             |
 | `DataTableExpandToggle`                 | Disclosure button. Props: `row`, optional `controls`, `expand-label`, `collapse-label`. Slot: `{ row, expanded }`.         |

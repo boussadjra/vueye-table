@@ -123,6 +123,18 @@ same ones. Target them to restyle a detail without replacing a component:
 }
 ```
 
+## Resize handles and pinned regions
+
+`--vt-resizer-color` defaults to `--vt-border`; `--vt-resizer-hover` uses `--vt-accent`.
+`--vt-pinned-bg` defaults to the opaque `--vt-bg`. `--vt-pinned-shadow` marks the boundary next
+to the centre. These tokens work in light/dark palettes and `theme="inherit"`; a host can override
+them alongside its existing `--vt-*` tokens.
+
+Cells expose `data-pinned="start|end"` and `data-pinned-edge`; handles expose
+`data-column-resizer` and `data-resizing`. Pinned body cells sit above normal body cells; sticky
+headers sit above the body, and pinned header corners sit above both. Keep custom pin backgrounds
+opaque so scrolling text does not show through.
+
 ## Without the styled layer
 
 The headless components ship no CSS at all. Style them with your own classes, Tailwind, or any

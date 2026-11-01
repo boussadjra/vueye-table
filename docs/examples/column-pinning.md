@@ -4,9 +4,18 @@ aside: false
 
 <script setup lang="ts">
 import ColumnPinning from "../.vitepress/theme/components/ColumnPinning.vue";
+import ResizableColumns from "../.vitepress/theme/components/ResizableColumns.vue";
 </script>
 
-# Column pinning
+# Resizable and pinned columns
+
+Resize a header by dragging its edge, or focus the handle and use the arrow keys. Switch between
+the full table and grid, turn virtualization on or off, and try right-to-left layout. The resize
+count changes once per completed drag. Pin positions and widths are controlled through `v-model`.
+
+<ResizableColumns />
+
+## Composable rendering
 
 Keep identifiers and totals visible while the middle columns scroll. Try pinning Customer beside
 Order, widening Order, or hiding it: the remaining pins move into place without gaps. Switch to
@@ -41,10 +50,12 @@ This example supplies its own sticky cells and fixed table layout. It uses `pinO
 `isPinnedEdge` identifies the boundary next to the scrolling centre. Hidden pins stay in state
 but contribute no width or edge marker.
 
-Built-in pinned component props, controls, and horizontal virtualization of just the centre are
-follow-up work. See [the column guide](/guide/columns#pinning-columns) and
+The full components above supply these sticky cells, utility offsets, resize handles and centre-only
+horizontal virtualization. See [the column guide](/guide/columns#pinning-columns) and
 [ADR 0024](/adr/0024-column-sizing-and-pinning) for the core contract.
 
 ## Source
+
+<<< ../.vitepress/theme/components/ResizableColumns.vue
 
 <<< ../.vitepress/theme/components/ColumnPinning.vue
