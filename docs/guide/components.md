@@ -7,37 +7,40 @@ line, loading and empty states, and theming.
 
 ### Props
 
-| Prop                  | Type                                       | Default                                    |
-| --------------------- | ------------------------------------------ | ------------------------------------------ |
-| `data`                | `readonly Row[]`, initial rows             | `[]`                                       |
-| `source`              | `TableSource<Row>`                         |                                            |
-| `load-more`           | `LoadMore<Row>`                            |                                            |
-| `end-threshold`       | non-negative integer                       | `5`                                        |
-| `columns`             | `ColumnDef<Row>[]`                         | inferred                                   |
-| `resizable-columns`   | `boolean`                                  | `false`                                    |
-| `row-key`             | path or `(row, index) => RowKey`           | `id`, then index                           |
-| `selectable`          | `boolean \| "single" \| "multiple"`        | `false`                                    |
-| `select-scope`        | `"page" \| "all"`                          | `"all"`                                    |
-| `manual`              | `boolean`                                  | `true` with `load-more`, otherwise `false` |
-| `row-count`           | `number`, the total for `manual`           |                                            |
-| `loading`             | `boolean`                                  | `false`                                    |
-| `loading-text`        | `string`                                   | the messages' `loading`                    |
-| `caption`             | `string`                                   |                                            |
-| `searchable`          | `boolean`                                  | `true`                                     |
-| `search-placeholder`  | `string`                                   | the messages' `searchPlaceholder`          |
-| `column-toggle`       | `boolean`                                  | `true`                                     |
-| `pagination`          | `boolean`                                  | `true`                                     |
-| `page-size-options`   | `number[]`                                 | `[5, 10, 20, 50]`                          |
-| `density`             | `"compact" \| "comfortable" \| "spacious"` | `"comfortable"`                            |
-| `striped`, `bordered` | `boolean`                                  | `false`                                    |
-| `hover`               | `boolean`                                  | `true`                                     |
-| `sticky-header`       | `boolean`                                  | `false`                                    |
-| `max-height`          | CSS height                                 |                                            |
-| `theme`               | `"light" \| "dark" \| "inherit"`           | follows the system                         |
-| `locale`              | BCP 47 locale, such as `"fr"` or `"ar-DZ"` | the plugin's, then the runtime's           |
-| `messages`            | `Partial<TableMessages>`                   | the plugin's, then English                 |
-| `normalize-text`      | `(text: string) => string`                 | `foldText`                                 |
-| `row-attrs`           | `(item, row) => RowAttributes`             |                                            |
+| Prop                   | Type                                          | Default                                    |
+| ---------------------- | --------------------------------------------- | ------------------------------------------ |
+| `data`                 | `readonly Row[]`, initial rows                | `[]`                                       |
+| `source`               | `TableSource<Row>`                            |                                            |
+| `load-more`            | `LoadMore<Row>`                               |                                            |
+| `end-threshold`        | non-negative integer                          | `5`                                        |
+| `columns`              | `ColumnDef<Row>[]`                            | inferred                                   |
+| `resizable-columns`    | `boolean`                                     | `false`                                    |
+| `groupable`            | Show the Group by control                     | `false`                                    |
+| `aggregate-position`   | `"group" \| "footer"`                         | `"group"`                                  |
+| `row-pinning-controls` | Show row pin actions without enabling editing | `false`                                    |
+| `row-key`              | path or `(row, index) => RowKey`              | `id`, then index                           |
+| `selectable`           | `boolean \| "single" \| "multiple"`           | `false`                                    |
+| `select-scope`         | `"page" \| "all"`                             | `"all"`                                    |
+| `manual`               | `boolean`                                     | `true` with `load-more`, otherwise `false` |
+| `row-count`            | `number`, the total for `manual`              |                                            |
+| `loading`              | `boolean`                                     | `false`                                    |
+| `loading-text`         | `string`                                      | the messages' `loading`                    |
+| `caption`              | `string`                                      |                                            |
+| `searchable`           | `boolean`                                     | `true`                                     |
+| `search-placeholder`   | `string`                                      | the messages' `searchPlaceholder`          |
+| `column-toggle`        | `boolean`                                     | `true`                                     |
+| `pagination`           | `boolean`                                     | `true`                                     |
+| `page-size-options`    | `number[]`                                    | `[5, 10, 20, 50]`                          |
+| `density`              | `"compact" \| "comfortable" \| "spacious"`    | `"comfortable"`                            |
+| `striped`, `bordered`  | `boolean`                                     | `false`                                    |
+| `hover`                | `boolean`                                     | `true`                                     |
+| `sticky-header`        | `boolean`                                     | `false`                                    |
+| `max-height`           | CSS height                                    |                                            |
+| `theme`                | `"light" \| "dark" \| "inherit"`              | follows the system                         |
+| `locale`               | BCP 47 locale, such as `"fr"` or `"ar-DZ"`    | the plugin's, then the runtime's           |
+| `messages`             | `Partial<TableMessages>`                      | the plugin's, then English                 |
+| `normalize-text`       | `(text: string) => string`                    | `foldText`                                 |
+| `row-attrs`            | `(item, row) => RowAttributes`                |                                            |
 
 `selectable`, `select-scope`, `manual`, `row-key`, `locale` (for ordering) and `normalize-text` are
 read when the table is created. See [Language, locale and search](/guide/language).
@@ -71,7 +74,7 @@ Choose `source` or `load-more`; both full components accept them and show loaded
 ### v-model
 
 `page`, `page-size`, `sorting`, `search`, `filters`, `hidden-columns`, `selected`, `column-sizing`,
-and `column-pinning`. Both full components accept the layout models. `column-sizing` maps column
+`column-pinning`, `grouping`, `expanded-groups` and `row-pinning`. Both full components accept the layout models. `column-sizing` maps column
 ids to pixel widths; `column-pinning` has ordered `start`/`end` arrays of ids. See
 [State and v-model](/guide/state).
 
@@ -181,6 +184,8 @@ provideDataTable(table); // for the controls outside <VtTable>
 Controls outside `<VtTable>` need the table provided above them, which is what
 `provideDataTable(table)` does in the component that creates it.
 
+Styled grouping exports add `VtGroupRow` and `VtGroupBy` for structural rows and ordered grouping controls.
+
 ## Headless components
 
 Full tables and grids include selection, details and row controls in accessible column
@@ -229,6 +234,11 @@ full grid with row numbers and actions.
 | `DataTableEditRoot`                     | Renderless table form provider, `table` and `mode` (`"cell"` or `"row"`); emits `save`/`cancel`.                           |
 | `DataTableEditCell`                     | Editable table cell under the form provider. Props `row`, `column`, optional `row-index`/`tree`; slots `default`/`editor`. |
 | `DataTableRowActions`                   | Edit/save/cancel/revert and optional remove controls. Props `row`, `editable`, `removable`.                                |
+
+Grouping/pinning primitives add `DataTableGroupRow` (group disclosure/selection and optional footer),
+`DataTableAggregateCell` (slot props `{ group, column, value, display }`) and `DataTablePinnedRow`
+(`row`, `side` context around one native row). Full components forward `group` and `aggregate.<id>`
+slots, preserve leaf-only grid coordinates and count the displayed structural sequence for assistive technology.
 
 ## Composables
 

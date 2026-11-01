@@ -11,6 +11,8 @@ import {
 } from "@vueye-table/vue";
 import {
   defineComponent,
+  Fragment,
+  cloneVNode,
   h,
   inject,
   mergeProps,
@@ -36,6 +38,7 @@ import {
   useEditorId,
   type CellEditorSlotProps,
 } from "./editor";
+import { groupRow, type GroupSlots } from "./grouped-rows";
 import {
   createDetails,
   DataTableTreeCell,
@@ -48,6 +51,13 @@ import {
 } from "./hierarchy";
 import { loadSentinel } from "./loading";
 import { rowAttributes, type AnyRowAttrs } from "./row-attrs";
+import {
+  provideRowLayout,
+  injectRowLayout,
+  injectPinnedRow,
+  groupingProps,
+  DataTablePinnedRow,
+} from "./row-layout";
 import {
   asProp,
   columnProp,
@@ -63,6 +73,8 @@ import {
   injectVirtual,
   renderColumns,
   renderRows,
+  rowSpacer,
+  physicalColumnCount,
   virtualColgroup,
   virtualOptions,
   virtualProps,
@@ -113,6 +125,7 @@ export const DataGridRoot = defineComponent({
     ...hierarchyProps,
     ...columnLayoutProps,
     ...resizingProps,
+    ...groupingProps,
     /** Width reserved before data columns, for a row-number/header column. */
     gutter: { type: Number, default: 0 },
   },
@@ -125,6 +138,7 @@ export const DataGridRoot = defineComponent({
     provideHierarchy(props.table, props);
     const element = ref<HTMLElement>();
     const layout = provideColumnLayout(props.table, props, () => element.value);
+    const rowLayout = provideRowLayout(props.table, props, () => element.value);
     const id = `vt-grid-${useId()}`;
     const focus = (): void => {
       void nextTick(() => {
@@ -229,19 +243,20 @@ export const DataGridRoot = defineComponent({
         {
           ref: element,
           id,
-          role: props.table.tree ? "treegrid" : "grid",
+          role: props.table.tree || props.table.grouped ? "treegrid" : "grid",
           tabindex: 0,
           "aria-label": props.label,
           "aria-multiselectable": "true",
           "aria-rowcount":
+            rowLayout.count ??
             (props.table.tree
               ? props.table.processedRows.length
               : binding
                 ? props.table.rowCount
                 : props.table.rows.length) +
-            props.table.topRows.length +
-            props.table.bottomRows.length +
-            1,
+              props.table.topRows.length +
+              props.table.bottomRows.length +
+              1,
           "aria-colcount": props.table.columns.length + props.leadingColumns,
           "aria-busy":
             props.table.loadState === "loading" || props.table.loadState === "streaming"
@@ -319,13 +334,16 @@ export interface GridCellSlotProps {
  */
 export const DataGridBody = defineComponent({
   name: "DataGridBody",
-  slots: Object as SlotsType<{
-    default?: (props: { rows: readonly TableRow<unknown>[] }) => VNode[];
-    rowHeader?: (props: { row: TableRow<unknown>; index: number }) => VNode[];
-    cell?: (props: GridCellSlotProps) => VNodeChild;
-    editor?: (props: CellEditorSlotProps) => VNodeChild;
-    detail?: (props: DetailSlotProps) => VNodeChild;
-  }>,
+  inheritAttrs: false,
+  slots: Object as SlotsType<
+    {
+      default?: (props: { rows: readonly TableRow<unknown>[] }) => VNode[];
+      rowHeader?: (props: { row: TableRow<unknown>; index: number }) => VNode[];
+      cell?: (props: GridCellSlotProps) => VNodeChild;
+      editor?: (props: CellEditorSlotProps) => VNodeChild;
+      detail?: (props: DetailSlotProps) => VNodeChild;
+    } & GroupSlots
+  >,
   props: {
     as: asProp("tbody"),
     ...virtualProps,
@@ -334,17 +352,78 @@ export const DataGridBody = defineComponent({
     /** A page's own attributes for each row; the row's own always win. */
     rowAttrs: { type: Function as PropType<AnyRowAttrs | undefined>, default: undefined },
   },
-  setup(props, { slots }) {
+  setup(props, { slots, attrs }) {
     const table = injectDataTable("<DataGridBody>");
     const { grid } = useGrid("<DataGridBody>");
     const virtual = injectVirtual();
     const hierarchy = injectHierarchy();
+    const rowLayout = injectRowLayout();
+    const columnOffset = injectColumnOffset();
     const details = createDetails(
       table,
       () => slots.detail,
       () => props.colspan ?? table.columns.length + (slots.rowHeader ? 1 : 0),
     );
     const element = ref<HTMLElement>();
+    const pinnedSections = (centre: VNode, binding?: ComponentVirtualBinding): VNode => {
+      const body = cloneVNode(centre, { ...attrs, "data-row-region": "centre" });
+      const region = (side: "top" | "bottom"): VNode | null => {
+        const rows = side === "top" ? table.topRows : table.bottomRows;
+        return rows.length
+          ? h(
+              props.as,
+              { "data-row-region": side, class: attrs["class"] },
+              rows.map((row, index) => {
+                const rowIndex =
+                  side === "top" ? index : table.topRows.length + table.rows.length + index;
+                return h(
+                  DataTablePinnedRow,
+                  { key: row.key, row, side },
+                  {
+                    default: () => [
+                      h(
+                        "tr",
+                        mergeProps(rowAttributes(props.rowAttrs, row), {
+                          role: "row",
+                          "data-key": String(row.key),
+                          "data-dirty": flag(row.isDirty),
+                          "aria-rowindex": rowLayout?.index(row.key),
+                          "aria-level": rowLayout?.level(row.key),
+                          ...hierarchyRowAttrs(table, row, hierarchy),
+                        }),
+                        [
+                          slots.rowHeader?.({ row, index: rowIndex }),
+                          ...renderColumns(
+                            table.columns,
+                            binding,
+                            (column, columnIndex) =>
+                              h(
+                                DataGridCell,
+                                {
+                                  key: column.id,
+                                  row,
+                                  column,
+                                  rowIndex,
+                                  columnIndex,
+                                  tree: props.treeCell,
+                                },
+                                { default: slots.cell, editor: slots.editor, $stable: true },
+                              ),
+                            "td",
+                          ),
+                        ],
+                      ),
+                    ],
+                  },
+                );
+              }),
+            )
+          : null;
+      };
+      return table.topRows.length || table.bottomRows.length
+        ? h(Fragment, [region("top"), body, region("bottom")])
+        : body;
+    };
     const render = (binding?: ComponentVirtualBinding): VNode => {
       if (binding && slots.default) {
         const sentinel = loadSentinel(
@@ -356,67 +435,101 @@ export const DataGridBody = defineComponent({
             item.renderItem.kind === "row" ? [item.renderItem.row] : [],
           ),
         });
-        return h(props.as, { ref: element }, sentinel ? [...content, sentinel] : content);
+        return pinnedSections(
+          h(
+            props.as,
+            { ref: element, "data-row-region": "centre" },
+            sentinel ? [...content, sentinel] : content,
+          ),
+          binding,
+        );
       }
       if (binding)
-        return h(props.as, { ref: element }, [
-          ...renderRows(
-            binding,
-            props.colspan ?? table.columns.length + (slots.rowHeader ? 1 : 0),
-            (item) => {
-              if (item.renderItem.kind === "group") return null;
-              if (item.renderItem.kind !== "row")
-                return details.render(item.renderItem.row, item.renderItem.rowIndex);
-              const { row, rowIndex } = item.renderItem;
-              const columns = renderColumns(
-                table.columns,
-                binding,
-                (column, columnIndex) =>
-                  h(
-                    DataGridCell,
-                    { key: column.id, row, column, rowIndex, columnIndex, tree: props.treeCell },
-                    { default: slots.cell, editor: slots.editor, $stable: true },
+        return pinnedSections(
+          h(props.as, { ref: element, "data-row-region": "centre" }, [
+            ...renderRows(
+              binding,
+              physicalColumnCount(binding, table.columns.length, columnOffset()),
+              (item) => {
+                if (item.renderItem.kind === "group")
+                  return groupRow(
+                    item.renderItem,
+                    slots,
+                    rowLayout?.aggregatePosition ?? "group",
+                    rowLayout?.footer(item.key),
+                  );
+                if (item.renderItem.kind !== "row")
+                  return details.render(item.renderItem.row, item.renderItem.rowIndex);
+                const { row, rowIndex } = item.renderItem;
+                const columns = renderColumns(
+                  table.columns,
+                  binding,
+                  (column, columnIndex) =>
+                    h(
+                      DataGridCell,
+                      { key: column.id, row, column, rowIndex, columnIndex, tree: props.treeCell },
+                      { default: slots.cell, editor: slots.editor, $stable: true },
+                    ),
+                  "td",
+                );
+                return h(
+                  "tr",
+                  mergeProps(rowAttributes(props.rowAttrs, row), {
+                    key: item.key,
+                    role: "row",
+                    "aria-rowindex": rowLayout?.index(row.key) ?? table.pageStart + rowIndex + 1,
+                    "aria-level": rowLayout?.level(row.key),
+                    "data-key": String(row.key),
+                    "data-dirty": flag(row.isDirty),
+                    ...hierarchyRowAttrs(table, row, hierarchy),
+                    "data-virtual-row": "",
+                    ref: (target: Element | ComponentPublicInstance | null) =>
+                      binding.rows.measureElement(target, item.key),
+                  }),
+                  [slots.rowHeader?.({ row, index: rowIndex }), ...columns],
+                );
+              },
+            ),
+            ...(table.bottomRows.length
+              ? [
+                  rowSpacer(
+                    Math.max(0, binding.rows.viewportSize - binding.rows.totalSize),
+                    physicalColumnCount(binding, table.columns.length, columnOffset()),
+                    "pin-fill",
                   ),
-                "td",
-              );
-              return h(
-                "tr",
-                mergeProps(rowAttributes(props.rowAttrs, row), {
-                  key: item.key,
-                  role: "row",
-                  "aria-rowindex": table.pageStart + rowIndex + 1,
-                  "data-key": String(row.key),
-                  "data-dirty": flag(row.isDirty),
-                  ...hierarchyRowAttrs(table, row, hierarchy),
-                  "data-virtual-row": "",
-                  ref: (target: Element | ComponentPublicInstance | null) =>
-                    binding.rows.measureElement(target, item.key),
-                }),
-                [slots.rowHeader?.({ row, index: rowIndex }), ...columns],
-              );
-            },
-          ),
-          ...details.retained(
-            new Set(
-              binding.rowItems.flatMap((item) =>
-                item.renderItem.kind === "detail" ? [item.renderItem.row.key] : [],
+                ]
+              : []),
+            ...details.retained(
+              new Set(
+                binding.rowItems.flatMap((item) =>
+                  item.renderItem.kind === "detail" ? [item.renderItem.row.key] : [],
+                ),
               ),
             ),
-          ),
-          ...(loadSentinel(table, props.colspan ?? table.columns.length + (slots.rowHeader ? 1 : 0))
-            ? [
-                loadSentinel(
-                  table,
-                  props.colspan ?? table.columns.length + (slots.rowHeader ? 1 : 0),
-                ),
-              ]
-            : []),
-        ]);
+            ...(loadSentinel(
+              table,
+              props.colspan ?? table.columns.length + (slots.rowHeader ? 1 : 0),
+            )
+              ? [
+                  loadSentinel(
+                    table,
+                    props.colspan ?? table.columns.length + (slots.rowHeader ? 1 : 0),
+                  ),
+                ]
+              : []),
+          ]),
+          binding,
+        );
       const content =
         slots.default?.({ rows: table.rows }) ??
-        table.renderItems.map((item) =>
+        (rowLayout?.items ?? table.renderItems).map((item) =>
           item.kind === "group"
-            ? null
+            ? groupRow(
+                item,
+                slots,
+                rowLayout?.aggregatePosition ?? "group",
+                rowLayout?.footer(item.key),
+              )
             : item.kind === "detail"
               ? details.render(item.row, item.rowIndex)
               : (() => {
@@ -426,7 +539,8 @@ export const DataGridBody = defineComponent({
                     mergeProps(rowAttributes(props.rowAttrs, row), {
                       key: item.key,
                       role: "row",
-                      "aria-rowindex": rowIndex + 2,
+                      "aria-rowindex": rowLayout?.index(row.key) ?? rowIndex + 2,
+                      "aria-level": rowLayout?.level(row.key),
                       "data-key": String(row.key),
                       "data-dirty": flag(row.isDirty),
                       ...hierarchyRowAttrs(table, row, hierarchy),
@@ -455,19 +569,21 @@ export const DataGridBody = defineComponent({
         table,
         props.colspan ?? table.columns.length + (slots.rowHeader ? 1 : 0),
       );
-      return h(props.as, [
-        ...content,
-        ...(slots.default
-          ? []
-          : details.retained(
-              new Set(
-                table.renderItems
-                  .filter((item) => item.kind === "detail")
-                  .map((item) => item.row.key),
-              ),
-            )),
-        sentinel,
-      ]);
+      return pinnedSections(
+        h(props.as, { "data-row-region": "centre" }, [
+          ...content,
+          ...(slots.default
+            ? []
+            : details.retained(
+                new Set(
+                  table.renderItems
+                    .filter((item) => item.kind === "detail")
+                    .map((item) => item.row.key),
+                ),
+              )),
+          sentinel,
+        ]),
+      );
     };
     return () =>
       props.virtual && !virtual
@@ -507,6 +623,7 @@ export const DataGridCell = defineComponent({
     const columnOffset = injectColumnOffset();
     const { grid, context } = useGrid("<DataGridCell>");
     const layout = injectColumnLayout();
+    const pin = injectPinnedRow();
     const virtual = injectVirtual();
     const hierarchy = injectHierarchy();
     const element = ref<HTMLElement>();
@@ -619,6 +736,7 @@ export const DataGridCell = defineComponent({
           ...issueAttrs(issueId, issues, pending),
           style: columnStyle(column),
           ...layout?.attrs(column),
+          ...(pin ? mergeProps(layout?.attrs(column) ?? {}, pin.attrs(!!column.pinned)) : {}),
           onMousedown: (event: MouseEvent) => {
             if (editing || event.button !== 0) {
               return;

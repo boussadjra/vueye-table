@@ -22,8 +22,9 @@ import {
   type VNodeChild,
 } from "vue";
 
-import { asProp, directionOf, rowProp } from "./shared";
-import { injectVirtual, type ComponentVirtualBinding } from "./virtual";
+import { injectRowLayout, injectPinnedRow } from "./row-layout";
+import { asProp, directionOf, rowProp, injectColumnOffset } from "./shared";
+import { injectVirtual, physicalColumnCount, type ComponentVirtualBinding } from "./virtual";
 
 export const hierarchyProps = {
   treeColumn: { type: String as PropType<string | undefined>, default: undefined },
@@ -137,8 +138,9 @@ export function treeKeydown(
   )
     return;
   const key = target.closest("tr")?.getAttribute("data-tree-key");
-  const index = table.rows.findIndex((row) => getRowItemKey(row.key) === key);
-  const row = table.rows[index];
+  const visible = table.gridRows;
+  const index = visible.findIndex((row) => getRowItemKey(row.key) === key);
+  const row = visible[index];
   if (!row) return;
   const command = gridCommand(
     {
@@ -156,17 +158,17 @@ export function treeKeydown(
     if (command.action === "expand" || command.action === "collapse")
       table.toggleExpanded(row.key, command.action === "expand");
     else if (command.action === "siblings") {
-      for (const sibling of table.processedRows.filter(
+      for (const sibling of [...table.topRows, ...table.processedRows, ...table.bottomRows].filter(
         (candidate) => candidate.parentKey === row.parentKey && candidate.canExpand,
       ))
         table.toggleExpanded(sibling.key, true);
     } else if (command.action === "child")
-      next = table.rows.find((candidate) => candidate.parentKey === row.key) ?? row;
-    else next = table.rows.find((candidate) => candidate.key === row.parentKey) ?? row;
+      next = visible.find((candidate) => candidate.parentKey === row.key) ?? row;
+    else next = visible.find((candidate) => candidate.key === row.parentKey) ?? row;
   } else if (event.key === "ArrowDown" || event.key === "ArrowUp")
-    next = table.rows[index + (event.key === "ArrowDown" ? 1 : -1)] ?? row;
+    next = visible[index + (event.key === "ArrowDown" ? 1 : -1)] ?? row;
   else if (event.key === "Home" || event.key === "End")
-    next = table.rows[event.key === "Home" ? 0 : table.rows.length - 1] ?? row;
+    next = visible[event.key === "Home" ? 0 : visible.length - 1] ?? row;
   else return;
   event.preventDefault();
   const root = target.closest("table");
@@ -191,6 +193,7 @@ export const DataTableExpandToggle = defineComponent({
   }>,
   setup(props, { slots }) {
     const table = injectDataTable("<DataTableExpandToggle>");
+    const pin = injectPinnedRow();
     const context = injectHierarchy();
     const grid = injectDataGrid();
     const locale = useTableLocale();
@@ -199,7 +202,7 @@ export const DataTableExpandToggle = defineComponent({
         ? (props.collapseLabel ?? locale().messages.collapseRow)
         : (props.expandLabel ?? locale().messages.expandRow);
     return () =>
-      props.row.canExpand
+      props.row.canExpand && !(pin && !table.tree)
         ? h(
             "button",
             {
@@ -225,7 +228,7 @@ export const DataTableExpandToggle = defineComponent({
                 event.stopPropagation();
                 if (grid?.table === table)
                   grid.focusCell({
-                    row: table.rows.indexOf(props.row),
+                    row: table.gridRows.indexOf(props.row),
                     column: Math.max(
                       0,
                       table.columns.findIndex(
@@ -290,7 +293,7 @@ export const DataTableTreeCell = defineComponent({
                       const element = (event.currentTarget as HTMLElement).closest("table");
                       if (grid?.table === table)
                         grid.focusCell({
-                          row: table.rows.indexOf(props.row),
+                          row: table.gridRows.indexOf(props.row),
                           column: Math.max(
                             0,
                             table.columns.findIndex(
@@ -330,8 +333,10 @@ export const DataTableDetailRow = defineComponent({
   slots: Object as SlotsType<{ default?: (props: { row: TableRow<unknown> }) => VNodeChild }>,
   setup(props, { slots }) {
     const table = injectDataTable("<DataTableDetailRow>");
+    const columnOffset = injectColumnOffset();
     const context = injectHierarchy();
     const virtual = injectVirtual();
+    const rowLayout = injectRowLayout();
     let opened = false;
     return () => {
       if (props.row.isExpanded && !props.hidden) opened = true;
@@ -346,6 +351,7 @@ export const DataTableDetailRow = defineComponent({
         {
           id: itemId(context, props.row, true),
           "data-detail": "",
+          "aria-rowindex": hidden ? undefined : rowLayout?.index(props.row.key, "detail"),
           hidden,
           ...(virtual && !hidden
             ? {
@@ -358,7 +364,9 @@ export const DataTableDetailRow = defineComponent({
           h(
             "td",
             {
-              colspan: Math.max(1, props.colspan ?? table.columns.length),
+              colspan: virtual
+                ? physicalColumnCount(virtual, table.columns.length, columnOffset())
+                : Math.max(1, props.colspan ?? table.columns.length),
               class: "vt-detail-cell",
             },
             [slots.default?.({ row: props.row })],
@@ -401,7 +409,9 @@ export function createDetails(
           visited.delete(key);
           return [];
         }
-        return visible.has(key) ? [] : [render(table.rows[index]!, index, true)];
+        return visible.has(key)
+          ? []
+          : [render(table.rows[index]!, index + table.topRows.length, true)];
       });
     },
   };

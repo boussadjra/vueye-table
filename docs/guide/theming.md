@@ -135,6 +135,12 @@ Cells expose `data-pinned="start|end"` and `data-pinned-edge`; handles expose
 headers sit above the body, and pinned header corners sit above both. Keep custom pin backgrounds
 opaque so scrolling text does not show through.
 
+Group rows use `--vt-group-bg` (defaults to `--vt-header-bg`); pinned row boundaries use
+`--vt-pinned-row-shadow`. Both follow inherited light/dark themes. Group depth is available as
+`data-group-depth` and `--vt-group-depth`; aggregate cells expose `data-aggregate="<id>"` and
+footers expose `data-aggregate-footer`. Row regions expose `data-row-region="top|centre|bottom"`,
+and pinned rows/cells expose `data-row-pinned="top|bottom"`.
+
 ## Without the styled layer
 
 The headless components ship no CSS at all. Style them with your own classes, Tailwind, or any

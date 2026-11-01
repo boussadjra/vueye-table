@@ -10,6 +10,14 @@ export {
 } from "./controls";
 export { DataTableLoadMore } from "./loading";
 export { DataTableColumnResizer, DataTableLeadingCell } from "./column-layout";
+export {
+  DataTableGroupRow,
+  DataTableAggregateCell,
+  type GroupSlotProps,
+  type AggregateSlotProps,
+  type GroupSlots,
+} from "./grouped-rows";
+export { groupingProps, DataTablePinnedRow } from "./row-layout";
 export { DataCellEditor, cellEditorProps, type CellEditorSlotProps } from "./editor";
 export { DataTableEditRoot, DataTableEditCell, DataTableRowActions } from "./editing";
 export {

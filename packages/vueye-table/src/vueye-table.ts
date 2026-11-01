@@ -20,6 +20,8 @@ import {
   DataTableViewport,
   type TableStatusSlotProps,
   type DetailSlotProps,
+  type GroupSlotProps,
+  type AggregateSlotProps,
   resolveTreeColumn,
   DataTableEditRoot,
   DataTableEditCell,
@@ -28,6 +30,7 @@ import {
 } from "@vueye-table/headless";
 import {
   VtColumnVisibility,
+  VtGroupBy,
   VtEmpty,
   VtHeader,
   VtPageSize,
@@ -135,6 +138,7 @@ export const VueyeTable = defineComponent({
       [key: `cell.${string}`]: CellSlotProps;
       [key: `editor.${string}`]: CellEditorSlotProps;
       [key: `header.${string}`]: HeaderSlotProps;
+      [key: `aggregate.${string}`]: AggregateSlotProps;
     } & {
       toolbar: { table: unknown };
       empty: Record<string, never>;
@@ -142,6 +146,7 @@ export const VueyeTable = defineComponent({
       footer: { table: unknown };
       status: StatusSlotProps;
       expanded: DetailSlotProps;
+      group: GroupSlotProps;
     }
   >,
   setup(props, { emit, slots, expose, attrs }) {
@@ -233,7 +238,8 @@ export const VueyeTable = defineComponent({
     };
 
     const hasDetails = (): boolean => !!slots.expanded && !table.tree;
-    const hasActions = (): boolean => !!props.editMode || props.removeRows;
+    const hasActions = (): boolean =>
+      !!props.editMode || props.removeRows || props.rowPinningControls;
     const leadingColumns = (): number =>
       Number(hasActions()) + Number(hasDetails()) + Number(selectable());
     const width = (): number =>
@@ -380,7 +386,14 @@ export const VueyeTable = defineComponent({
           DataTableBody,
           { class: "vt-body", colspan: width() },
           {
-            ...(table.rows.length === 0 ? { default: emptyBody } : {}),
+            ...(table.renderItems.length === 0 && !table.topRows.length && !table.bottomRows.length
+              ? { default: emptyBody }
+              : {}),
+            ...Object.fromEntries(
+              Object.entries(slots).filter(
+                ([name]) => name === "group" || name.startsWith("aggregate."),
+              ),
+            ),
             row: bodyRow,
             detail: slots.expanded
               ? (detail: DetailSlotProps) => slots.expanded?.(detail)
@@ -410,6 +423,7 @@ export const VueyeTable = defineComponent({
                       ...(selectable() ? [44] : []),
                     ],
                     resizableColumns: props.resizableColumns,
+                    aggregatePosition: props.aggregatePosition,
                     virtual: props.virtual,
                     virtualColumns: props.virtualColumns,
                     rowHeight: props.rowHeight,
@@ -436,6 +450,7 @@ export const VueyeTable = defineComponent({
                   ...(selectable() ? [44] : []),
                 ],
                 resizableColumns: props.resizableColumns,
+                aggregatePosition: props.aggregatePosition,
                 "aria-busy": busy() ? "true" : undefined,
               },
               children,
@@ -461,7 +476,11 @@ export const VueyeTable = defineComponent({
         }),
         [
           h("div", { class: "vt-root" }, [
-            props.searchable || props.columnToggle || slots.toolbar || props.addRow
+            props.searchable ||
+            props.columnToggle ||
+            slots.toolbar ||
+            props.addRow ||
+            props.groupable
               ? h(VtToolbar, () => [
                   props.searchable
                     ? h(VtSearch, {
@@ -478,6 +497,7 @@ export const VueyeTable = defineComponent({
                   h("div", { class: "vt-toolbar-spacer" }),
                   slots.toolbar?.({ table }),
                   props.columnToggle ? h(VtColumnVisibility) : null,
+                  props.groupable ? h(VtGroupBy) : null,
                 ])
               : null,
             h("div", { class: "vt-progress", role: "presentation" }),

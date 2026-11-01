@@ -1,8 +1,8 @@
 # Pin rows to the top or bottom
 
 Keep selected records in view while the centre is searched, sorted and paginated. Configure
-`createTable` or `useDataTable` with a custom body; built-in pinned-row components remain
-follow-up work. Try the [inventory example](/examples/row-pinning).
+`createTable`/`useDataTable` with a custom body, or use the full components' `v-model:row-pinning`.
+Try the [inventory example](/examples/row-pinning) or the [grouped component demo](/examples/row-grouping).
 
 ```ts
 const table = useDataTable({
@@ -83,6 +83,27 @@ const table = useDataTable({
 
 The host owns server pagination, filtering and out-of-page pin retrieval. The engine never
 invents a missing record or counts supplied pins toward its fallback centre count.
+
+## Component regions
+
+`VueyeTable` and `VueyeGrid` render pins in separate top/bottom `tbody` regions, outside the centre
+virtualizer and groups. Top cells stick under the header; bottom cells stick to the viewport end.
+The renderer measures header and pin heights, reserves their space, and gives short virtual
+centres an invisible presentation spacer so bottom pins remain at the viewport end.
+
+`row-pinning-controls` opts into row action menus without enabling editing. Existing row menus
+also offer Pin to top, Pin to bottom and Unpin row. Moving a row keeps its key and restores focus
+to its action control. Group totals and selection coverage update after a leaf leaves the centre.
+Pinned data cells remain ordinary editable/selectable cells. Detail disclosures are omitted for
+standalone non-tree pins; tree disclosures can still affect descendants in the centre.
+
+Headless roots provide `DataTablePinnedRow` context to their default pin regions. Custom pin rows
+must render one native row so measurements refer to the actual row. Cell components combine row
+and column sticky offsets, including utility cells. Grouped or pinned roots expose presentation
+row indices for the displayed page; engine counts and status ranges still describe the centre.
+Custom body attributes apply to the centre section, with its class shared by pin sections.
+
+## Compatibility
 
 **Migration for the next beta:** complete `TableState` literals add
 `rowPinning: { top: [], bottom: [] }`. Partial state patches need no change. Renderers that opt

@@ -1,6 +1,7 @@
 export {
   VtCellEditor,
   VtRowActions,
+  VtGroupRow,
   VtExpandToggle,
   VtDetailRow,
   VtTreeCell,
@@ -20,4 +21,5 @@ export {
   type Density,
 } from "./components";
 export { icon, type IconName } from "./icons";
+export { VtGroupBy } from "./group-by";
 export { withClass } from "./with-class";

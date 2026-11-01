@@ -11,6 +11,8 @@ import type {
   TableStatusSlotProps,
   DetailSlotProps,
   CellEditorSlotProps,
+  GroupSlotProps,
+  AggregateSlotProps,
 } from "@vueye-table/headless";
 import {
   VtGrid,
@@ -20,6 +22,7 @@ import {
   VtStatus,
   VtLoadMore,
   VtToolbar,
+  VtGroupBy,
 } from "@vueye-table/styled";
 import {
   provideDataTable,
@@ -55,10 +58,12 @@ export const VueyeGrid = defineComponent({
     {
       [key: `cell.${string}`]: GridCellSlotProps & { readonly item: unknown };
       [key: `editor.${string}`]: CellEditorSlotProps;
+      [key: `aggregate.${string}`]: AggregateSlotProps;
     } & {
       default?: (props: Record<string, unknown>) => VNode[];
       status?: (props: TableStatusSlotProps) => VNode[];
       expanded?: (props: DetailSlotProps) => VNode[];
+      group?: (props: GroupSlotProps) => VNode[];
     }
   >,
   props: {
@@ -167,7 +172,7 @@ export const VueyeGrid = defineComponent({
       const forwarded: Record<string, unknown> = {};
       if (slots.expanded) forwarded["expanded"] = slots.expanded;
       for (const [name, slot] of Object.entries(slots)) {
-        if (name === "default" && slot) {
+        if ((name === "default" || name === "group" || name.startsWith("aggregate.")) && slot) {
           forwarded[name] = slot;
         } else if (name.startsWith("cell.")) {
           const cellSlot = slots[name as `cell.${string}`];
@@ -185,7 +190,7 @@ export const VueyeGrid = defineComponent({
 
     return () =>
       h("div", { class: "vt-theme vueye-grid", "data-vt-theme": props.theme }, [
-        props.toolbar || props.searchable || props.addRow
+        props.toolbar || props.searchable || props.addRow || props.groupable
           ? h(VtToolbar, () => [
               props.searchable
                 ? h(VtSearch, {
@@ -198,6 +203,7 @@ export const VueyeGrid = defineComponent({
                   })
                 : null,
               h("div", { class: "vt-toolbar-spacer" }),
+              props.groupable ? h(VtGroupBy) : null,
               props.toolbar
                 ? [
                     button(locale().messages.undo, !table.canUndo, () => table.undo()),
@@ -217,8 +223,9 @@ export const VueyeGrid = defineComponent({
             "aria-describedby": attrs["aria-describedby"],
             rowNumbers: props.rowNumbers,
             resizableColumns: props.resizableColumns,
+            aggregatePosition: props.aggregatePosition,
             rowAttrs: props.rowAttrs,
-            rowActions: props.editable || props.removeRows,
+            rowActions: props.editable || props.removeRows || props.rowPinningControls,
             removable: props.removeRows,
             onSave: (result: unknown) => emit("save", result as EditResult<unknown>),
             onCancel: (key: unknown) => emit("cancel", key as string | number),

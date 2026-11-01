@@ -17,6 +17,7 @@ const rows = Array.from({ length: 100 }, (_, id) => ({ id, name: `Row ${id}` }))
 function fixture(observer = false, margin = 0, columnMargin = 0) {
   const scroll = shallowRef<HTMLElement | null>();
   const data = shallowRef(rows);
+  const rowHeights = shallowRef({ top: 0, bottom: 0 });
   const observers: {
     callback: ResizeObserverCallback;
     observe: ReturnType<typeof vi.fn<(element: Element) => void>>;
@@ -55,6 +56,7 @@ function fixture(observer = false, margin = 0, columnMargin = 0) {
         initialCount: 3,
         grid,
         scrollMargin: margin,
+        pinnedRowHeights: rowHeights,
       });
       columns = useVirtualColumns(grid, {
         scrollElement: scroll,
@@ -72,10 +74,32 @@ function fixture(observer = false, margin = 0, columnMargin = 0) {
     clientWidth: { configurable: true, value: 200 },
   });
   el.dispatchEvent(new Event("scroll"));
-  return { table, grid, virtual, columns, data, scroll, el, wrapper, observers };
+  return { table, grid, virtual, columns, data, scroll, el, wrapper, observers, rowHeights };
 }
 
 describe("Vue virtualization", () => {
+  it("reserves measured pin bands, refreshes their heights, and reports invalid reserved space", async () => {
+    const f = fixture(false, 40);
+    await nextTick();
+    f.rowHeights.value = { top: 20, bottom: 30 };
+    await nextTick();
+    expect(f.virtual.viewportSize).toBe(30);
+    f.virtual.scrollToKey(10, { align: "start" });
+    expect(f.el.scrollTop).toBe(400);
+    f.el.scrollTop = 420;
+    f.el.dispatchEvent(new Event("scroll"));
+    expect(f.virtual.offset).toBe(420);
+    f.rowHeights.value = { top: 30, bottom: 40 };
+    await nextTick();
+    expect(f.virtual.viewportSize).toBe(10);
+    f.rowHeights.value = { top: -1, bottom: 40 };
+    await nextTick();
+    expect(f.virtual.issues).toContainEqual(
+      expect.objectContaining({ code: "invalid_virtual_option" }),
+    );
+    expect(f.virtual.viewportSize).toBe(80);
+    f.wrapper.unmount();
+  });
   it("normalizes RTL scroll and reserves a sticky utility gutter without shifting the centre offset", async () => {
     const f = fixture(false, 0, 40);
     await nextTick();

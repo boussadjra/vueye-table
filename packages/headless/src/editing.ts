@@ -1,4 +1,5 @@
 import type { EditResult, GridDirection, RowKey, TableIssue, TableRow } from "@vueye-table/core";
+import { getRowItemKey } from "@vueye-table/core";
 import {
   injectDataTable,
   useDataGrid,
@@ -33,6 +34,7 @@ import {
 } from "./editor";
 import { rowProp, columnProp } from "./shared";
 import { DataTableCell } from "./table";
+import { injectVirtual } from "./virtual";
 
 interface EditingContext {
   readonly grid: DataGridBinding<unknown>;
@@ -140,7 +142,7 @@ export const DataTableEditCell = defineComponent({
     const id = useEditorId();
     const element = shallowRef<HTMLElement>();
     const position = () => ({
-      row: props.rowIndex ?? table.rows.indexOf(props.row),
+      row: props.rowIndex ?? table.gridRows.indexOf(props.row),
       column: table.columns.indexOf(props.column),
     });
     const active = computed(() =>
@@ -346,6 +348,21 @@ export const DataTableRowActions = defineComponent({
     const context = inject(editingKey, undefined);
     const id = useEditorId();
     const element = shallowRef<HTMLElement>();
+    const virtual = injectVirtual();
+    const pin = (side: "top" | "bottom" | false): void => {
+      const root = element.value?.closest("table");
+      const key = props.row.key;
+      table.pinRow(key, side);
+      if (side === false) virtual?.rows.scrollToKey(key);
+      void nextTick(() => {
+        const control = [...(root?.querySelectorAll<HTMLElement>("[data-row-actions-key]") ?? [])]
+          .find((target) => target.getAttribute("data-row-actions-key") === getRowItemKey(key))
+          ?.querySelector<HTMLElement>("summary");
+        control?.focus({ preventScroll: true });
+        if (side === false) control?.scrollIntoView?.({ block: "nearest", inline: "nearest" });
+        if (!control) root?.querySelector<HTMLElement>("thead button")?.focus();
+      });
+    };
     watch(
       () => context?.draft?.rowKey === props.row.key,
       (active, previous) => {
@@ -391,6 +408,7 @@ export const DataTableRowActions = defineComponent({
         {
           ref: element,
           "data-row-actions": "",
+          "data-row-actions-key": getRowItemKey(props.row.key),
           role: "group",
           "aria-label": messages.rowActionsFor(rowName),
           "aria-busy": draft?.pending ? "true" : undefined,
@@ -418,6 +436,20 @@ export const DataTableRowActions = defineComponent({
             [
               h("summary", { "aria-label": messages.actionsForRow(rowName) }, messages.actions),
               h("div", { "data-row-menu": "" }, [
+                button(
+                  messages.pinRowTop,
+                  () => pin("top"),
+                  !!draft || table.rowPinning.top.includes(props.row.key),
+                ),
+                button(
+                  messages.pinRowBottom,
+                  () => pin("bottom"),
+                  !!draft || table.rowPinning.bottom.includes(props.row.key),
+                ),
+                table.rowPinning.top.includes(props.row.key) ||
+                table.rowPinning.bottom.includes(props.row.key)
+                  ? button(messages.unpinRow, () => pin(false), !!draft)
+                  : null,
                 button(
                   messages.revertRow,
                   () => table.revert([props.row.key]),

@@ -1,8 +1,8 @@
 # Row grouping and aggregation
 
 Group flat client data by one or more columns, with nested groups and aggregates over every
-filtered leaf. Use `createTable` or `useDataTable` with a custom body; built-in group rows and
-controls are follow-up work. Try the [runnable example](/examples/row-grouping).
+filtered leaf. Use full components or compose a body with `createTable`/`useDataTable`.
+Try the [runnable example](/examples/row-grouping).
 
 ```ts
 const table = useDataTable<Sale>({
@@ -113,6 +113,45 @@ Streaming append, upsert and removal reuse bucket values for unchanged rows and 
 for unaffected group paths. Membership/order scanning still scales with the input; expansion,
 selection, column widths and pagination do not rerun bucket or aggregate callbacks. See the
 [benchmark](/benchmarks/grouping).
+
+## Full and headless components
+
+Both full components accept `v-model:grouping`, `v-model:expanded-groups` and `v-model:row-pinning`.
+`groupable` opts into the Group by control, which adds, removes and orders grouping columns.
+`aggregate-position="group"` is the default; `"footer"` moves aligned aggregates to a measured
+footer after each expanded group. Collapsed groups retain their header and leaf count.
+
+```vue
+<VueyeTable
+  :data="projects"
+  :columns="columns"
+  groupable
+  v-model:grouping="grouping"
+  v-model:expanded-groups="expandedGroups"
+  v-model:row-pinning="pins"
+  row-pinning-controls
+  aggregate-position="footer"
+  virtual
+  virtual-columns
+  height="28rem"
+/>
+```
+
+`#group="{ group, label, toggle }"` fills the disclosure button's content; keep it non-interactive.
+`#aggregate.<id>="{ group, column, value, display }"` customizes an aggregate cell. Defaults render
+formatted text. Group rows and totals never become editable grid coordinates; leaf cells keep
+normal editing, selection, sorting and source-update rules. A group checkbox selects its filtered
+centre leaves, excluding pins. Streaming batches refresh counts and aggregates by stable keys.
+
+Headless composition uses `DataTableGroupRow` and `DataTableAggregateCell`; styled exports add
+`VtGroupRow` and `VtGroupBy`. Body components render group rows by default and accept the same
+group/aggregate slots. A custom body `default` slot owns its centre markup; use the row/group slots
+to keep automatic rendering and measurements. Grouped roots use `role="treegrid"` with group
+levels and expansion state. Their row counts/indices describe the displayed page's full sequence:
+header, top pins, group/data/detail/footer items, bottom pins. Virtualization omits DOM rows but
+retains these indices. Ordinary ungrouped, unpinned tables keep their existing count policy.
+
+See [ADR 0029](/adr/0029-grouped-and-pinned-row-components) for layout and accessibility decisions.
 
 ## Export and compatibility
 

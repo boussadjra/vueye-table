@@ -3,6 +3,9 @@ import {
   DataGridBody,
   DataGridRoot,
   DataTableBody,
+  DataTableGroupRow,
+  groupingProps,
+  type GroupSlots,
   DataTableColumnVisibility,
   DataTableHeader,
   DataTableHeaderCell,
@@ -56,9 +59,22 @@ import { withClass } from "./with-class";
 
 export type Density = "compact" | "comfortable" | "spacious";
 
+function forwardedGroups(slots: GroupSlots): GroupSlots {
+  const result: GroupSlots = {};
+  if (slots.group) result.group = slots.group;
+  for (const name of Object.keys(slots))
+    if (name.startsWith("aggregate.")) {
+      const key = name as `aggregate.${string}`;
+      const slot = slots[key];
+      if (slot) result[key] = slot;
+    }
+  return result;
+}
+
 /** Visual options shared by the styled table and grid. */
 const surfaceProps = {
   ...virtualProps,
+  ...groupingProps,
   resizableColumns: { type: Boolean, default: false },
   ...hierarchyProps,
   density: { type: String as PropType<Density>, default: "comfortable" },
@@ -215,10 +231,12 @@ export const VtHeader = defineComponent({
  */
 export const VtTable = defineComponent({
   name: "VtTable",
-  slots: Object as SlotsType<{
-    default?: (props: { table: DataTableBinding<unknown> }) => VNode[];
-    expanded?: (props: DetailSlotProps) => VNodeChild;
-  }>,
+  slots: Object as SlotsType<
+    {
+      default?: (props: { table: DataTableBinding<unknown> }) => VNode[];
+      expanded?: (props: DetailSlotProps) => VNodeChild;
+    } & GroupSlots
+  >,
   props: {
     table: { type: Object as PropType<AnyDataTableBinding>, required: true },
     leadingColumns: { type: Number, default: 0 },
@@ -250,6 +268,7 @@ export const VtTable = defineComponent({
                 leadingColumns: props.leadingColumns,
                 leadingColumnWidths: props.leadingColumnWidths,
                 resizableColumns: props.resizableColumns,
+                aggregatePosition: props.aggregatePosition,
                 virtual: props.virtual,
                 virtualColumns: props.virtualColumns,
                 rowHeight: props.rowHeight,
@@ -261,7 +280,11 @@ export const VtTable = defineComponent({
                 default: () =>
                   slots.default?.({ table: props.table }) ?? [
                     h(VtHeader),
-                    h(VtBody, { treeColumn: props.treeColumn }, { detail: slots.expanded }),
+                    h(
+                      VtBody,
+                      { treeColumn: props.treeColumn },
+                      { ...forwardedGroups(slots), detail: slots.expanded },
+                    ),
                   ],
               },
             ),
@@ -274,12 +297,14 @@ export const VtTable = defineComponent({
 /** The styled body, with the empty state in a full-width row. */
 export const VtBody = defineComponent({
   name: "VtBody",
-  slots: Object as SlotsType<{
-    default?: (props: { rows: readonly TableRow<unknown>[] }) => VNode[];
-    empty?: () => VNode[];
-    detail?: (props: DetailSlotProps) => VNodeChild;
-    row?: (props: DetailSlotProps) => VNodeChild;
-  }>,
+  slots: Object as SlotsType<
+    {
+      default?: (props: { rows: readonly TableRow<unknown>[] }) => VNode[];
+      empty?: () => VNode[];
+      detail?: (props: DetailSlotProps) => VNodeChild;
+      row?: (props: DetailSlotProps) => VNodeChild;
+    } & GroupSlots
+  >,
   props: {
     ...virtualProps,
     treeColumn: { type: String as PropType<string | undefined>, default: undefined },
@@ -287,6 +312,19 @@ export const VtBody = defineComponent({
   setup(props, { slots }) {
     const table = injectDataTable("<VtBody>");
     const locale = useTableLocale();
+    const virtual = injectVirtualRenderer();
+    const cell = (row: TableRow<unknown>, column: TableColumn<unknown>): VNode =>
+      h(
+        DataTableCell,
+        { key: column.id, row, column, tree: false },
+        {
+          default: () =>
+            table.tree && column.id === resolveTreeColumn(table, props.treeColumn)
+              ? h(VtTreeCell, { row }, () => row.getDisplay(column.id))
+              : row.getDisplay(column.id),
+          $stable: true,
+        },
+      );
     return () =>
       h(
         DataTableBody,
@@ -301,19 +339,17 @@ export const VtBody = defineComponent({
                 { key: row.key, row, rowIndex },
                 {
                   default: () =>
-                    table.columns.map((column) =>
-                      h(
-                        DataTableCell,
-                        { key: column.id, row, column, tree: false },
-                        {
-                          default: () =>
-                            table.tree && column.id === resolveTreeColumn(table, props.treeColumn)
-                              ? h(VtTreeCell, { row }, () => row.getDisplay(column.id))
-                              : row.getDisplay(column.id),
-                          $stable: true,
-                        },
-                      ),
-                    ),
+                    virtual?.columns
+                      ? h(
+                          DataTableVirtualColumns,
+                          { as: "td" },
+                          {
+                            default: ({ column }: { column: TableColumn<unknown> }) => [
+                              cell(row, column),
+                            ],
+                          },
+                        )
+                      : table.columns.map((column) => cell(row, column)),
                   $stable: true,
                 },
               )),
@@ -533,6 +569,7 @@ export const VtCellEditor = defineComponent({
   },
 });
 export const VtRowActions = withClass(DataTableRowActions, "vt-row-actions", "VtRowActions");
+export const VtGroupRow = withClass(DataTableGroupRow, "vt-group-row", "VtGroupRow");
 
 const GridBody = defineComponent({
   name: "VtGridBody",
@@ -555,6 +592,7 @@ const GridBody = defineComponent({
     rowActions: { type: Boolean, default: false },
     removable: { type: Boolean, default: false },
     rowAttrs: { type: Function as PropType<AnyRowAttrs | undefined>, default: undefined },
+    groups: { type: Object as PropType<GroupSlots>, default: () => ({}) },
   },
   setup(props) {
     const table = injectDataTable("<VtGrid>");
@@ -570,19 +608,26 @@ const GridBody = defineComponent({
           colspan: table.columns.length + (props.rowNumbers || details || props.rowActions ? 1 : 0),
         },
         {
+          ...props.groups,
           detail: props.detail,
-          rowHeader: ({ index }: { index: number }) =>
+          rowHeader: ({ row, index }: { row: TableRow<unknown>; index: number }) =>
             props.rowNumbers || details || props.rowActions
               ? h(
                   DataTableLeadingCell,
                   { as: "th", class: "vt-row-number", scope: "row", "aria-colindex": 1 },
                   {
                     default: () => [
-                      details ? h(VtExpandToggle, { row: table.rows[index]! }) : null,
-                      props.rowNumbers ? String(table.pageStart + index) : null,
+                      details ? h(VtExpandToggle, { row }) : null,
+                      props.rowNumbers
+                        ? String(
+                            table.grouped || table.topRows.length || table.bottomRows.length
+                              ? index + 1
+                              : table.pageStart + index,
+                          )
+                        : null,
                       props.rowActions
                         ? h(VtRowActions, {
-                            row: table.rows[index]!,
+                            row,
                             editable: false,
                             removable: props.removable,
                           })
@@ -617,10 +662,10 @@ export const VtGrid = defineComponent({
     {
       [key: `cell.${string}`]: GridCellSlotProps;
       [key: `editor.${string}`]: CellEditorSlotProps;
-    } & {
-      default?: (props: Record<string, unknown>) => VNode[];
-      expanded?: (props: DetailSlotProps) => VNodeChild;
-    }
+    } & GroupSlots & {
+        default?: (props: Record<string, unknown>) => VNode[];
+        expanded?: (props: DetailSlotProps) => VNodeChild;
+      }
   >,
   props: {
     table: { type: Object as PropType<AnyDataTableBinding>, required: true },
@@ -703,6 +748,7 @@ export const VtGrid = defineComponent({
                 label: props.label,
                 leadingColumns: props.rowNumbers || details() || props.rowActions ? 1 : 0,
                 resizableColumns: props.resizableColumns,
+                aggregatePosition: props.aggregatePosition,
                 "aria-describedby": attrs["aria-describedby"],
                 class: "vt-table vt-grid",
                 virtual: props.virtual,
@@ -730,6 +776,7 @@ export const VtGrid = defineComponent({
                     header(),
                     h(GridBody, {
                       rowNumbers: props.rowNumbers,
+                      groups: forwardedGroups(slots),
                       cells: cellSlots(),
                       editors: editorSlots(),
                       rowActions: props.rowActions,

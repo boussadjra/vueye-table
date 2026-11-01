@@ -25,6 +25,7 @@ import {
   type VNodeChild,
 } from "vue";
 
+import { injectRowLayout } from "./row-layout";
 import { asProp } from "./shared";
 
 export interface ComponentVirtualOptions {
@@ -107,22 +108,34 @@ export function createComponentVirtual(
   gutter = 0,
 ): ComponentVirtualBinding {
   const scrollElement = inject(viewportKey, shallowRef<HTMLElement | null>(null));
+  const layout = injectRowLayout();
   const rows = useVirtualRows(table, {
     scrollElement,
     estimateRowHeight: options.rowHeight,
     overscan: options.overscan,
     initialCount: options.initialCount,
     grid,
-    scrollMargin: () => tableElement()?.querySelector("thead")?.getBoundingClientRect().height ?? 0,
+    renderItems: () => layout?.items ?? table.renderItems,
+    pinnedRowHeights: () => ({ top: layout?.topHeight ?? 0, bottom: layout?.bottomHeight ?? 0 }),
+    scrollMargin: () =>
+      layout?.headerHeight ??
+      tableElement()?.querySelector("thead")?.getBoundingClientRect().height ??
+      0,
   });
   onMounted(() => {
     watch(
-      () => [rows.endIndex, table.renderItems.length, table.canLoadMore] as const,
+      () =>
+        [
+          rows.endIndex,
+          layout?.items.length ?? table.renderItems.length,
+          table.canLoadMore,
+        ] as const,
       () => {
         if (
           table.loadingMode === "cursor" &&
           table.canLoadMore &&
-          rows.endIndex >= table.renderItems.length - 1 - table.endThreshold
+          rows.endIndex >=
+            (layout?.items.length ?? table.renderItems.length) - 1 - table.endThreshold
         )
           void table.loadNext();
       },
@@ -150,13 +163,12 @@ export function createComponentVirtual(
         )
       )
         continue;
-      const direct = table.renderItems[position];
+      const items = layout?.items ?? table.renderItems;
+      const direct = items[position];
       const index =
         direct?.kind === "row" && direct.rowIndex === position
           ? position
-          : table.renderItems.findIndex(
-              (item) => item.kind === "row" && item.rowIndex === position,
-            );
+          : items.findIndex((item) => item.kind === "row" && item.rowIndex === position);
       const item = rows.getItem(index);
       if (item) result.push(item);
     }
@@ -165,7 +177,11 @@ export function createComponentVirtual(
   const retainedColumns = computed(() => {
     if (!columns) return undefined;
     const result = [...columns.items];
-    const positions = new Set([grid?.selection?.focus.column, grid?.editor?.position.column]);
+    const positions = new Set([
+      grid?.selection?.focus.column,
+      grid?.editor?.position.column,
+      ...(table.grouped ? [0] : []),
+    ]);
     for (const position of positions) {
       if (position === undefined || result.some((item) => item.index === position)) continue;
       const item = columns.getItem(position);
@@ -268,6 +284,23 @@ export function renderColumns(
   }
   result.push(columnSpacer(binding.columns.totalSize - end, tag, "gap-end"));
   return result;
+}
+/** Native colspans count rendered cells and spacers, rather than logical omitted columns. */
+export function physicalColumnCount(
+  binding: ComponentVirtualBinding | undefined,
+  count: number,
+  leading = 0,
+): number {
+  if (!binding?.columns || !binding.columnItems) return Math.max(1, count + leading);
+  let end = 0;
+  let size = leading;
+  for (const item of binding.columnItems) {
+    if (item.start > end) size++;
+    size++;
+    end = item.start + item.size;
+  }
+  if (binding.columns.totalSize > end) size++;
+  return Math.max(1, size);
 }
 export function renderRows(
   binding: ComponentVirtualBinding,

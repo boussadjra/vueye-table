@@ -175,6 +175,21 @@ only while that cell exists in its rendered slice.
 
 Pass the same `grid` in row options to bring logical row focus into view during keyboard navigation; columns automatically follow their grid. `grid.table` exposes the owning table. Supply your own accessible markup, focus handling, row/column counts and indices; these bindings do not render components or change DOM focus. Native tables can use spacer rows; custom grids can use positioned items as in the example. `getItem(index)` reads a frozen offscreen item without scrolling; a missing index returns undefined. Optional `scrollMargin` reserves leading header/gutter space and can be a reactive getter. Invalid margins recover to zero with a TableIssue.
 
+## Pinned regions and presentation items
+
+`useVirtualRows` additionally accepts a reactive `renderItems` presentation sequence and
+`pinnedRowHeights: () => ({ top, bottom })` in pixels. Presentation keys must remain unique and
+stable; data items keep their original logical `rowIndex`. Components use this for measured
+aggregate footers without changing engine rows or grid coordinates. Pin bands and the header
+reserve viewport space; while pins are present, vertical offsets describe the scrolling centre
+directly. Invalid reserved heights recover to zero with `invalid_virtual_option`.
+
+Component group headers and aggregate footers are keyed and measured independently. Pin regions
+are always rendered outside that slice. The first data column is retained for group labels when
+horizontal virtualization is enabled; colspans count the actual native cells/spacers. Footer
+placement and source updates preserve the surviving visible key and inset. A caller-owned body
+`default` slot remains responsible for its own presentation markup.
+
 ## Component props
 
 Both full components now support `virtual-columns` with `virtual`. Pinned columns remain outside
