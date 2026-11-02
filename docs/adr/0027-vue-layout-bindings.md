@@ -1,6 +1,6 @@
 # 0027 — Reactive Vue layout and virtual regions
 
-Status: accepted for the next beta.
+Status: accepted; implemented in 3.0.0-beta.7.
 
 ## Decision
 

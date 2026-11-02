@@ -163,7 +163,7 @@ when collapsed; add `pageOnly: true` to export just visible page items. `columns
 Trees ignore grouping and report `grouping_with_tree`. Manual tables forward grouping/expansion
 state to the server and do not group or aggregate a partial server page.
 
-**Migration for the next beta:** complete `TableState` literals must add `grouping: []` and
+**Migration from beta.5 or earlier:** complete `TableState` literals must add `grouping: []` and
 `expandedGroups: true`. Partial state patches need no change. Custom renderers must handle the
 new `kind: 'group'` union member before accessing a data row. See
 [ADR 0025](/adr/0025-row-grouping-and-aggregation).

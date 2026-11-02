@@ -5,9 +5,13 @@ With `layers: true`, editor primitives `DataCellEditor`, `DataTableEditRoot`,
 Full-component `edit-mode` and `editor.<id>` slots work with the default component registration;
 see [editing](/guide/editing).
 
+<!-- current-release:start -->
+
 ```bash
-pnpm add @vueye-table/nuxt@3.0.0-beta.4
+pnpm add @vueye-table/nuxt@3.0.0-beta.7
 ```
+
+<!-- current-release:end -->
 
 This is a prerelease for application feedback. Keep directly installed vueye-table packages on
 the same version. See the [beta contract](/guide/beta) for API guarantees and acceptance limits.
@@ -37,3 +41,11 @@ The same option registers `DataTableExpandToggle`, `DataTableDetailRow`, `DataTa
 their styled equivalents `VtExpandToggle`, `VtDetailRow`, `VtTreeCell`. Expansion IDs use Vue's
 SSR-stable instance IDs; provide the same initial rows and expanded state on server and client.
 See [row expansion](/guide/expansion) and [tree data](/guide/trees).
+
+Full tables and grids also support resizing, column/row pinning, grouping and aggregate slots.
+The module's current `layers` registration list does not include the newer standalone layout and
+grouping primitives. When composing those directly, import them in `<script setup>` from
+`vueye-table` (for example `DataTableColumnResizer`, `DataTableLeadingCell`, `DataTableGroupRow`,
+`DataTableAggregateCell`, `DataTablePinnedRow`, `VtGroupRow`, `VtGroupBy`). Full-component
+`resizable-columns`, `groupable`, pinning models and `group` / `aggregate.<id>` slots work with
+the default registration. See [components](/guide/components).

@@ -58,9 +58,13 @@ pnpm check                         # the full gate before finishing
 
 ## Status
 
-All six packages are published as `3.0.0-beta.1` on npm's `beta` channel, with provenance and a
-[GitHub prerelease](https://github.com/boussadjra/vueye-table/releases/tag/v3.0.0-beta.1). The [beta contract](./docs/guide/beta.md) records
+<!-- current-release:start -->
+
+All six packages are published as `3.0.0-beta.7` on npm's `beta` and `latest` channels, with provenance and a
+[GitHub release](https://github.com/boussadjra/vueye-table/releases/tag/v3.0.0-beta.7). The [beta contract](./docs/guide/beta.md) records
 the documented API and remaining acceptance limits. Do not claim production readiness.
+
+<!-- current-release:end -->
 
 Releases go through changesets in `beta` pre mode and `.github/workflows/release.yml`; see
 [RELEASING.md](./RELEASING.md). Publish with `pnpm publish:packages`, never `changeset publish`.

@@ -1,7 +1,5 @@
 # vueye-table
 
-`VueyeTable` and `VueyeGrid` support opt-in virtualization through `virtual`, `height`, `rowHeight` and `overscan`; grids also expose `virtualColumns` and `columnWidth`. Virtual tables default to no paging, with `paginate` available for large pages. The guide and runnable 100k-record example live in `docs/guide/virtualization.md` and `docs/examples/virtual-components.md`.
-
 A Vue framework for data, data tables, and spreadsheets.
 
 vueye-table began as a single table component. Version 3 is a rewrite around one idea: a table is
@@ -21,17 +19,42 @@ undo, clipboard, and export. Vue layers sit on top of it, and you pick the one t
 Each layer depends only on the layers beneath it, and `vueye-table` re-exports all of them, so
 one install covers every level.
 
-> **Status:** `3.0.0-alpha`. The API is provisional and may change between alpha releases. The
-> 2.x component lives on the [`legacy`](https://github.com/boussadjra/vueye-table/tree/legacy)
-> branch; see [Upgrading from 2.x](./docs/guide/upgrading-from-2.md).
+<!-- current-release:start -->
+
+> **Status:** `3.0.0-beta.7`, published on npm's `beta` and `latest` channels. The beta is for application
+> feedback: documented import paths, options, events and slot scopes are kept stable, and a
+> necessary breaking change ships with an ADR and migration notes. It is not production ready.
+> See [the beta contract](https://github.com/boussadjra/vueye-table/blob/main/docs/guide/beta.md). The 2.x component lives on the
+> [`legacy`](https://github.com/boussadjra/vueye-table/tree/legacy) branch; see
+> [Upgrading from 2.x](https://github.com/boussadjra/vueye-table/blob/main/docs/guide/upgrading-from-2.md).
 
 ## Install
 
 ```bash
-pnpm add vueye-table
+pnpm add vueye-table@beta
 ```
 
-Vue 3.5 or newer is a peer dependency.
+Install an exact version such as `3.0.0-beta.7` to pin a release. Both `pnpm add vueye-table` and
+`pnpm add vueye-table@beta` follow the current beta. Vue 3.5 or newer is a peer dependency.
+
+<!-- current-release:end -->
+
+## What the beta covers
+
+- **Tables and spreadsheets**: search, column filters, multi-column sorting, pagination,
+  selection, column visibility, CSV/TSV export, and a spreadsheet grid with clipboard and undo.
+- **Editing and validation**: inline cell and row editing in `VueyeTable`, typed and custom
+  editors, validation issues, dirty rows, revert, and a saved baseline you acknowledge.
+- **Expansion and trees**: detail rows, nested and lazy-loaded children, tree search that keeps
+  matching branches.
+- **Grouping and layout**: nested group rows, aggregate headers or footers, column resizing,
+  sticky columns and top/bottom row regions, including virtualized tables and grids.
+- **Large data**: opt-in row and column virtualization for tables and grids, and incremental
+  streams, cursor loading, and cancellable sources.
+- **Language and themes**: every word shown or announced comes from `messages`, numbers and
+  ordering follow `locale`, search ignores case and accents, and host design tokens win over
+  the defaults.
+- **Server data**: `manual` mode hands searching, sorting and paging to your API.
 
 ## Full table
 
@@ -75,9 +98,16 @@ const selected = ref<readonly RowKey[]>([]);
 Column ids are typed paths into your rows, so `format` above receives a `number`. Without
 `columns`, columns are inferred from the data.
 
-Every piece of state has a `v-model`: `page`, `pageSize`, `sorting`, `search`, `filters`,
-`hiddenColumns`, and `selected`. Add `manual` and `row-count` to let a server search, sort, and
-page, with the table presenting whatever page it returns.
+The full components expose `v-model` bindings for `page`, `pageSize`, `sorting`, `search`,
+`filters`, `hiddenColumns`, `selected`, `expanded`, `columnSizing`, `columnPinning`, `grouping`,
+`expandedGroups` and `rowPinning`. Add `manual` and `row-count` to let a server search, sort,
+and page, with the table presenting whatever page it returns.
+
+Use `resizable-columns` for resize handles and `groupable` for ordered grouping controls.
+`aggregate-position="footer"` moves group totals below their expanded leaves;
+`row-pinning-controls` enables pin actions without enabling editing. See
+[grouping](https://github.com/boussadjra/vueye-table/blob/main/docs/guide/grouping.md), [column layout](https://github.com/boussadjra/vueye-table/blob/main/docs/guide/columns.md) and
+[row pinning](https://github.com/boussadjra/vueye-table/blob/main/docs/guide/row-pinning.md) for examples and model shapes.
 
 ## Spreadsheet
 
@@ -111,7 +141,8 @@ const table = useDataTable({ data: users, columns });
 
 Headless components render semantic, accessible markup (`aria-sort`, `aria-selected`,
 `aria-rowindex`, a polite live status, grid keyboard navigation) with `data-*` state attributes
-and no styles. Every one accepts `as` and exposes its state through slot props.
+and no styles. Components expose slot props and `data-*` state; primitives with an `as` prop
+let you choose their element. Structural group and pinned-row composition retain native rows.
 
 ## Engine
 
@@ -152,21 +183,34 @@ The styled layer is driven by CSS custom properties on `.vt-surface`:
 }
 ```
 
-Dark colors follow `prefers-color-scheme`; `theme="dark"` or `theme="light"` forces one.
-Density is `compact`, `comfortable`, or `spacious`.
+Dark colors follow `prefers-color-scheme`; `theme="dark"` or `theme="light"` forces one, and
+`theme="inherit"` declares no colors so the host's own tokens apply. The defaults have zero
+specificity, so your tokens always win. Density is `compact`, `comfortable`, or `spacious`.
+
+## Language
+
+```vue
+<VueyeTable :data="rows" :columns="columns" locale="fr" :messages="{ columns: 'Colonnes' }" />
+```
+
+Every word a table shows or announces comes from `TableMessages`; whatever you leave out keeps its
+English default. `app.use(VueyeTablePlugin, { locale, messages })` sets them for the whole
+application. Arrow keys and chevrons mirror in right-to-left layouts.
 
 ## Development
 
 ```bash
 pnpm install
 pnpm playground      # every layer, side by side
+pnpm docs:dev        # the documentation site
 pnpm test            # every Vitest project
 pnpm check           # format, lint, types, tests with coverage, build, boundaries, packages
+pnpm docs:sync       # sync current-release copy and the npm README from the package version
 ```
 
-Architecture lives in [ARCHITECTURE.md](./ARCHITECTURE.md) and decisions in
-[docs/adr](./docs/adr).
+Architecture lives in [ARCHITECTURE.md](https://github.com/boussadjra/vueye-table/blob/main/ARCHITECTURE.md) and decisions in
+[docs/adr](https://github.com/boussadjra/vueye-table/blob/main/docs/adr).
 
 ## License
 
-[MIT](./LICENSE)
+[MIT](https://github.com/boussadjra/vueye-table/blob/main/LICENSE)

@@ -143,8 +143,9 @@ cross-field rule. Insert and remove rows, undo a batch, and compare pending reco
 
 <ValidatedEdits />
 
-The component composes `useDataTable` with native inputs; full component editor/async integration
-remains follow-up work. See [Validation and changes since save](/guide/validation) for the contracts.
+This example composes `useDataTable` with native inputs. Full table/grid components also support
+typed/custom editors and asynchronous validation; see [inline editors](/examples/inline-editors),
+[editing](/guide/editing) and [Validation and changes since save](/guide/validation).
 
 ::: details Runnable example source
 <<< @/.vitepress/theme/components/ValidatedEdits.vue

@@ -9,8 +9,9 @@ follow the new engine. The 2.x source is on the `legacy` branch.
 pnpm add vueye-table@beta
 ```
 
-3.0 is published on npm's `beta` channel. A plain `pnpm add vueye-table` still installs the last
-alpha, and `vueye-table@1` the old line.
+The current 3.0 beta is published on both npm's `beta` and `latest` channels. A plain
+`pnpm add vueye-table` follows the same beta as `@beta`; pin an exact version for a fixed
+release. `vueye-table@1` installs the old 1.x line. See the [beta contract](/guide/beta).
 
 ```diff
 - import { VueyeTable } from "vueye-table";
