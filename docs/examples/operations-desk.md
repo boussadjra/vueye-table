@@ -5,6 +5,10 @@ installs all six published npm packages at **3.0.0-beta.1** and runs a Nuxt serv
 the in-page demos cannot: persistent saves, concurrent revisions, actual HTTP cancellation and SSR
 integration.
 
+The beta.1 pin records that consumer's acceptance baseline. It does not track the
+[current release](/guide/beta), and the historical test matrix does not establish acceptance
+for later betas. The main repository's current-feature demos run against its workspace packages.
+
 ```sh
 cd examples/operations-desk
 pnpm install --frozen-lockfile
@@ -12,7 +16,7 @@ pnpm dev
 # Open http://127.0.0.1:4310
 ```
 
-Use Node 24.18.0 and pnpm 11.17.0. The generated local database contains 100,000 orders and 2,000
+Use Node 24.22.1 and pnpm 11.17.0. The generated local database contains 100,000 orders and 2,000
 stock items. Inventory also offers a 100,000-row, 24-column virtual grid. Orders support cursor
 loading and delayed/outage requests; locations load branches over HTTP; receiving consumes a real
 NDJSON stream with multilingual notes.

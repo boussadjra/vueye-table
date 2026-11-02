@@ -105,7 +105,7 @@ Custom body attributes apply to the centre section, with its class shared by pin
 
 ## Compatibility
 
-**Migration for the next beta:** complete `TableState` literals add
+**Migration from beta.6 or earlier:** complete `TableState` literals add
 `rowPinning: { top: [], bottom: [] }`. Partial state patches need no change. Renderers that opt
 into pinning must use the three regions and `gridRows` for coordinates. See
 [ADR 0026](/adr/0026-row-pinning).

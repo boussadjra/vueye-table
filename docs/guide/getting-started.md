@@ -2,9 +2,13 @@
 
 ## Install
 
+<!-- current-release:start -->
+
 ```bash
-pnpm add vueye-table@3.0.0-beta.4
+pnpm add vueye-table@3.0.0-beta.7
 ```
+
+<!-- current-release:end -->
 
 3.0 is in beta, published on npm's `beta` and `latest` channels. Both `pnpm add vueye-table` and
 `pnpm add vueye-table@beta` follow subsequent betas; the exact version above pins this release.

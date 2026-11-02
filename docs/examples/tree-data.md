@@ -16,4 +16,7 @@ import TreeData from '../.vitepress/theme/components/TreeData.vue'
 
 <<< ../.vitepress/theme/components/TreeData.vue
 
-The example supplies its own disclosure buttons and indentation. The [tree guide](/guide/trees) covers flat parent keys, filtering modes, cancellation, editing and export. Arrow-key tree navigation and styled tree controls remain separate follow-up work.
+The example supplies its own disclosure buttons and indentation. The [tree guide](/guide/trees)
+covers flat parent keys, filtering modes, cancellation, editing and export. Built-in disclosures,
+styled tree cells and arrow-key tree navigation are available in the
+[tree and detail component example](/examples/hierarchy-components).

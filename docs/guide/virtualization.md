@@ -228,6 +228,11 @@ Virtual `VueyeTable` defaults to all rows with pagination controls hidden. Suppl
 
 The built-in grid keeps active and edited rows/columns mounted if manual scrolling moves them away. Arrow keys, Page Up/Down and Ctrl/Command + Home/End bring the active cell into view; copy/paste, editing and undo use logical positions. Spacer cells/rows are hidden from assistive technology. Full counts and true row/column indices are preserved.
 
-For custom composition, wrap `DataTableRoot`/`DataGridRoot` in `DataTableViewport` and enable `virtual` on the root or body. `DataTableVirtualColumns` and `injectVirtualRenderer()` share column layout with custom headers. Built-in cell and row-header slots retain automatic rendering; a whole-body replacement owns measurement, gap placement and mounted focus targets. `DataTableBody` accepts a measured `detail` slot for expanded content; tree controls and rich grid details remain separate component work.
+For custom composition, wrap `DataTableRoot`/`DataGridRoot` in `DataTableViewport` and enable `virtual`
+on the root or body. `DataTableVirtualColumns` and `injectVirtualRenderer()` share column layout
+with custom headers. Built-in cell and row-header slots retain automatic rendering; a whole-body
+replacement owns measurement, gap placement and mounted focus targets. Both body renderers accept
+measured `detail` slots, and full components forward `expanded` content. Built-in tree controls
+participate in virtual keyboard navigation; see [tree and detail components](/examples/hierarchy-components).
 
 Try the [100k-record component example](/examples/virtual-components). The public decisions are recorded in [ADR 0013](/adr/0013-component-virtualization).

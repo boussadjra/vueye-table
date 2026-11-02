@@ -17,7 +17,9 @@ removing a pinned record prunes its key with an issue.
 
 The example renders `topRows`, `rows` and `bottomRows` as three table bodies. `gridRows` supplies
 the visual coordinate space for `useDataGrid`, clipboard operations and focus. Sticky styles are
-owned by the example; built-in pinned-row components remain follow-up work.
+owned by this custom renderer. Full table/grid components now render and measure sticky pin
+regions automatically; try the [grouped-row component example](/examples/row-grouping) for the
+built-in row actions and pinning models.
 
 See [row pinning](/guide/row-pinning) for filter behaviour, manual-page supply and migration,
 and [ADR 0026](/adr/0026-row-pinning) for the complete contract.

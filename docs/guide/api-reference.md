@@ -1,6 +1,6 @@
-# Ingestion, hierarchy and editing API
+# API reference
 
-This reference maps the virtualization, streaming and editing roadmap APIs to their detailed
+This reference maps virtualization, streaming, editing, hierarchy and layout APIs to their detailed
 contracts. `vueye-table` re-exports lower layers; import a lower layer when composing your own
 view. Vue exposes snapshot fields directly; core uses `getSnapshot()`.
 
@@ -45,7 +45,7 @@ active cells, spacers, ARIA indices, SSR estimates and disabling pagination.
 | `treeFilter`, `paginateBy`, `maxDepth`                                          | Ancestry filtering, root/row pagination and recovery depth.                                                                                                              |
 | `setTreeFilter(mode)`                                                           | Changes search context without resetting loaded branches, expansion, selection or edits. Undefined restores `ancestors`; Vue also accepts a ref/getter for `treeFilter`. |
 | `row.depth`, `parentKey`, `canExpand`, `isExpanded`, `childStatus`, `selection` | Hierarchy metadata; source objects stay unchanged.                                                                                                                       |
-| `renderItems`, `TableRenderItem`, `getRowItemKey`                               | Stable data/detail items. Details do not change grid addresses or pagination counts.                                                                                     |
+| `renderItems`, `TableRenderItem`, `getRowItemKey`                               | Keyed data/detail/group items. Narrow `kind` before reading a leaf. Structural rows do not occupy data-cell coordinates.                                                 |
 | `rowCanExpand`, `expandMode`, `keepAliveDetail`, `treeColumn`, `#expanded`      | Component presentation.                                                                                                                                                  |
 
 Types include `TreeOptions`, `TreeFilter`, `TreePagination`, `TreeLoadSignal`,
@@ -87,6 +87,12 @@ before reading a leaf. `getAggregate(id)` returns a value and `getAggregateDispl
 subtotal text. `exportRows({groups: true})` includes labels and aggregates. See
 [grouping](/guide/grouping) for pagination units, aggregates, manual/tree limits and migration.
 
+Full components add `groupable`, `aggregate-position`, `v-model:grouping` and
+`v-model:expanded-groups`. `DataTableGroupRow`, `DataTableAggregateCell` and `VtGroupRow` render
+structural rows; `VtGroupBy` manages ordered grouping. Slots `group` and `aggregate.<id>` customize
+content while retaining structural semantics. Group/footer rows are read-only and omitted from
+grid-cell navigation and editing.
+
 ## Row pinning
 
 `pinRow(key, "top" | "bottom" | false)` changes the ordered `state.rowPinning` regions.
@@ -94,3 +100,18 @@ Snapshots expose `topRows`, centre `rows`/`renderItems`, `bottomRows`, and visua
 Client pagination counts the centre; `keepPinnedRows` controls filter visibility.
 Grid navigation, ranges and clipboard operations use `gridRows`. See [row pinning](/guide/row-pinning)
 for manual-page supply, stale-key recovery, tree behaviour and migration.
+
+`VueyeTable` and `VueyeGrid` expose `v-model:row-pinning` and optional `row-pinning-controls`.
+Default bodies render measured sticky pin bands outside the virtual centre; `DataTablePinnedRow`
+provides region context for custom native rows. Accessible row counts include the displayed
+header, pins, groups, leaves, details and aggregate footers.
+
+## Column layout
+
+`resizeColumn(id, pixels)`, `resetColumnSize(id?)` and `pinColumn(id, "start" | "end" | false)`
+change `columnSizing` and `columnPinning`. Snapshots expose effective widths, offsets and pinned
+edges. Vue bindings accept reactive layout state and constraints without external-update echoes.
+Full components expose `column-sizing` / `column-pinning` models and opt-in `resizable-columns`.
+`DataTableColumnResizer` supplies accessible pointer/keyboard resizing; `DataTableLeadingCell`
+aligns utility cells with pinned columns. See [columns](/guide/columns),
+[components](/guide/components) and [virtualization](/guide/virtualization).

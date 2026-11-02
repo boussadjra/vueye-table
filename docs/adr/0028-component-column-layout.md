@@ -1,6 +1,6 @@
 # 0028 — Component resizing and pinned columns
 
-Status: accepted for the next beta.
+Status: accepted; implemented in 3.0.0-beta.7.
 
 ## Decision
 

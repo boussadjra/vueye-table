@@ -121,6 +121,9 @@ const decisionItems: DefaultTheme.SidebarItem[] = [
       { text: "0024 Column sizing and pinning", link: "/adr/0024-column-sizing-and-pinning" },
       { text: "0025 Row grouping and aggregation", link: "/adr/0025-row-grouping-and-aggregation" },
       { text: "0026 Row pinning", link: "/adr/0026-row-pinning" },
+      { text: "0027 Vue layout bindings", link: "/adr/0027-vue-layout-bindings" },
+      { text: "0028 Resizable and pinned columns", link: "/adr/0028-component-column-layout" },
+      { text: "0029 Grouped and pinned rows", link: "/adr/0029-grouped-and-pinned-row-components" },
     ],
   },
   {

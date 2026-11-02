@@ -19,7 +19,9 @@ undo, clipboard, and export. Vue layers sit on top of it, and you pick the one t
 Each layer depends only on the layers beneath it, and `vueye-table` re-exports all of them, so
 one install covers every level.
 
-> **Status:** `3.0.0-beta.4`, published on npm's `beta` and `latest` channels. The beta is for application
+<!-- current-release:start -->
+
+> **Status:** `3.0.0-beta.7`, published on npm's `beta` and `latest` channels. The beta is for application
 > feedback: documented import paths, options, events and slot scopes are kept stable, and a
 > necessary breaking change ships with an ADR and migration notes. It is not production ready.
 > See [the beta contract](./docs/guide/beta.md). The 2.x component lives on the
@@ -32,8 +34,10 @@ one install covers every level.
 pnpm add vueye-table@beta
 ```
 
-Install an exact version such as `3.0.0-beta.4` to pin a release. Both `pnpm add vueye-table` and
+Install an exact version such as `3.0.0-beta.7` to pin a release. Both `pnpm add vueye-table` and
 `pnpm add vueye-table@beta` follow the current beta. Vue 3.5 or newer is a peer dependency.
+
+<!-- current-release:end -->
 
 ## What the beta covers
 
@@ -43,6 +47,8 @@ Install an exact version such as `3.0.0-beta.4` to pin a release. Both `pnpm add
   editors, validation issues, dirty rows, revert, and a saved baseline you acknowledge.
 - **Expansion and trees**: detail rows, nested and lazy-loaded children, tree search that keeps
   matching branches.
+- **Grouping and layout**: nested group rows, aggregate headers or footers, column resizing,
+  sticky columns and top/bottom row regions, including virtualized tables and grids.
 - **Large data**: opt-in row and column virtualization for tables and grids, and incremental
   streams, cursor loading, and cancellable sources.
 - **Language and themes**: every word shown or announced comes from `messages`, numbers and
@@ -92,9 +98,16 @@ const selected = ref<readonly RowKey[]>([]);
 Column ids are typed paths into your rows, so `format` above receives a `number`. Without
 `columns`, columns are inferred from the data.
 
-Every piece of state has a `v-model`: `page`, `pageSize`, `sorting`, `search`, `filters`,
-`hiddenColumns`, and `selected`. Add `manual` and `row-count` to let a server search, sort, and
-page, with the table presenting whatever page it returns.
+The full components expose `v-model` bindings for `page`, `pageSize`, `sorting`, `search`,
+`filters`, `hiddenColumns`, `selected`, `expanded`, `columnSizing`, `columnPinning`, `grouping`,
+`expandedGroups` and `rowPinning`. Add `manual` and `row-count` to let a server search, sort,
+and page, with the table presenting whatever page it returns.
+
+Use `resizable-columns` for resize handles and `groupable` for ordered grouping controls.
+`aggregate-position="footer"` moves group totals below their expanded leaves;
+`row-pinning-controls` enables pin actions without enabling editing. See
+[grouping](./docs/guide/grouping.md), [column layout](./docs/guide/columns.md) and
+[row pinning](./docs/guide/row-pinning.md) for examples and model shapes.
 
 ## Spreadsheet
 
@@ -128,7 +141,8 @@ const table = useDataTable({ data: users, columns });
 
 Headless components render semantic, accessible markup (`aria-sort`, `aria-selected`,
 `aria-rowindex`, a polite live status, grid keyboard navigation) with `data-*` state attributes
-and no styles. Every one accepts `as` and exposes its state through slot props.
+and no styles. Components expose slot props and `data-*` state; primitives with an `as` prop
+let you choose their element. Structural group and pinned-row composition retain native rows.
 
 ## Engine
 
@@ -191,6 +205,7 @@ pnpm playground      # every layer, side by side
 pnpm docs:dev        # the documentation site
 pnpm test            # every Vitest project
 pnpm check           # format, lint, types, tests with coverage, build, boundaries, packages
+pnpm docs:sync       # sync current-release copy and the npm README from the package version
 ```
 
 Architecture lives in [ARCHITECTURE.md](./ARCHITECTURE.md) and decisions in

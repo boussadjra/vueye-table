@@ -84,3 +84,10 @@ enforced, with a stricter floor for the engine.
 - Export, path, and paste boundaries — ADR 0009.
 - Expansion/detail items and trees — ADR 0007 and ADR 0011.
 - Validation, editors and persistence — ADR 0008, ADR 0012, ADR 0014 and ADR 0017.
+- Vue virtual bindings, component virtualization and source loading — ADR 0010, ADR 0013 and ADR 0015.
+- Hierarchy components and reactive tree context — ADR 0016 and ADR 0018.
+- Rendered coordinates, beta contracts, host language/themes and row attributes — ADR 0019–0022.
+- Column measurement, sizing and pinning — ADR 0023 and ADR 0024.
+- Grouping, aggregates and row pinning — ADR 0025 and ADR 0026.
+- Reactive Vue layout bindings — ADR 0027.
+- Resizable/pinned column components and grouped/pinned row components — ADR 0028 and ADR 0029.

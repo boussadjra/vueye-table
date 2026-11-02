@@ -13,6 +13,7 @@ import { join } from "node:path";
 
 import { publishablePackages, repositoryRoot } from "./packages.mjs";
 import { compareVersions, incrementVersion, parseVersion } from "./semver.mjs";
+import { syncDocs } from "./sync-docs.mjs";
 
 const releaseTypes = new Set([
   "major",
@@ -155,6 +156,7 @@ function main() {
     writeFileSync(manifest.path, withVersion(manifest.raw, next));
   }
   console.log(`\nWrote ${manifests.length} manifests.`);
+  syncDocs();
 }
 
 try {

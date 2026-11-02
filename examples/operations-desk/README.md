@@ -4,9 +4,13 @@ A standalone Nuxt warehouse application for testing the published vueye-table be
 It has its own dependency lockfile and installs all six packages at `3.0.0-beta.1` from npm. It does
 not use workspace aliases or source builds.
 
+This is a pinned beta.1 acceptance fixture, not the current package release. The
+[beta contract](../../docs/guide/beta.md) describes the current release. Its newer features need
+a separate consumer upgrade and retest; the beta.1 acceptance record does not certify them.
+
 ## Run
 
-Use Node **24.18.0** and pnpm **11.17.0**. From this directory:
+Use Node **24.22.1** and pnpm **11.17.0**. From this directory:
 
 ```sh
 pnpm install --frozen-lockfile

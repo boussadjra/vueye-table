@@ -4,6 +4,12 @@ GitHub is [`boussadjra/vueye-table`](https://github.com/boussadjra/vueye-table).
 packages that share one version: `@vueye-table/core`, `@vueye-table/vue`, `@vueye-table/headless`,
 `@vueye-table/styled`, `vueye-table`, and `@vueye-table/nuxt`.
 
+<!-- current-release:start -->
+
+The current package version is `3.0.0-beta.7`. Both `beta` and `latest` follow the beta line.
+
+<!-- current-release:end -->
+
 The Release workflow (`.github/workflows/release.yml`) only runs when `github.repository` is
 `boussadjra/vueye-table`, never from a fork or a pull request.
 
@@ -33,10 +39,11 @@ packages. Re-running it repairs missing or outdated tags without republishing ex
 
 ## Prerelease line
 
-Changesets is in **pre mode** with the `beta` tag (`.changeset/pre.json`). The first beta,
-[`3.0.0-beta.1`](https://github.com/boussadjra/vueye-table/releases/tag/v3.0.0-beta.1), is published
-for all six packages with provenance. The [release run](https://github.com/boussadjra/vueye-table/actions/runs/37966067677)
-passed, and each exact version, tarball and `beta` dist-tag was verified on npm.
+Changesets is in **pre mode** with the `beta` tag (`.changeset/pre.json`). As a historical
+acceptance record, the first beta,
+[`3.0.0-beta.1`](https://github.com/boussadjra/vueye-table/releases/tag/v3.0.0-beta.1), was published
+for all six packages with provenance. Its [release run](https://github.com/boussadjra/vueye-table/actions/runs/37966067677)
+passed, and that version's tarballs and `beta` dist-tags were verified on npm.
 Subsequent Version PRs continue the beta sequence until pre mode is exited deliberately.
 
 For an alpha-to-beta transition, change the pre-mode tag and version together, in this order,
@@ -56,14 +63,15 @@ changelog and refresh the root lockfile. Commit pre mode, manifests, changelogs 
 together. Verify the release plan and notes before merging; do not run another Version PR
 for the same beta transition.
 
-Running `pnpm version:set` alone leaves pre mode at `alpha`, and the next Version PR would write an
-alpha version back over the beta one. The first stable release is `pnpm changeset pre exit`
+During an alpha-to-beta transition, `pnpm version:set` alone does not change the pre-mode tag.
+Leaving that tag at `alpha` makes the next Version PR generate an alpha again. For the current
+beta line, keep the tag at `beta`. The first stable release is `pnpm changeset pre exit`
 followed by a normal Version PR.
 
 ## Dist-tags
 
-- **Every beta updates both `beta` and `latest`** for all six packages. For example, publishing
-  `3.0.0-beta.4` makes both `pnpm add vueye-table` and `pnpm add vueye-table@beta` install that
+- **Every beta updates both `beta` and `latest`** for all six packages. Publishing a new beta
+  makes both `pnpm add vueye-table` and `pnpm add vueye-table@beta` install that
   version. This policy also applies after a stable version exists; the default install follows
   the beta line. Applications can pin an exact version when they need a fixed release.
 - **Until a stable 3.x exists**, alpha publishes to `latest`. 1.x stays installable as
@@ -123,5 +131,19 @@ npm dist-tag ls vueye-table
 ## Setting a version by hand
 
 `pnpm version:set <version|release-type>` bumps every package and the root manifest together, for
-example `pnpm version:set prerelease --preid alpha` or `pnpm version:set 3.0.0-rc.0 --dry-run`. Do
+example `pnpm version:set prerelease --preid beta` or `pnpm version:set 3.0.0-rc.0 --dry-run`. Do
 not use it and a Version PR for the same release.
+
+## Keeping documentation in sync
+
+`packages/vueye-table/package.json` is the version source for the docs navigation and homepage.
+`pnpm docs:sync` updates the `current-release` blocks in the README, release/agent guidance and
+install/beta guides. Keep only current-release version references within those markers; historical
+notes and the standalone consumer's pinned dependency version belong outside them.
+
+The same command generates `packages/vueye-table/README.md` from the repository README, rewriting
+relative links for npm. Edit the root README rather than the generated copy. Both the Changesets
+version command and `pnpm version:set` run the sync, and `pnpm check` rejects drift.
+
+Release history on the beta contract page is maintained alongside feature documentation; syncing
+versions does not invent release notes or upgrade the standalone consumer.

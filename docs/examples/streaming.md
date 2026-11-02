@@ -27,4 +27,8 @@ Additional progress lines accompany edit and source operations. The script check
 <<< ../../examples/streaming.ts
 :::
 
-See [Incremental data and streams](/guide/streaming) for source contracts, conflicts, manual cursor accumulation, readonly arrays and performance boundaries. This example uses simulated rows; HTTP/SSE/WebSocket adapters and infinite-scroll component behavior remain follow-up work.
+See [Incremental data and streams](/guide/streaming) for source contracts, conflicts, manual cursor
+accumulation, readonly arrays and performance boundaries. This core example uses simulated rows.
+For built-in source/loading controls and automatic virtual-end loading, see
+[streaming components](/examples/streaming-components). [Live logs](/examples/live-logs) demonstrate
+an HTTP NDJSON adapter; applications supply transport adapters for their own HTTP, SSE or WebSocket APIs.

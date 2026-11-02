@@ -1,7 +1,9 @@
 # The 3.0 beta contract
 
-**3.0.0-beta.4 is published** for all six packages on npm's `beta` and `latest` channels, with provenance and a
-[GitHub release](https://github.com/boussadjra/vueye-table/releases/tag/v3.0.0-beta.4).
+<!-- current-release:start -->
+
+**3.0.0-beta.7 is published** for all six packages on npm's `beta` and `latest` channels, with provenance and a
+[GitHub release](https://github.com/boussadjra/vueye-table/releases/tag/v3.0.0-beta.7).
 Beta is a prerelease for application feedback and does not establish production readiness.
 The default install and `@beta` both follow the current beta; pin an exact version to keep a fixed release.
 
@@ -10,13 +12,17 @@ The default install and `@beta` both follow the current beta; pin an exact versi
 Install an exact version or opt into the beta channel:
 
 ```sh
-pnpm add vueye-table@3.0.0-beta.4
+pnpm add vueye-table@3.0.0-beta.7
 # To follow subsequent betas:
 pnpm add vueye-table@beta
 ```
 
-Nuxt applications use `@vueye-table/nuxt@3.0.0-beta.4`. Keep directly installed vueye-table
-packages on the same version. Vue 3.5 or later within Vue 3 is required; Nuxt integration supports Nuxt 4.x.
+Nuxt applications use `@vueye-table/nuxt@3.0.0-beta.7`. Keep directly installed vueye-table
+packages on the same version.
+
+<!-- current-release:end -->
+
+Vue 3.5 or later within Vue 3 is required; Nuxt integration supports Nuxt 4.x.
 The packages use ESM. Import `vueye-table/style.css` for full or styled components; the Nuxt
 module adds the stylesheet itself. See [getting started](/guide/getting-started) and
 [Nuxt](/guide/nuxt) for complete setup.
@@ -25,7 +31,48 @@ Version 2 applications need the [2.x migration guide](/guide/upgrading-from-2). 
 column definitions, selected row keys, slot scopes and immutable data updates changed in 3.0.
 Changing the dependency version alone does not migrate those contracts.
 
-## What changed in beta.4
+## What changed in beta.7
+
+Beta.7 brings the column and row layout APIs into the full and composable component layers:
+
+- Resize handles, sticky start/end columns, pin choices, and `columnSizing` / `columnPinning`
+  models work with both virtual axes. See [columns](/guide/columns) and
+  [the runnable column example](/examples/column-pinning).
+- Group rows, aggregate headers or footers, group selection and ordered Group by controls render
+  automatically. `grouping` and `expandedGroups` models keep the host in control. See
+  [grouping](/guide/grouping) and [the grouped table/grid example](/examples/row-grouping).
+- `rowPinning` separates top and bottom reference rows from the centre. `pinRow` and row actions
+  move keys between regions. Pinned cells keep selection and editing; grid navigation uses
+  `gridRows`, while accessible indices include structural rows. See [row pinning](/guide/row-pinning).
+- Reactive Vue layout controls, measured pin bands and keyed group/footer virtualization preserve
+  logical coordinates and scroll anchoring. Toolbar dropdowns stay above sticky intersections.
+
+**Migration from beta.6:** complete `TableState` literals must add
+`rowPinning: { top: [], bottom: [] }`. Partial state patches remain compatible. Custom grids use
+`gridRows` for data-cell coordinates and render top/centre/bottom regions separately. In manual
+tables, `rowCount` is the server's centre total. The documented state shape is in
+[State and v-model](/guide/state).
+
+## Earlier beta changes
+
+The sections below describe when each API was introduced. The install commands above target
+the current release.
+
+### Beta.6: grouping and aggregation
+
+Beta.6 added nested grouping, filtered-leaf aggregates, group expansion and selection, grouped
+pagination and export. Complete state literals gained `grouping: []` and `expandedGroups: true`.
+`TableRenderItem` gained `kind: "group"`; custom renderers must narrow the kind before accessing
+`row` or `rowIndex`. Manual tables forward grouping state without aggregating partial server pages;
+tree tables report unsupported grouping. Beta.7 supplies the built-in group rows and controls.
+
+### Beta.5: logical column pinning
+
+Beta.5 added `columnPinning`, `pinned` / `pinnable` column options and `pinColumn`.
+Complete state literals gained `columnPinning: { start: [], end: [] }`. Snapshots expose effective
+widths, offsets and pinned edges. Beta.7 supplies the sticky component rendering and controls.
+
+### Beta.4: column sizing and release channels
 
 Beta.4 adds persistent column widths through `TableState.columnSizing`, `resizeColumn`, and
 `resetColumnSize`. Widths respect `minWidth`, `maxWidth`, and `resizable`; resizing keeps the
@@ -34,8 +81,8 @@ width changes while retaining other measurements and scroll anchoring. See
 [column widths](/guide/columns#widths-and-resizing) and [virtualization](/guide/virtualization).
 
 **Migration:** complete hand-built `TableState` literals must add `columnSizing: {}`. Partial
-state patches need no change. Component resize handles remain follow-up work; applications can
-call the sizing operations from their own controls.
+state patches need no change. Beta.4 exposed sizing operations for custom controls;
+beta.7 adds the built-in resize handles.
 
 The core virtualizer's `setOptions` also accepts an optional second array of keys whose cached
 measurements should be discarded when rebuilding layout. See
@@ -44,7 +91,7 @@ measurements should be discarded when rebuilding layout. See
 Every beta now updates both `beta` and `latest` across all six packages, so default installs
 follow the beta line. Exact versions remain available for applications that need a fixed release.
 
-## What changed in beta.3
+### Beta.3: row attributes
 
 Beta.3 adds `row-attrs` to `VueyeTable`, `VueyeGrid` and `VtGrid`: `(item, row) =>` a class, a
 style, and `data-*` and `aria-*` attributes for each body row, so a row can be tinted by its state
@@ -53,7 +100,7 @@ collision and handlers are left out. Headless rows take the same through `DataTa
 `attributes` prop and `DataGridBody`'s `row-attrs`, and `rowAttributes` filters them. Nothing was
 removed or renamed. See [components](/guide/components).
 
-## What changed in beta.2
+### Beta.2: language and themes
 
 Beta.2 lets a host application speak its own language and wear its own theme. No import, option,
 event or slot was removed or renamed. Because theme defaults now have zero specificity, host CSS
@@ -74,7 +121,7 @@ that used to lose to them now applies, so check custom styles when upgrading.
 
 The decision is recorded in [ADR 0021](/adr/0021-host-language-text-and-themes).
 
-## What changed in beta.1
+### Beta.1: first beta and warehouse fixes
 
 Beta.1 promoted the corrected alpha.12 package group. Applications upgrading from alpha.10
 receive the warehouse fixes:
