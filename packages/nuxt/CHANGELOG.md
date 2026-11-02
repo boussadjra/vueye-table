@@ -1,5 +1,15 @@
 # @vueye-table/nuxt
 
+## 3.0.0-beta.8
+
+### Patch Changes
+
+- f9d38a2: Refresh package READMEs and guides for the current beta, including grouping, pinning, resizing,
+  virtualization and Nuxt composition. Synchronize current-release references and the npm README
+  during version bumps, while preserving historical release and consumer-acceptance records.
+- Updated dependencies [f9d38a2]
+  - vueye-table@3.0.0-beta.8
+
 ## 3.0.0-beta.7
 
 ### Patch Changes
