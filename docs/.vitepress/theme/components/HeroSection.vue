@@ -3,8 +3,10 @@ import { withBase } from "vitepress";
 
 import { docsRelease } from "../../release";
 import CopyCommand from "./CopyCommand.vue";
+import DataWord from "./DataWord.vue";
 import HeroGrid from "./HeroGrid.vue";
 import LiveShowcase from "./LiveShowcase.vue";
+import PixelButton from "./PixelButton.vue";
 
 const facts = [
   "TypeScript-first",
@@ -25,7 +27,7 @@ const facts = [
     <HeroGrid />
 
     <div class="inner">
-      <h1 id="vy-hero-title" class="title">The <em>data</em> framework for&nbsp;Vue.</h1>
+      <h1 id="vy-hero-title" class="title">The <DataWord /> framework for&nbsp;Vue.</h1>
 
       <p class="lede">
         A framework-independent engine searches, sorts, pages, selects, edits, and undoes. Headless
@@ -40,10 +42,10 @@ const facts = [
       </a>
 
       <div class="actions">
-        <a class="vy-button primary" :href="withBase('/guide/getting-started')">
+        <PixelButton :href="withBase('/guide/getting-started')">
           Get started
           <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4 10h11m-4-4 4 4-4 4" /></svg>
-        </a>
+        </PixelButton>
         <a class="vy-button ghost" href="#layers">Explore the layers</a>
         <CopyCommand :command="docsRelease.installCommand" />
       </div>
@@ -180,16 +182,6 @@ const facts = [
   letter-spacing: -0.04em;
   color: var(--vp-c-text-1);
   text-wrap: balance;
-}
-
-.title em {
-  padding: 0 0.1em 0 0.02em;
-  font-family: var(--vy-font-serif);
-  font-size: 1.14em;
-  font-style: italic;
-  font-weight: 400;
-  letter-spacing: -0.02em;
-  color: var(--vp-c-brand-1);
 }
 
 .lede {

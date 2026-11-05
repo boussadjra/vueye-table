@@ -4,13 +4,25 @@ import { columnLabel, toA1 } from "vueye-table";
 
 /*
  * The hero's backdrop: a spreadsheet whose cell cursor follows the pointer, names the cell it is
- * on with the engine's own toA1. It stays still until the reader moves the pointer.
+ * on with the engine's own toA1, and snaps around hovered links and controls. It stays still until
+ * the reader moves the pointer.
  */
 
 const CELL_WIDTH = 112;
 const CELL_HEIGHT = 44;
 const COLUMNS = 26;
 const ROWS = 40;
+const SNAP_PADDING = 4;
+const CLICKABLE_SELECTOR =
+  'a[href], button, input:not([type="hidden"]), select, textarea, summary, [role="button"], [role="link"]';
+
+interface SnapBounds {
+  readonly x: number;
+  readonly y: number;
+  readonly width: number;
+  readonly height: number;
+  readonly radius: number;
+}
 
 const columnLabels = Array.from({ length: COLUMNS }, (_, index) => columnLabel(index));
 const rowLabels = Array.from({ length: ROWS }, (_, index) => index + 1);
@@ -18,10 +30,19 @@ const rowLabels = Array.from({ length: ROWS }, (_, index) => index + 1);
 const root = ref<HTMLElement>();
 const cells = ref<HTMLElement>();
 const cursor = shallowRef({ row: 2, column: 3 });
+const snapBounds = shallowRef<SnapBounds | null>(null);
 const reference = computed(() => toA1(cursor.value));
-const cursorStyle = computed(() => ({
-  transform: `translate(${cursor.value.column * CELL_WIDTH}px, ${cursor.value.row * CELL_HEIGHT}px)`,
-}));
+const cursorStyle = computed(() => {
+  const snapped = snapBounds.value;
+  return {
+    transform: snapped
+      ? `translate(${snapped.x}px, ${snapped.y}px)`
+      : `translate(${cursor.value.column * CELL_WIDTH}px, ${cursor.value.row * CELL_HEIGHT}px)`,
+    width: `${snapped?.width ?? CELL_WIDTH + 1}px`,
+    height: `${snapped?.height ?? CELL_HEIGHT + 1}px`,
+    borderRadius: `${snapped?.radius ?? 0}px`,
+  };
+});
 const columnBandStyle = computed(() => ({
   transform: `translateX(${cursor.value.column * CELL_WIDTH}px)`,
 }));
@@ -32,6 +53,7 @@ const rowBandStyle = computed(() => ({
 let host: HTMLElement | null = null;
 let frame = 0;
 let motionQuery: MediaQueryList | undefined;
+let hoverQuery: MediaQueryList | undefined;
 let reducedMotion = false;
 
 function place(column: number, row: number): void {
@@ -42,45 +64,81 @@ function place(column: number, row: number): void {
 }
 
 function onPointerMove(event: PointerEvent): void {
+  cancelAnimationFrame(frame);
+  const target = event.target instanceof Element ? event.target : null;
   if (
     reducedMotion ||
+    !hoverQuery?.matches ||
     event.pointerType === "touch" ||
-    (event.target instanceof Element && event.target.closest("[data-grid-ignore]"))
+    target?.closest("[data-grid-ignore]")
   ) {
+    snapBounds.value = null;
     return;
   }
+  const clickable = target?.closest(CLICKABLE_SELECTOR);
+  const canSnap =
+    clickable &&
+    host?.contains(clickable) &&
+    !clickable.matches(":disabled") &&
+    !clickable.closest('[aria-disabled="true"], [inert]');
   const { clientX, clientY } = event;
-  cancelAnimationFrame(frame);
   frame = requestAnimationFrame(() => {
     const rect = cells.value?.getBoundingClientRect();
     if (!rect) {
       return;
     }
-    const column = Math.floor((clientX - rect.left) / CELL_WIDTH);
-    const row = Math.floor((clientY - rect.top) / CELL_HEIGHT);
+    const bounds = canSnap && clickable.isConnected ? clickable.getBoundingClientRect() : null;
+    if (clickable && bounds && bounds.width > 0 && bounds.height > 0) {
+      snapBounds.value = {
+        x: bounds.left - rect.left - SNAP_PADDING,
+        y: bounds.top - rect.top - SNAP_PADDING,
+        width: bounds.width + SNAP_PADDING * 2,
+        height: bounds.height + SNAP_PADDING * 2,
+        radius: parseFloat(getComputedStyle(clickable).borderTopLeftRadius) + SNAP_PADDING,
+      };
+    } else {
+      snapBounds.value = null;
+    }
+    // Use the control's center so its cell reference stays put while it is hovered.
+    const x = bounds ? bounds.left + bounds.width / 2 : clientX;
+    const y = bounds ? bounds.top + bounds.height / 2 : clientY;
+    const column = Math.floor((x - rect.left) / CELL_WIDTH);
+    const row = Math.floor((y - rect.top) / CELL_HEIGHT);
     if (column >= 0 && row >= 0 && column < COLUMNS && row < ROWS) {
       place(column, row);
     }
   });
 }
 
+function clearSnap(): void {
+  cancelAnimationFrame(frame);
+  snapBounds.value = null;
+}
+
 function onMotionChange(event: MediaQueryListEvent): void {
   reducedMotion = event.matches;
-  cancelAnimationFrame(frame);
+  clearSnap();
 }
 
 onMounted(() => {
   motionQuery = matchMedia("(prefers-reduced-motion: reduce)");
   reducedMotion = motionQuery.matches;
   motionQuery.addEventListener("change", onMotionChange);
+  hoverQuery = matchMedia("(hover: hover) and (pointer: fine)");
+  hoverQuery.addEventListener("change", clearSnap);
   host = root.value?.parentElement ?? null;
   host?.addEventListener("pointermove", onPointerMove, { passive: true });
+  host?.addEventListener("pointerleave", clearSnap, { passive: true });
+  host?.addEventListener("pointercancel", clearSnap, { passive: true });
 });
 
 onBeforeUnmount(() => {
   host?.removeEventListener("pointermove", onPointerMove);
+  host?.removeEventListener("pointerleave", clearSnap);
+  host?.removeEventListener("pointercancel", clearSnap);
   cancelAnimationFrame(frame);
   motionQuery?.removeEventListener("change", onMotionChange);
+  hoverQuery?.removeEventListener("change", clearSnap);
 });
 </script>
 
@@ -108,7 +166,7 @@ onBeforeUnmount(() => {
     <div ref="cells" class="cells">
       <div class="band column-band" :style="columnBandStyle" />
       <div class="band row-band" :style="rowBandStyle" />
-      <div class="cursor" :style="cursorStyle">
+      <div class="cursor" :class="{ snapped: snapBounds !== null }" :style="cursorStyle">
         <span class="tag">{{ reference }}</span>
         <span class="handle" />
       </div>
@@ -239,16 +297,31 @@ onBeforeUnmount(() => {
   position: absolute;
   top: 0;
   left: 0;
-  width: calc(var(--cell-w) + 1px);
-  height: calc(var(--cell-h) + 1px);
   margin: -1px 0 0 -1px;
   border: 2px solid transparent;
-  border-image: var(--vy-gradient) 1;
   background: rgb(160 45 230 / 0.07);
   box-shadow:
     0 0 28px rgb(160 45 230 / 0.35),
     0 0 80px rgb(201 17 127 / 0.18);
   transition: transform 0.22s var(--vy-ease);
+}
+
+.cursor::before {
+  content: "";
+  position: absolute;
+  inset: -2px;
+  padding: 2px;
+  border-radius: inherit;
+  background: var(--vy-gradient);
+  mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  mask-composite: exclude;
+}
+
+.cursor.snapped {
+  margin: 0;
+  transition-duration: 0s;
 }
 
 .tag {

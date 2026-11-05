@@ -263,25 +263,6 @@ body {
   transition: transform 0.25s var(--vy-ease);
 }
 
-.vy-button.primary {
-  color: #fff;
-  background: var(--vy-gradient-strong);
-  box-shadow:
-    inset 0 1px 0 rgb(255 255 255 / 0.22),
-    0 10px 30px -10px rgb(160 45 230 / 0.75);
-}
-
-.vy-button.primary:hover {
-  transform: translateY(-1px);
-  box-shadow:
-    inset 0 1px 0 rgb(255 255 255 / 0.22),
-    0 16px 40px -10px rgb(201 17 127 / 0.7);
-}
-
-.vy-button.primary:hover svg {
-  transform: translateX(3px);
-}
-
 .vy-button.ghost {
   color: var(--vp-c-text-1);
   background: var(--vy-glass);

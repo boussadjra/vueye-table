@@ -3,6 +3,7 @@ import { withBase } from "vitepress";
 
 import { docsRelease } from "../../release";
 import CopyCommand from "./CopyCommand.vue";
+import PixelButton from "./PixelButton.vue";
 </script>
 
 <template>
@@ -15,10 +16,10 @@ import CopyCommand from "./CopyCommand.vue";
         Drop down a layer whenever you need more control. Columns, state, and data stay the same.
       </p>
       <div class="actions">
-        <a class="vy-button primary" :href="withBase('/guide/getting-started')">
+        <PixelButton :href="withBase('/guide/getting-started')">
           Get started
           <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4 10h11m-4-4 4 4-4 4" /></svg>
-        </a>
+        </PixelButton>
         <a class="vy-button ghost" href="https://github.com/boussadjra/vueye-table">
           <svg viewBox="0 0 24 24" aria-hidden="true" class="github">
             <path
