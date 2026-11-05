@@ -13,7 +13,7 @@ const guideItems: DefaultTheme.SidebarItem[] = [
     collapsed: false,
     items: [
       { text: "Getting started", link: "/guide/getting-started" },
-      { text: "3.0 beta contract", link: "/guide/beta" },
+      { text: "3.0 release contract", link: "/guide/beta" },
       { text: "Layers", link: "/guide/layers" },
       { text: "Nuxt", link: "/guide/nuxt" },
     ],
@@ -234,7 +234,7 @@ export default defineConfig({
       {
         text: docsRelease.label,
         items: [
-          { text: "Beta contract", link: docsRelease.contractLink },
+          { text: "3.0 contract", link: docsRelease.contractLink },
           { text: "Upgrading from 2.x", link: "/guide/upgrading-from-2" },
           {
             text: "2.x on the legacy branch",

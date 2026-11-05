@@ -1,5 +1,11 @@
 # vueye-table
 
+## 3.0.0-rc.1
+
+### Release candidate
+
+Promote the beta.9 package group to the first 3.0 release candidate without another public API change. Includes column sizing and logical pinning, native grouping and aggregation, pinned rows, completed examples, and the resize-handle hit-area fix. Documented APIs are frozen for final application validation; published-candidate consumer and manual screen-reader acceptance remain pending.
+
 ## 3.0.0-beta.9
 
 ### Patch Changes

@@ -8,6 +8,6 @@ export const docsRelease = {
   label: `v${version}`,
   installCommand: `pnpm add vueye-table@${version}`,
   nuxtInstallCommand: `pnpm add @vueye-table/nuxt@${version}`,
-  notice: `${version} is a prerelease for application feedback. Documented APIs stay stable through the beta. Review the beta contract before adopting it.`,
+  notice: `${version} is a release candidate for final application validation. Documented APIs are frozen for this phase. Review the 3.0 contract before adopting it.`,
   contractLink: "/guide/beta",
 } as const;

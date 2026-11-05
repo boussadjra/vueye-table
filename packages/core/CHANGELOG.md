@@ -1,5 +1,11 @@
 # @vueye-table/core
 
+## 3.0.0-rc.1
+
+### Release candidate
+
+Promote the beta.9 implementation to the first 3.0 release candidate without another public API change. Keep all six packages on 3.0.0-rc.1; documented APIs are frozen for final application validation.
+
 ## 3.0.0-beta.9
 
 ## 3.0.0-beta.8

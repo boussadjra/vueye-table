@@ -8,13 +8,13 @@ see [editing](/guide/editing).
 <!-- current-release:start -->
 
 ```bash
-pnpm add @vueye-table/nuxt@3.0.0-beta.9
+pnpm add @vueye-table/nuxt@3.0.0-rc.1
 ```
 
 <!-- current-release:end -->
 
-This is a prerelease for application feedback. Keep directly installed vueye-table packages on
-the same version. See the [beta contract](/guide/beta) for API guarantees and acceptance limits.
+This is a release candidate for final application validation. Keep directly installed vueye-table
+packages on the same version. See the [3.0 contract](/guide/beta) for API guarantees and acceptance limits.
 
 ```ts
 export default defineNuxtConfig({
