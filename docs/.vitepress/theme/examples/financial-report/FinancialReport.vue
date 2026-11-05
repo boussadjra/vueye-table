@@ -1,10 +1,9 @@
 <script setup lang="ts">
-import { computed, ref, watch } from "vue";
+import { computed, ref } from "vue";
 import {
-  defineColumns,
   provideDataTable,
   useDataTable,
-  VtEmpty,
+  VtBody,
   VtHeader,
   VtSearch,
   VtTable,
@@ -12,58 +11,31 @@ import {
 } from "vueye-table";
 
 import CostLineRow from "./CostLineRow.vue";
-import { DEPARTMENTS, REGIONS, makeCostLines, type CostLine, type Region } from "./data";
-import { DEPARTMENT_HUE, REGION_CODE, UNITS, money, percent, signed, type Unit } from "./format";
-import { MEASURES, groupRows, totalsOf, type GroupBy } from "./grouping";
-import SummaryCells from "./SummaryCells.vue";
+import { REGIONS, makeCostLines, type CostLine, type Region } from "./data";
+import { DEPARTMENT_HUE, REGION_CODE, UNITS, money, signed, type Unit } from "./format";
+import { ALL_LINES_KEY, reportColumns, withReferenceTotal } from "./report";
+import { totalsOf } from "./totals";
+import VarianceValue from "./VarianceValue.vue";
+
+type GroupBy = "region" | "department" | "none";
 
 /* Columns are rebuilt when the unit changes; the table follows them and keeps its state. */
 
 const unit = ref<Unit>("k");
 const amount = (value: number): string => money(value, unit.value);
-const fullYear = (line: CostLine): number => line.q1 + line.q2 + line.q3 + line.q4;
-
-const columns = computed(() => {
-  const as = unit.value;
-  const format = (value: number): string => money(value, as);
-  return defineColumns<CostLine>([
-    { id: "item", header: "Line item" },
-    { id: "department" },
-    { id: "region" },
-    { id: "q1", header: "Q1", align: "end", searchable: false, format },
-    { id: "q2", header: "Q2", align: "end", searchable: false, format },
-    { id: "q3", header: "Q3", align: "end", searchable: false, format },
-    { id: "q4", header: "Q4", align: "end", searchable: false, format },
-    { id: "fy", header: "FY total", accessor: fullYear, align: "end", searchable: false, format },
-    { id: "budget", align: "end", searchable: false, format },
-    {
-      id: "variance",
-      accessor: (line) => line.budget - fullYear(line),
-      align: "end",
-      searchable: false,
-      format: (value: number) => signed(value, as),
-      // This column's own filter values: "over" or "under" budget.
-      filter: (value: number, wanted) =>
-        wanted === "over" ? value < 0 : wanted === "under" ? value >= 0 : true,
-    },
-    {
-      id: "variancePct",
-      header: "Var %",
-      accessor: (line) => (line.budget === 0 ? 0 : (line.budget - fullYear(line)) / line.budget),
-      align: "end",
-      searchable: false,
-      format: percent,
-    },
-  ]);
-});
-
+const source = makeCostLines();
+const columns = computed(() => reportColumns(unit.value));
 const table = useDataTable<CostLine>({
-  data: makeCostLines(),
+  data: withReferenceTotal(source),
   columns,
   rowKey: "id",
-  // One page holds every line, so grouping sees the whole filtered set.
-  // The grouped column starts hidden: its value is already in each group's header.
-  initialState: { pagination: { page: 1, pageSize: 500 }, hiddenColumns: ["region"] },
+  paginate: false,
+  selectionMode: "none",
+  initialState: {
+    grouping: ["region"],
+    hiddenColumns: ["region"],
+    rowPinning: { top: [], bottom: [ALL_LINES_KEY] },
+  },
 });
 // The search box sits outside the table element, so provide the table to it here.
 provideDataTable(table);
@@ -113,55 +85,29 @@ function clearAll(): void {
   table.clearFilters();
 }
 
-/* Grouping, composed over the rows the engine has already searched, filtered, and sorted. */
-
+/* Group membership, expansion and subtotals belong to the engine. */
 const groupOptions: readonly { readonly id: GroupBy; readonly label: string }[] = [
   { id: "region", label: "Region" },
   { id: "department", label: "Department" },
   { id: "none", label: "None" },
 ];
-const groupBy = ref<GroupBy>("region");
-// The column being grouped by moves into the group headers; the other one comes back.
-watch(groupBy, (next, previous) => {
-  if (previous !== "none") {
-    table.toggleColumn(previous, true);
-  }
-  if (next !== "none") {
-    table.toggleColumn(next, false);
-  }
+const groupBy = computed<GroupBy>(() => {
+  const id = table.grouping[0];
+  return id === "region" || id === "department" ? id : "none";
 });
-const groups = computed(() =>
-  groupBy.value === "none"
-    ? []
-    : groupRows(table.processedRows, groupBy.value, table.state.sorting),
-);
+function setGroup(next: GroupBy): void {
+  if (groupBy.value !== "none") table.toggleColumn(groupBy.value, true);
+  table.groupBy(next === "none" ? [] : [next]);
+  if (next !== "none") table.toggleColumn(next, false);
+}
+const groups = computed(() => table.renderItems.filter((item) => item.kind === "group"));
 const grand = computed(() => totalsOf(table.processedRows));
-
-const collapsed = ref<readonly string[]>([]);
-const collapseKey = (key: string): string => `${groupBy.value}:${key}`;
-const isCollapsed = (key: string): boolean => collapsed.value.includes(collapseKey(key));
-function toggleGroup(key: string): void {
-  const id = collapseKey(key);
-  collapsed.value = collapsed.value.includes(id)
-    ? collapsed.value.filter((item) => item !== id)
-    : [...collapsed.value, id];
-}
+const allOpen = computed(() => groups.value.every((group) => group.isExpanded));
+const allClosed = computed(() => groups.value.every((group) => !group.isExpanded));
 function setAll(open: boolean): void {
-  const keys: readonly string[] = groupBy.value === "department" ? DEPARTMENTS : REGIONS;
-  const ids = keys.map(collapseKey);
-  const others = collapsed.value.filter((id) => !ids.includes(id));
-  collapsed.value = open ? others : [...others, ...ids];
+  if (open) table.expandAllGroups();
+  else table.collapseAllGroups();
 }
-const allOpen = computed(() => groups.value.every((group) => !isCollapsed(group.key)));
-const allClosed = computed(() => groups.value.every((group) => isCollapsed(group.key)));
-
-/* Subtotals line up under whichever columns are visible: the label spans the text columns. */
-
-const SUMMED: readonly string[] = [...MEASURES, "variancePct"];
-const labelSpan = computed(() => {
-  const first = table.columns.findIndex((column) => SUMMED.includes(column.id));
-  return first <= 0 ? table.columns.length : first;
-});
 
 /* The chart strip: quarterly actuals against an even quarterly share of the budget. */
 
@@ -224,7 +170,7 @@ const worstLine = computed(() => {
         <div class="kpi">
           <span class="kpi-label">Actual spend</span>
           <strong class="kpi-value">{{ amount(grand.fy) }}</strong>
-          <span class="kpi-note">{{ grand.count }} of {{ table.totalRowCount }} lines</span>
+          <span class="kpi-note">{{ grand.count }} of {{ source.length }} lines</span>
         </div>
         <div class="kpi">
           <span class="kpi-label">Budget</span>
@@ -337,7 +283,7 @@ const worstLine = computed(() => {
             type="button"
             class="seg"
             :aria-pressed="groupBy === option.id"
-            @click="groupBy = option.id"
+            @click="setGroup(option.id)"
           >
             {{ option.label }}
           </button>
@@ -366,104 +312,53 @@ const worstLine = computed(() => {
 
     <VtTable :table="table" class="fin-table" density="compact" sticky-header>
       <VtHeader />
-      <tbody v-if="table.rowCount === 0" class="vt-body">
-        <tr data-empty>
-          <td :colspan="table.columns.length">
-            <VtEmpty>
-              <span>No cost lines match this search and these filters.</span>
-              <button type="button" class="ghost" @click="clearAll">
-                Clear search and filters
-              </button>
-            </VtEmpty>
-          </td>
-        </tr>
-      </tbody>
-      <tbody v-else-if="groupBy === 'none'" class="vt-body">
-        <CostLineRow
-          v-for="row in table.processedRows"
-          :key="row.key"
-          :row="row"
-          :columns="table.columns"
-          :amount="amount"
-        />
-      </tbody>
-      <template v-else>
-        <!-- One tbody per group, so its header cell can use scope="rowgroup". -->
-        <tbody
-          v-for="group in groups"
-          :key="group.key"
-          class="vt-body group-body"
-          :data-collapsed="isCollapsed(group.key) ? '' : undefined"
-        >
-          <tr class="group">
-            <SummaryCells
-              :columns="table.columns"
-              :span="labelSpan"
-              :totals="group.totals"
-              :amount="amount"
-              scope="rowgroup"
+      <VtBody>
+        <template #row="{ row }">
+          <CostLineRow :row="row as TableRow<CostLine>" :columns="table.columns" :amount="amount" />
+        </template>
+        <template #group="{ group }">
+          <span class="group-toggle" :data-expanded="group.isExpanded">
+            <svg class="chevron" viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">
+              <path
+                d="M6 4l4 4-4 4"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.8"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+            <span
+              v-if="groupBy === 'department'"
+              class="dept"
+              :data-hue="DEPARTMENT_HUE[String(group.value)]"
+              ><i aria-hidden="true"
+            /></span>
+            <span v-else class="code" aria-hidden="true">{{
+              REGION_CODE[String(group.value)]
+            }}</span>
+            <span class="group-name">{{ group.value }}</span>
+            <span class="count"
+              >{{ group.leafCount }} {{ group.leafCount === 1 ? "line" : "lines" }}</span
             >
-              <button
-                type="button"
-                class="group-toggle"
-                :aria-expanded="!isCollapsed(group.key)"
-                @click="toggleGroup(group.key)"
-              >
-                <svg class="chevron" viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">
-                  <path
-                    d="M6 4l4 4-4 4"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="1.8"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                  />
-                </svg>
-                <span
-                  v-if="groupBy === 'department'"
-                  class="dept"
-                  :data-hue="DEPARTMENT_HUE[group.key]"
-                  ><i aria-hidden="true"
-                /></span>
-                <span v-else class="code" aria-hidden="true">{{ REGION_CODE[group.key] }}</span>
-                <span class="group-name">{{ group.label }}</span>
-                <span class="count"
-                  >{{ group.totals.count }} {{ group.totals.count === 1 ? "line" : "lines" }}</span
-                >
-              </button>
-            </SummaryCells>
-          </tr>
-          <template v-if="!isCollapsed(group.key)">
-            <CostLineRow
-              v-for="row in group.rows"
-              :key="row.key"
-              :row="row"
-              :columns="table.columns"
-              :amount="amount"
-            />
-          </template>
-        </tbody>
-      </template>
-      <tfoot v-if="table.rowCount > 0" class="grand">
-        <tr>
-          <SummaryCells
-            :columns="table.columns"
-            :span="labelSpan"
-            :totals="grand"
-            :amount="amount"
-            scope="row"
-            ledger
-          >
-            Grand total
-            <span class="count">{{ grand.count }} {{ grand.count === 1 ? "line" : "lines" }}</span>
-          </SummaryCells>
-        </tr>
-      </tfoot>
+          </span>
+        </template>
+        <template #aggregate.variance="{ value, display }"
+          ><VarianceValue kind="amount" :value="Number(value)" :text="display"
+        /></template>
+        <template #aggregate.variancePct="{ value }"
+          ><VarianceValue kind="ratio" :value="Number(value)"
+        /></template>
+        <template #empty>
+          <span>No cost lines match this search and these filters.</span>
+          <button type="button" class="ghost" @click="clearAll">Clear search and filters</button>
+        </template>
+      </VtBody>
     </VtTable>
 
     <footer class="fin-foot">
       <p class="vt-status" role="status">
-        Showing {{ table.rowCount }} of {{ table.totalRowCount }} lines<span
+        Showing {{ grand.count }} of {{ source.length }} lines<span
           v-if="groupBy !== 'none' && groups.length > 0"
         >
           in {{ groups.length }} {{ groupBy === "region" ? "regions" : "departments" }}</span
@@ -473,6 +368,7 @@ const worstLine = computed(() => {
         Clear search and filters
       </button>
       <p class="fin-note">
+        Pinned total: all {{ source.length }} source lines. Summary and groups: filtered lines.
         Variance is budget minus actual: <span class="tone-pos">▲ under budget</span>,
         <span class="tone-neg">▼ over budget</span>.
       </p>
@@ -908,7 +804,6 @@ const worstLine = computed(() => {
   min-height: 2px;
   background: var(--fin-bar);
   border-radius: 6px 6px 1px 1px;
-  transition: height 0.35s var(--vy-ease);
 }
 
 .bar-over {
@@ -1012,7 +907,7 @@ const worstLine = computed(() => {
   transition: transform 0.18s var(--vy-ease);
 }
 
-.group-body[data-collapsed] .chevron {
+.group-toggle[data-expanded="false"] .chevron {
   transform: rotate(0deg);
 }
 
@@ -1243,7 +1138,7 @@ const worstLine = computed(() => {
 }
 
 /* Group rows out-rank the theme's hover and stripe colors. */
-.fin-report .vt-surface .vt-table tr.group > * {
+.fin-report .vt-surface .vt-table tr.vt-group-row > * {
   font-weight: 600;
   color: var(--vt-fg);
   background: color-mix(in srgb, var(--vt-accent) 6%, var(--vt-header-bg));
@@ -1251,11 +1146,11 @@ const worstLine = computed(() => {
   border-bottom: 1px solid var(--vt-border);
 }
 
-.fin-report .vt-table tbody.group-body:first-of-type tr.group > * {
+.fin-report .vt-table tbody[data-row-region="centre"] tr.vt-group-row:first-child > * {
   border-top: 0;
 }
 
-.fin-report .vt-table tbody.group-body[data-collapsed] tr.group > * {
+.fin-report .vt-table tr.vt-group-row[aria-expanded="false"] > * {
   border-bottom: 0;
 }
 
@@ -1270,7 +1165,7 @@ const worstLine = computed(() => {
 }
 
 /* Grand total: stays in view at the bottom, ruled like a ledger. */
-.fin-report .vt-table tfoot :is(th, td) {
+.fin-report .vt-table tbody[data-row-region="bottom"] :is(th, td) {
   position: sticky;
   bottom: 0;
   z-index: 1;
@@ -1282,11 +1177,11 @@ const worstLine = computed(() => {
   border-bottom: 0;
 }
 
-.fin-report .vt-table tfoot th {
+.fin-report .vt-table tbody[data-row-region="bottom"] th {
   font-size: 13.5px;
 }
 
-.fin-report .vt-table tfoot th .count {
+.fin-report .vt-table tbody[data-row-region="bottom"] th .count {
   margin-inline-start: 8px;
 }
 

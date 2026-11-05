@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, useId, type ComponentPublicInstance } from "vue";
+import { computed, nextTick, ref, useId, type ComponentPublicInstance } from "vue";
 import {
   useDataGrid,
   useDataTable,
@@ -13,21 +13,44 @@ import DemoFrame from "./DemoFrame.vue";
 
 const id = useId();
 const scroller = ref<HTMLElement | null>(null);
+const TOTAL_KEY = -1;
 const data = Array.from({ length: 20_000 }, (_, index) => ({
   id: index,
   name: `Sample row ${index + 1}`,
   team: ["Support", "Sales", "Engineering", "Operations"][index % 4]!,
+  amount: ((index % 100) + 1) * 25,
 }));
 const table = useDataTable<(typeof data)[number]>({
-  data,
+  data: [
+    ...data,
+    {
+      id: TOTAL_KEY,
+      name: "All-row total",
+      team: "All teams",
+      amount: data.reduce((sum, row) => sum + row.amount, 0),
+    },
+  ],
   columns: Array.from({ length: 24 }, (_, index) => ({
     id: `c${index}`,
+    header: index === 2 ? "Amount" : `Column ${index + 1}`,
     accessor: (row) =>
-      index === 0 ? row.name : index === 1 ? row.team : `${row.id + 1} · ${index + 1}`,
+      index === 0
+        ? row.name
+        : index === 1
+          ? row.team
+          : index === 2
+            ? row.amount
+            : row.id === TOTAL_KEY
+              ? index === 23
+                ? `${data.length.toLocaleString("en-US")} rows`
+                : ""
+              : `${row.id + 1} · ${index + 1}`,
+    editable: false,
     width: index === 0 ? 160 : index === 23 ? 100 : 176,
   })),
   paginate: false,
   columnPinning: { start: ["c0"], end: ["c23"] },
+  initialState: { rowPinning: { top: [], bottom: [TOTAL_KEY] } },
 });
 const grid = useDataGrid(table);
 const rows = useVirtualRows(table, {
@@ -35,6 +58,7 @@ const rows = useVirtualRows(table, {
   estimateRowHeight: (index) => (table.renderItems[index]?.kind === "group" ? 48 : 40),
   overscan: 3,
   grid,
+  pinnedRowHeights: { top: 0, bottom: 40 },
 });
 const columns = useVirtualColumns(grid, {
   scrollElement: scroller,
@@ -49,9 +73,10 @@ const activeCellId = computed(() => {
   const focus = grid.selection?.focus;
   return focus &&
     columns.items.some((item) => item.index === focus.column) &&
-    rows.items.some(
+    (rows.items.some(
       (item) => item.renderItem.kind === "row" && item.renderItem.rowIndex === focus.row,
-    )
+    ) ||
+      table.gridRows[focus.row]?.key === TOTAL_KEY)
     ? cellId(focus.row, focus.column)
     : undefined;
 });
@@ -59,14 +84,23 @@ function measure(element: Element | ComponentPublicInstance | null, key: RowKey)
   rows.measureElement(element, key);
 }
 function onKey(event: KeyboardEvent): void {
+  if (event.target !== event.currentTarget) return;
   if (grid.handleKey(event)) event.preventDefault();
 }
 function focusLast(): void {
-  grid.focusCell({ row: table.rows.length - 1, column: table.columns.length - 1 });
+  activate(table.gridRows.length - 1, table.columns.length - 1);
 }
 function focusFirst(): void {
-  grid.focusCell({ row: 0, column: 0 });
+  activate(0, 0);
 }
+function activate(row: number, column: number): void {
+  grid.focusCell({ row, column });
+  void nextTick(() => scroller.value?.focus({ preventScroll: true }));
+}
+const presentationIndices = computed(
+  () => new Map<RowKey, number>(table.renderItems.map((item, index) => [item.key, index + 1])),
+);
+const presentationCount = computed(() => table.renderItems.length + table.bottomRows.length);
 function columnOffset(item: VirtualColumnItem<(typeof data)[number]>): number {
   if (item.column.pinned === "start") return columns.offset + item.column.pinOffset;
   if (item.column.pinned === "end")
@@ -112,15 +146,16 @@ function toggleGrouping(): void {
     </div>
     <p :id="`${id}-help`">
       20,000 sample rows · 24 columns. Pinned edges stay visible while the centre scrolls. Group by
-      team, then collapse a group or use the arrow keys inside the grid.
+      team, then collapse a group or use the arrow keys inside the grid. Column 3 contains sample
+      amounts; the read-only all-row total stays pinned below the centre and outside every group.
     </p>
     <div
       ref="scroller"
       class="scroller"
-      role="grid"
+      :role="table.grouped ? 'treegrid' : 'grid'"
       aria-label="Virtual sample grid"
       :aria-describedby="`${id}-help`"
-      :aria-rowcount="table.rows.length"
+      :aria-rowcount="presentationCount"
       :aria-colcount="table.columns.length"
       :aria-activedescendant="activeCellId"
       tabindex="0"
@@ -136,7 +171,8 @@ function toggleGrouping(): void {
             :ref="(element) => measure(element, item.key)"
             class="row"
             role="row"
-            :aria-rowindex="item.renderItem.rowIndex + 1"
+            :aria-rowindex="presentationIndices.get(item.key)"
+            :aria-level="table.grouped ? item.renderItem.row.depth + 1 : undefined"
             :style="{ transform: `translateY(${item.start}px)` }"
           >
             <div
@@ -150,11 +186,12 @@ function toggleGrouping(): void {
               }"
               role="gridcell"
               :aria-colindex="column.index + 1"
+              aria-readonly="true"
               :style="{
                 width: `${column.size}px`,
                 transform: `translateX(${columnOffset(column)}px)`,
               }"
-              @click="grid.focusCell({ row: item.renderItem.rowIndex, column: column.index })"
+              @click="activate(item.renderItem.rowIndex, column.index)"
             >
               {{ item.renderItem.row.getDisplay(column.column.id) }}
             </div>
@@ -164,6 +201,9 @@ function toggleGrouping(): void {
             :ref="(element) => measure(element, item.key)"
             class="row group-row"
             role="row"
+            :aria-rowindex="presentationIndices.get(item.key)"
+            :aria-level="item.renderItem.depth + 1"
+            :aria-expanded="item.renderItem.isExpanded"
             :style="{ transform: `translateY(${item.start}px)` }"
           >
             <div role="gridcell" :aria-colspan="table.columns.length">
@@ -179,6 +219,33 @@ function toggleGrouping(): void {
             </div>
           </div>
         </template>
+      </div>
+      <div
+        v-for="row in table.bottomRows"
+        :key="row.key"
+        class="total-row"
+        role="row"
+        :aria-rowindex="presentationCount"
+        :aria-level="table.grouped ? 1 : undefined"
+        :style="{ width: `${columns.totalSize}px` }"
+      >
+        <div
+          v-for="column in columns.items"
+          :id="cellId(table.gridRows.length - 1, column.index)"
+          :key="column.key"
+          class="cell"
+          :class="{
+            pinned: !!column.column.pinned,
+            active: grid.isFocused({ row: table.gridRows.length - 1, column: column.index }),
+          }"
+          role="gridcell"
+          aria-readonly="true"
+          :aria-colindex="column.index + 1"
+          :style="{ width: `${column.size}px`, transform: `translateX(${columnOffset(column)}px)` }"
+          @click="activate(table.gridRows.length - 1, column.index)"
+        >
+          {{ row.getDisplay(column.column.id) }}
+        </div>
       </div>
     </div>
     <p role="status">
@@ -233,6 +300,18 @@ p:last-child {
 }
 .canvas {
   position: relative;
+}
+.total-row {
+  position: sticky;
+  bottom: 0;
+  height: 40px;
+  z-index: 2;
+  background: var(--vp-c-bg-soft);
+  border-top: 1px solid var(--vp-c-border);
+  font-weight: 600;
+}
+.total-row .cell {
+  background: var(--vp-c-bg-soft);
 }
 .row {
   position: absolute;

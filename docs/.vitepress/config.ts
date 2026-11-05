@@ -24,6 +24,7 @@ const guideItems: DefaultTheme.SidebarItem[] = [
     items: [
       { text: "Columns", link: "/guide/columns" },
       { text: "State and v-model", link: "/guide/state" },
+      { text: "Share column layout", link: "/guide/layout-persistence" },
       { text: "Row expansion", link: "/guide/expansion" },
       { text: "Tree data", link: "/guide/trees" },
       { text: "Grouping and aggregation", link: "/guide/grouping" },

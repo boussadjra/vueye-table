@@ -8,140 +8,84 @@ import FinancialReport from "../.vitepress/theme/examples/financial-report/Finan
 
 # Financial report
 
-A finance team reviews operating expenses each quarter: 60 cost lines across three regions and five
-departments, budget against actual, with subtotals per group and a grand total. This example
-composes report-specific grouping over `processedRows`, with subtotal ordering and a grand total.
-The engine now also offers [native grouping and aggregation](/guide/grouping); the
-[row grouping example](/examples/row-grouping) demonstrates its shared expansion, selection,
-pagination and editing model.
+Review a fictional company's FY2026 operating expenses: 60 cost lines across three regions and
+five departments, budget against actual, with native group subtotals and a pinned all-line total.
+Group by Region or Department, collapse a header, filter the lines and change the display units.
+Choose None for an ordinary flat table.
 
 <DemoFrame title="FinancialReport.vue">
   <FinancialReport />
 </DemoFrame>
 
-## How it works
+## Grouping belongs to the engine
 
-### One table, one page
+The report uses `useDataTable` with `initialState.grouping: ['region']` and `paginate: false`.
+`VtBody` renders the keyed group/data sequence. Its `group` slot customizes the label content
+while retaining the native disclosure button, hierarchy level, expansion state and accessible
+row index. Changing the segmented control calls `groupBy`; expansion uses `toggleGroup`,
+`expandAllGroups` and `collapseAllGroups`.
 
-The table is an ordinary `useDataTable`. Its page size is larger than the data, so pagination
-never splits a group, and `processedRows` holds every line that passed the search and filters, in
-sorted order. The toolbar sits outside the table element, so the component provides the table
-itself for `VtSearch` to find.
+Group membership, subtotal values and expansion share the table's filter/sort/group pipeline.
+The grouped column is hidden from leaf cells, because each group label already names its value.
+Sorting applies through the engine's documented group/leaf ordering, rather than the previous
+report-specific subtotal-ordering helper. See [grouping](/guide/grouping).
+
+## Add amounts; derive percentages from totals
+
+Quarterly amounts, full-year cost, budget and variance use `aggregate: 'sum'`.
+Variance is budget minus actual. Variance percentage uses a custom aggregate:
 
 ```ts
-const table = useDataTable<CostLine>({
-  data: makeCostLines(),
-  columns, // a computed, see below
-  rowKey: "id",
-  initialState: { pagination: { page: 1, pageSize: 500 } },
-});
-provideDataTable(table);
+aggregate: (_values, lines) => {
+  const budget = lines.reduce((sum, line) => sum + line.budget, 0);
+  const actual = lines.reduce((sum, line) => sum + line.q1 + line.q2 + line.q3 + line.q4, 0);
+  return budget === 0 ? 0 : (budget - actual) / budget;
+};
 ```
 
-### Grouping over `processedRows`
+This is a ratio of totals, not an average of leaf percentages. `formatAggregate` applies the
+same unit formatting as the data cells. Slots `aggregate.variance` and `aggregate.variancePct`
+retain the report's positive/negative treatment without interpreting values as HTML.
 
-Grouping is a plain function over the engine's output. It buckets rows in the order they arrive,
-so every group keeps the table's sort inside it, and then orders the groups themselves: by name when
-the grouped column is sorted, by subtotal when a summed column is, and in their natural order
-otherwise.
+::: details Column definitions and reference data
+<<< ../.vitepress/theme/examples/financial-report/report.ts
+:::
+
+## Keep total scopes explicit
+
+The summary cards and quarterly chart use `processedRows`: filtered centre leaves, including
+leaves in collapsed groups. Their count is a count of cost lines, not the engine's grouped
+pagination units. Collapse changes presentation without changing these filtered totals.
+
+The pinned **All-line total** is a fixed reference for all 60 source cost lines. The example
+adds one immutable summary record and pins its stable key with `rowPinning.bottom`.
+The engine excludes it from centre grouping, aggregates and pagination, so its amounts are
+never counted twice. It stays visible when filters match no centre rows. Its label and the
+footnote distinguish it from the filtered cards and group subtotals.
+
+The custom row slot uses `DataTableRow` and `DataTableCell`, including the spanning summary
+label, so measured pin insets and accessible indices still come from the shared components.
+See [row pinning](/guide/row-pinning) for filter visibility and manual-page rules.
+
+## Compose it yourself
+
+A report with application-specific group ordering or cross-table sections can still build
+buckets over ungrouped `processedRows`:
 
 ```ts
-const groups = computed(() =>
-  groupBy.value === "none"
-    ? []
-    : groupRows(table.processedRows, groupBy.value, table.state.sorting),
-);
-const grand = computed(() => totalsOf(table.processedRows));
-```
-
-Because `processedRows` is a reactive accessor, typing in the search box, toggling a region chip,
-or picking "Over budget" regroups the rows, recomputes every subtotal, and redraws the chart strip
-above the table in one pass.
-
-### Aggregates through the columns
-
-Totals read values with `row.getValue(id)`, the same accessor the cells use, so the computed
-`fy` and `variance` columns sum as easily as the stored quarters. Variance % is not summed: a
-subtotal's percentage is its summed variance over its summed budget, which is what a reviewer
-expects and what averaging the line percentages would get wrong.
-
-```ts
-export function totalsOf(rows: readonly TableRow<CostLine>[]): Totals {
-  const sums = Object.fromEntries(MEASURES.map((id) => [id, 0])) as Record<Measure, number>;
-  for (const row of rows) {
-    for (const id of MEASURES) {
-      sums[id] += Number(row.getValue(id) ?? 0);
-    }
-  }
-  return {
-    ...sums,
-    variancePct: sums.budget === 0 ? 0 : sums.variance / sums.budget,
-    count: rows.length,
-  };
+const buckets = new Map<string, (typeof table.processedRows)[number][]>();
+for (const row of table.processedRows) {
+  const key = String(row.getValue("region"));
+  const bucket = buckets.get(key) ?? [];
+  bucket.push(row);
+  buckets.set(key, bucket);
 }
 ```
 
-### Rendering with the styled theme
+Keep native grouping disabled for that composition and own the structural markup, keyboard
+controls, counts and aggregation policy. The built-in model is preferable when grouping must
+participate in selection, expansion, pagination, editing or streaming.
 
-`VtTable` takes a default slot, and with `VtHeader` inside it the header keeps its sort buttons,
-`aria-sort`, and sticky position. The body is the page's own: one `tbody` per group, so each
-group's header cell can use `scope="rowgroup"`, and a `tfoot` for the grand total. Subtotal cells
-follow `table.columns`, so hiding the budget columns removes their totals too.
-
-```vue
-<VtTable :table="table" density="compact" sticky-header>
-  <VtHeader />
-  <tbody v-for="group in groups" :key="group.key" class="vt-body">
-    <tr class="group">
-      <SummaryCells :columns="table.columns" :span="labelSpan" :totals="group.totals" … />
-    </tr>
-    <template v-if="!isCollapsed(group.key)">
-      <CostLineRow v-for="row in group.rows" :key="row.key" :row="row" :columns="table.columns" … />
-    </template>
-  </tbody>
-  <tfoot>…grand total…</tfoot>
-</VtTable>
-```
-
-### Units, visibility, and filters are table state
-
-The units switch rebuilds the column definitions; the table picks up the new `format` functions and
-keeps its sorting, filters, and hidden columns. "Show budget columns" is `toggleColumn`, and so is
-hiding the grouped column, whose value already sits in each group's header. The
-region chips and budget status are column filters: an array on `region` is the default one-of
-match, and `variance` brings its own `filter` function.
-
-```ts
-const columns = computed(() => {
-  const format = (value: number) => money(value, unit.value);
-  return defineColumns<CostLine>([
-    { id: "q1", header: "Q1", align: "end", searchable: false, format },
-    // …
-    {
-      id: "variance",
-      accessor: (line) => line.budget - fullYear(line),
-      filter: (value: number, wanted) =>
-        wanted === "over" ? value < 0 : wanted === "under" ? value >= 0 : true,
-    },
-  ]);
-});
-
-table.filter("region", ["EMEA", "APAC"]);
-table.filter("variance", "over");
-```
-
-### Choosing native grouping or report composition
-
-Use [native grouping](/guide/grouping) for shared grouping state, nested expansion, filtered-leaf
-selection and group pagination. This report retains its custom subtotal ordering and grand-total
-layout as a composition example. A percentage subtotal still needs a ratio of totals; averaging
-row percentages gives a different result. The native API supports that calculation through a
-custom `aggregate`, as shown in the grouping guide.
-
-## Related
-
-- [Columns](/guide/columns): accessors, `format`, `filter`, and computed columns.
-- [State](/guide/state): filters, hidden columns, and sorting as plain data.
-- [Components](/guide/components): `VtTable`, `VtHeader`, and their slots.
-- [Layers](/guide/layers): when to drop from `VueyeTable` to the composable and styled parts.
-- [Theming](/guide/theming): the `--vt-*` custom properties this page builds on.
+::: details Runnable report source
+<<< ../.vitepress/theme/examples/financial-report/FinancialReport.vue
+:::

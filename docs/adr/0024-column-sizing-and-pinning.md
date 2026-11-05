@@ -46,3 +46,26 @@ leading utility-cell offsets, resize handles, commit-on-release gestures and vir
 regions remain #139/#140. The runnable example supplies its own fixed table layout and logical
 sticky styles. Row pinning, its pagination policy and grid coordinates remain #137; grouping
 remains #138 and ADR 0025. This decision does not claim those features are implemented.
+
+## Completed follow-on decisions
+
+The core scope above records the original implementation boundary. Row pinning is now specified
+in [ADR 0026](/adr/0026-row-pinning): top/bottom keys stay outside centre pagination and grouping;
+`keepPinnedRows` defaults to retaining resolved pins through filters, and manual `rowCount` counts
+only the server's centre. `gridRows` addresses top pins, visible centre leaves and bottom pins in
+one coordinate space, skipping structural rows.
+
+[ADR 0027](/adr/0027-vue-layout-bindings) supplies reactive layout/virtual bindings.
+[ADR 0028](/adr/0028-component-column-layout) supplies pointer/keyboard resizing: a gesture previews
+width through CSS and commits once on release, with no row-pipeline invalidation per pointer move.
+The native column order and logical offsets are shared by header/body cells and utility columns.
+
+[ADR 0029](/adr/0029-grouped-and-pinned-row-components) composes sticky row and column regions.
+Ordinary column pins sit above centre cells; pinned row bands above those; row/column corners
+above the bands; headers and their corners above the body; toolbar menus above all table layers.
+Surfaces stay opaque, and measured header/pin heights reserve the centre viewport. These decisions
+supersede the earlier sticky/frozen deferrals in ADRs 0003 and 0005.
+
+The [orders dashboard](/examples/orders-dashboard), [financial report](/examples/financial-report)
+and [virtual grid](/examples/virtual-grid) demonstrate these policies. Layout URL persistence is
+an application concern; see [the QueryWeave example](/guide/layout-persistence).

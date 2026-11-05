@@ -58,4 +58,7 @@ row surface. They must preserve table/grid semantics, logical `aria-rowcount`/`a
 column alignment, and active-cell visibility. Component props and hydration acceptance belong
 to #72; this core addition does not claim those integrations are implemented.
 
-Sticky/pinned items are deferred. Streaming reconciliation is covered separately by ADR 0006.
+The earlier sticky/pinned-item deferral is superseded by
+[ADR 0024](/adr/0024-column-sizing-and-pinning), [ADR 0026](/adr/0026-row-pinning) and the reactive
+binding/component decisions in ADRs 0027–0029. Pinned columns stay outside the virtual centre;
+measured row bands reserve its viewport. Streaming reconciliation is covered separately by ADR 0006.
