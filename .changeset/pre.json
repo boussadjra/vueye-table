@@ -23,6 +23,7 @@
     "core-row-expansion",
     "core-virtual-layout",
     "data-streaming",
+    "docs-release-sync",
     "edit-validation",
     "framework-rewrite",
     "grid-slots-and-fixes",

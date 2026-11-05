@@ -6,7 +6,7 @@ packages that share one version: `@vueye-table/core`, `@vueye-table/vue`, `@vuey
 
 <!-- current-release:start -->
 
-The current package version is `3.0.0-beta.7`. Both `beta` and `latest` follow the beta line.
+The current package version is `3.0.0-beta.8`. Both `beta` and `latest` follow the beta line.
 
 <!-- current-release:end -->
 

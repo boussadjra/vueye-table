@@ -8,7 +8,7 @@ see [editing](/guide/editing).
 <!-- current-release:start -->
 
 ```bash
-pnpm add @vueye-table/nuxt@3.0.0-beta.7
+pnpm add @vueye-table/nuxt@3.0.0-beta.8
 ```
 
 <!-- current-release:end -->
