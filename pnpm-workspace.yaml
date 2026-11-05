@@ -17,15 +17,15 @@ catalogs:
     turbo: 2.10.7
     typescript: 6.0.3
   testing:
-    "@vitest/coverage-v8": 4.1.11
+    "@vitest/coverage-v8": 4.1.12
     "@vue/test-utils": 2.5.1
-    happy-dom: 20.14.5
-    vitest: 4.1.11
+    happy-dom: 21.0.4
+    vitest: 4.1.12
   node:
     "@types/node": 26.1.1
   vue:
     "@vitejs/plugin-vue": 6.0.8
-    vite: 8.3.1
+    vite: 8.3.3
     vue: 3.5.43
     vue-tsc: 3.3.8
   docs:
@@ -52,6 +52,9 @@ saveWorkspaceProtocol: true
 sharedWorkspaceLockfile: true
 strictPeerDependencies: true
 overrides:
+  "vite@>=8.3.0 <8.3.3": 8.3.3
+  "minimatch@>=7 <11.0.1": 11.0.1
+  "glob@>=9 <14.0.2": 14.0.2
   # Security patches for pinned development-tool dependencies.
   tinypool: 2.1.2
   source-map-js: 1.2.2

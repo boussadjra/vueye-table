@@ -69,6 +69,21 @@ Nuxt 4.6.0 needs a Windows renderer workaround, documented in
 [nuxt/nuxt#36467](https://github.com/nuxt/nuxt/issues/36467). Fixtures live in a plain application
 utility module shared by the client, server and tests.
 
+## Dependency security
+
+The example pins Nuxt 4.6.4 and applies patched transitive dependencies through
+`pnpm-workspace.yaml`. The root workspace has a separate lockfile and security policy.
+
+`deepmerge` 4.3.1 has no published fixed version for
+[GHSA-gcqx-w48m-w2h4](https://github.com/advisories/GHSA-gcqx-w48m-w2h4).
+Its committed pnpm patch uses own-property definitions for merged keys, preventing writes through
+the inherited `__proto__` setter. Regression tests cover hostile target and source objects and
+normal nested merging. Both the package entry point and browser bundle are patched.
+
+Version-based audit tools still report that advisory because the installed version remains 4.3.1.
+The advisory is not ignored or dismissed. Replace the patch with an upstream fixed release when
+one is published; keep the regression tests. Run `pnpm test` and `pnpm verify` after changing it.
+
 ## Acceptance and beta
 
 Read [ACCEPTANCE.md](./ACCEPTANCE.md) for the repeatable manual matrix and recorded results. Every
