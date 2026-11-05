@@ -32,7 +32,7 @@ test("lazy search contexts preserve selection, loaded branches and keyboard trav
   const aisle = table.getByRole("row").filter({ hasText: "Aisle 1", hasNotText: /Aisle 1[012]/ });
   await aisle.getByRole("button", { name: "Expand row", exact: true }).click();
   await expect(table.getByText("Bin 01", { exact: true })).toBeVisible();
-  await aisle.getByRole("checkbox", { name: "Select row", exact: true }).check();
+  await aisle.getByRole("checkbox", { name: /^Select row \d+$/ }).check();
   await expect(page.getByText("25 locations selected", { exact: true })).toBeVisible();
   const search = page.getByPlaceholder("Search loaded locations…");
   await search.fill("Bin 01");

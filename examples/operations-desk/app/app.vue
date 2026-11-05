@@ -1,18 +1,27 @@
 <script setup lang="ts">
-import { ref } from "vue";
+import { onMounted, ref } from "vue";
 
 import { PACKAGE_VERSION } from "./utils/operations";
 const dark = ref(false);
+const hydrated = ref(false);
+onMounted(() => {
+  hydrated.value = true;
+});
 const links = [
   { to: "/", label: "Orders" },
   { to: "/inventory", label: "Inventory" },
   { to: "/locations", label: "Locations" },
   { to: "/receiving", label: "Receiving" },
+  { to: "/layout", label: "Layout acceptance" },
 ];
 </script>
 
 <template>
-  <div class="operations" :data-theme="dark ? 'dark' : 'light'">
+  <div
+    class="operations"
+    :data-theme="dark ? 'dark' : 'light'"
+    :data-hydrated="hydrated ? '' : undefined"
+  >
     <header class="app-header">
       <NuxtLink to="/" class="brand">Operations desk</NuxtLink>
       <span class="version">Local acceptance · {{ PACKAGE_VERSION }}</span>

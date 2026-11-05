@@ -1,12 +1,12 @@
 # Operations desk
 
-A standalone Nuxt warehouse application for testing the published vueye-table beta packages.
-It has its own dependency lockfile and installs all six packages at `3.0.0-beta.1` from npm. It does
+A standalone Nuxt warehouse application for testing the published vueye-table prerelease packages.
+It has its own dependency lockfile and installs all six packages at `3.0.0-rc.1` from npm. It does
 not use workspace aliases or source builds.
 
-This is a pinned beta.1 acceptance fixture, not the current package release. The
-[beta contract](../../docs/guide/beta.md) describes the current release. Its newer features need
-a separate consumer upgrade and retest; the beta.1 acceptance record does not certify them.
+The historical beta.1 record is preserved in [ACCEPTANCE.md](./ACCEPTANCE.md). The RC.1 record
+separates published-package functional results, automated accessibility findings, actual NVDA
+checks, and verification of unpublished corrections. See the [3.0 contract](../../docs/guide/beta.md).
 
 ## Run
 
@@ -39,6 +39,8 @@ For the automated browser matrix after building:
 ```sh
 pnpm exec playwright install --with-deps chromium firefox webkit
 pnpm test:browser
+# Separate automated WCAG 2.1 AA audit; known RC.1 blockers make this fail:
+pnpm test:a11y
 ```
 
 The browser runner starts its own server on port 4312 with a fresh temporary database. It checks
@@ -49,13 +51,14 @@ and screenshots for seven days. These checks do not establish screen-reader or n
 
 ## Workflows
 
-| Workspace        | Actual integration                                             | Difficult cases                                                                                                                      |
-| ---------------- | -------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
-| Orders           | SQLite search/sort, HTTP cursor pages, full table              | 100k server rows, delayed requests, stale searches, outage/retry, selection and variable-height details                              |
-| Inventory        | Full spreadsheet, async SKU checks, transactional HTTP saves   | Immutable edits, invalid pastes, row constraints, duplicate SKUs, optimistic 409 conflicts, undo, insertion/deletion and persistence |
-| Inventory stress | 100k frozen rows and 24 columns                                | Two-axis virtualization, Ctrl+End/Home, retained keyboard focus, bounded DOM, editing the final row                                  |
-| Locations        | HTTP lazy warehouse/aisle/bin loads                            | Branch outage/retry, collapse during loading, descendant selection, search context                                                   |
-| Receiving        | Composable + headless caption + styled table, real NDJSON HTTP | 1k/10k events, split text chunks, Arabic/accented text, literal HTML notes, restart/stop/unmount cleanup                             |
+| Workspace         | Actual integration                                             | Difficult cases                                                                                                                          |
+| ----------------- | -------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| Orders            | SQLite search/sort, HTTP cursor pages, full table              | 100k server rows, delayed requests, stale searches, outage/retry, selection and variable-height details                                  |
+| Inventory         | Full spreadsheet, async SKU checks, transactional HTTP saves   | Immutable edits, invalid pastes, row constraints, duplicate SKUs, optimistic 409 conflicts, undo, insertion/deletion and persistence     |
+| Inventory stress  | 100k frozen rows and 24 columns                                | Two-axis virtualization, Ctrl+End/Home, retained keyboard focus, bounded DOM, editing the final row                                      |
+| Locations         | HTTP lazy warehouse/aisle/bin loads                            | Branch outage/retry, collapse during loading, descendant selection, search context                                                       |
+| Receiving         | Composable + headless caption + styled table, real NDJSON HTTP | 1k/10k events, split text chunks, Arabic/accented text, literal HTML notes, restart/stop/unmount cleanup                                 |
+| Layout acceptance | Published full table/grid with controlled layout state         | Logical resizing and pins in LTR/RTL, weighted aggregates, group selection, fixed reference totals, both virtual axes and keyboard menus |
 
 Inventory save requests acknowledge only the submitted batch. If the operator edits again while a
 save is in flight, the app keeps the newer local edits pending and asks for a reload before another
@@ -80,8 +83,9 @@ The acceptance log preserves alpha.10's [accessible column counts #111](https://
 
 These fixes were published together in alpha.11. Alpha.12 adds the virtual tree keyboard-focus
 and grid pointer/editor-focus fixes from [#118](https://github.com/boussadjra/vueye-table/issues/118)
-and [#119](https://github.com/boussadjra/vueye-table/issues/119). Beta.1 includes all five fixes. The consumer pins beta.1, and
+and [#119](https://github.com/boussadjra/vueye-table/issues/119). Beta.1 included all five fixes. The consumer now pins RC.1, and
 `node scripts/reproduce-column-semantics.mjs` must pass during verification. Rerun both automated
 checks and browser workflows after every package-pin update. Passing this project is one beta gate; it does
 not establish production readiness. The [beta contract](../../docs/guide/beta.md) records the API and
-compatibility decisions. Manual screen-reader acceptance remains unrun.
+compatibility decisions. The scoped NVDA/Edge run and its limits are recorded in ACCEPTANCE.md;
+that run does not establish universal screen-reader or native-device compatibility.

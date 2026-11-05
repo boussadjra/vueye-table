@@ -137,6 +137,9 @@ updates. Slots: `cell.<id>` with `{ item, row, column, value, display, editable 
 
 The grid also accepts the `status` slot with `TableStatusSlotProps`.
 
+With `column-letters`, sort-button names include the visible coordinate letter and header text,
+followed by the next sort action. Letters follow the current display order when columns move.
+
 ## Styled components
 
 `@vueye-table/styled` arranges the headless components with the theme. Each reads the table

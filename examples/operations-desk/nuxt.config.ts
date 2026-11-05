@@ -19,5 +19,5 @@ export default defineNuxtConfig({
       inline: [/[/\\]node_modules[/\\]nuxt[/\\]dist[/\\]/u],
     },
   },
-  app: { head: { title: "Operations desk · vueye-table acceptance" } },
+  app: { head: { htmlAttrs: { lang: "en" }, title: "Operations desk · vueye-table acceptance" } },
 });

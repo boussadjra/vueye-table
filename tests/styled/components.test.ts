@@ -115,6 +115,20 @@ describe("VtTable", () => {
 });
 
 describe("VtGrid", () => {
+  it("includes visible column letters in sort names without losing sort direction", async () => {
+    const { wrapper, table } = mountWithTable<Person>(options, (t) =>
+      h(VtGrid, { table: t, columnLetters: true }),
+    );
+    const button = wrapper.get(".vt-sort-button");
+    const heading = table().columns[0]!.header;
+    expect(button.attributes("aria-label")).toBe(`A ${heading}, sort ascending`);
+    await button.trigger("click");
+    expect(button.attributes("aria-label")).toBe(`A ${heading}, sort descending`);
+    table().moveColumn("age", 0);
+    await wrapper.vm.$nextTick();
+    expect(wrapper.get(".vt-sort-button").attributes("aria-label")).toBe("A Age, sort ascending");
+  });
+
   it("adds row numbers and column letters", () => {
     const { wrapper } = mountWithTable<Person>(options, (t) =>
       h(VtGrid, { table: t, columnLetters: true }),

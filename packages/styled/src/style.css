@@ -451,11 +451,6 @@
   --vt-progress-sign: -1;
 }
 
-.vt-surface[data-loading] .vt-body {
-  opacity: 0.55;
-  transition: opacity 0.15s;
-}
-
 @keyframes vt-progress {
   from {
     transform: translateX(calc(-100% * var(--vt-progress-sign, 1)));

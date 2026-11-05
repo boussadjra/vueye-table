@@ -75,6 +75,10 @@ their defaults under `inherit` unless you set them on the table, `.vt-surface { 
 Choosing the colors in CSS rather than in a prop also keeps server-rendered pages free of a flash
 or a hydration mismatch, since the server does not know the reader's theme.
 
+Loading uses the progress indicator and busy state while retaining full text contrast. Keep
+custom loading styles readable; lowering the opacity of the entire body also fades loading
+messages and retained data.
+
 ## Right to left
 
 The theme uses logical properties throughout, so `dir="rtl"` on the table or an ancestor lays it
