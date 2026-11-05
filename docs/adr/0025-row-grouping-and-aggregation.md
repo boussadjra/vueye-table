@@ -1,12 +1,17 @@
 # 0025 — Row grouping and aggregation
 
-Status: accepted for the next beta.
+Status: accepted; engine implemented in 3.0.0-beta.6, components in 3.0.0-beta.7.
 
 ## Context
 
-The financial report currently composes groups over `processedRows`. Group expansion, selection,
+The financial report originally composed groups over `processedRows`. Group expansion, selection,
 pagination, editing and streaming need one shared model. This extends that earlier composition-only
 decision; ADR 0011's exclusion of aggregation from **trees** still applies.
+
+The report now uses native grouping and retains a short composition alternative. The
+`TableRenderItem` union change extends [ADR 0020's beta contract](/adr/0020-beta-api-contract):
+custom renderers must narrow `kind` before reading leaf-only fields. Complete state literals
+add `grouping` and `expandedGroups`; partial patches remain compatible.
 
 ## Decision
 

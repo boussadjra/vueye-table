@@ -19,6 +19,19 @@ generated sample orders.
   <OrdersDashboard />
 </DemoFrame>
 
+## Resize and pin columns
+
+Order starts pinned to the logical start edge and Total to the end. Leading selection/detail
+cells share the start region. Drag a header separator to preview a width, then release to commit
+one state change; focused separators also support keyboard resizing. The Columns menu changes
+pin positions, and **Reset column layout** restores widths and the initial pins without resetting
+search, filters, sorting or selection.
+
+The page controls `columnSizing` and `columnPinning` through `v-model:column-sizing` and
+`v-model:column-pinning`, with `resizable-columns` enabled. Explicit column widths and min/max
+bounds keep offsets predictable. Pin only the fields needed for reference on narrow screens.
+See [columns](/guide/columns) and [URL layout persistence](/guide/layout-persistence).
+
 ## How it works
 
 ### Filters are state the page owns

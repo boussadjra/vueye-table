@@ -10,6 +10,7 @@ import {
   useDataTable,
   type DataTableBinding,
   type RowKey,
+  type ColumnPinning,
 } from "vueye-table";
 
 import {
@@ -33,15 +34,24 @@ const statusLabel = (status: OrderStatus): string =>
   STATUSES.find((entry) => entry.id === status)?.label ?? status;
 
 const columns = defineColumns<Order>([
-  { id: "id", header: "Order", width: 96 },
+  { id: "id", header: "Order", width: 96, minWidth: 88, maxWidth: 180 },
   {
     id: "customer",
     header: "Customer",
     accessor: (order) => order.customer.name,
-    minWidth: 220,
+    width: 240,
+    minWidth: 180,
+    maxWidth: 420,
   },
-  { id: "status", format: statusLabel, searchable: false },
-  { id: "date", format: shortDate, searchable: false },
+  {
+    id: "status",
+    format: statusLabel,
+    searchable: false,
+    width: 140,
+    minWidth: 110,
+    maxWidth: 200,
+  },
+  { id: "date", format: shortDate, searchable: false, width: 120, minWidth: 100, maxWidth: 180 },
   { id: "channel", hidden: true },
   {
     id: "items",
@@ -49,8 +59,19 @@ const columns = defineColumns<Order>([
     accessor: itemCount,
     align: "end",
     searchable: false,
+    width: 72,
+    minWidth: 64,
+    maxWidth: 120,
   },
-  { id: "total", align: "end", format: (total) => money(total), searchable: false },
+  {
+    id: "total",
+    align: "end",
+    format: (total) => money(total),
+    searchable: false,
+    width: 130,
+    minWidth: 100,
+    maxWidth: 220,
+  },
 ]);
 
 // ---- State the page owns, shared with the table through v-model ----
@@ -58,6 +79,12 @@ const search = ref("");
 const filters = ref<Readonly<Record<string, unknown>>>({});
 const selected = ref<readonly RowKey[]>([]);
 const density = ref<"comfortable" | "compact">("comfortable");
+const columnSizing = ref<Readonly<Record<string, number>>>({});
+const columnPinning = ref<ColumnPinning>({ start: ["id"], end: ["total"] });
+function resetLayout(): void {
+  columnSizing.value = {};
+  columnPinning.value = { start: ["id"], end: ["total"] };
+}
 
 type ExposedTable = { readonly table: DataTableBinding<unknown> };
 const tableRef = ref<ExposedTable | null>(null);
@@ -372,11 +399,21 @@ const subtotal = computed(() =>
       </div>
     </Transition>
 
+    <p class="od-layout-note">
+      Order and Total stay pinned while the centre scrolls. Drag a header separator, or focus it and
+      use the arrow keys to resize. Choose pin positions in Columns.
+      <button type="button" class="od-btn od-btn-ghost" @click="resetLayout">
+        Reset column layout
+      </button>
+    </p>
     <VueyeTable
       ref="tableRef"
       v-model:selected="selected"
       v-model:filters="filters"
       v-model:search="search"
+      v-model:column-sizing="columnSizing"
+      v-model:column-pinning="columnPinning"
+      resizable-columns
       class="od-table"
       :data="orders"
       :columns="columns"
@@ -587,6 +624,15 @@ const subtotal = computed(() =>
 </template>
 
 <style scoped>
+.od-layout-note {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+  font-size: 12px;
+  color: var(--vp-c-text-2);
+}
 .od-line-items {
   padding: 16px 24px;
   overflow-x: auto;

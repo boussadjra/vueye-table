@@ -180,6 +180,9 @@ For typed, validated URL state with defaults and canonical output,
 [QueryWeave](https://github.com/boussadjra/queryweave) keeps the same kind of plain state in the
 URL, and its fields bind to these `v-model`s.
 
+For a validated example persisting `columnSizing` and ordered `columnPinning` with restore and
+Back/Forward behavior, see [Share column layout with QueryWeave](/guide/layout-persistence).
+
 ## Reading the table
 
 The full components expose the binding. Everything a renderer needs is a plain reactive property:

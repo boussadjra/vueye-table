@@ -1,5 +1,17 @@
 # Performance and scale
 
+## Grouping and layout
+
+The [grouping benchmark](/benchmarks/grouping) records 10k/100k initial grouping, cached expansion
+and append costs with its machine, runtime and sample limits. It measures engine work, not DOM
+rendering. Resizing/pinning resolve layout without rerunning row filter/sort/group stages;
+pointer resize previews commit once on release. Grouping still scans membership where documented.
+
+The [financial report](/examples/financial-report) uses native groups and a pinned source total;
+the [virtual grid](/examples/virtual-grid) keeps a fixed total row outside its centre viewport.
+Those totals are reference records, excluded from centre aggregates. Browser examples establish
+interaction behavior, not cross-machine latency budgets.
+
 Virtualization bounds rendered rows and columns. It does not remove the cost of receiving,
 indexing, filtering or sorting source data. Choose the loading strategy before the viewport.
 

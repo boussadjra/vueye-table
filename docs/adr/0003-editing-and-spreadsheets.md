@@ -43,7 +43,10 @@ focus on every arrow key.
 
 ## Deferred
 
-Formulas, merged cells, frozen columns, and fill handles. Virtualized layout is specified in
+Formulas, merged cells, and fill handles. Frozen-column deferrals are superseded by logical
+column pinning in [ADR 0024](/adr/0024-column-sizing-and-pinning), row pinning in
+[ADR 0026](/adr/0026-row-pinning), and their component decisions in ADRs 0028/0029.
+Virtualized layout is specified in
 [ADR 0005](/adr/0005-virtualization); component integration follows that contract.
 Validation, async completion, row operations and saved baselines are accepted in
 [ADR 0008](/adr/0008-validation-editors-and-persistence) and its detailed implementation decisions.

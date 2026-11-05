@@ -204,7 +204,8 @@
 .vt-table [data-column-resizer] {
   position: absolute;
   inset-block: 0;
-  inset-inline-end: -5px;
+  /* Keep the hit area inside its header, above neighboring sticky header surfaces. */
+  inset-inline-end: 0;
   width: 11px;
   z-index: 5;
 }
