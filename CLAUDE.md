@@ -60,8 +60,8 @@ pnpm check                         # the full gate before finishing
 
 <!-- current-release:start -->
 
-All six packages are published as `3.0.0-rc.1` on npm's `latest` channel, with provenance and a
-[GitHub release](https://github.com/boussadjra/vueye-table/releases/tag/v3.0.0-rc.1). The [3.0 contract](./docs/guide/beta.md) records
+All six packages are published as `3.0.0-rc.2` on npm's `latest` channel, with provenance and a
+[GitHub release](https://github.com/boussadjra/vueye-table/releases/tag/v3.0.0-rc.2). The [3.0 contract](./docs/guide/beta.md) records
 the documented API and remaining acceptance limits. Do not claim production readiness.
 
 <!-- current-release:end -->

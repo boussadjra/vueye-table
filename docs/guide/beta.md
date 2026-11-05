@@ -2,8 +2,8 @@
 
 <!-- current-release:start -->
 
-**3.0.0-rc.1 is published** for all six packages on npm's `latest` channel, with provenance and a
-[GitHub release](https://github.com/boussadjra/vueye-table/releases/tag/v3.0.0-rc.1).
+**3.0.0-rc.2 is published** for all six packages on npm's `latest` channel, with provenance and a
+[GitHub release](https://github.com/boussadjra/vueye-table/releases/tag/v3.0.0-rc.2).
 This release candidate freezes the documented API for final application validation and does not
 establish production readiness. Default installs follow `latest`; `@beta` remains on the last beta.
 
@@ -12,10 +12,10 @@ establish production readiness. Default installs follow `latest`; `@beta` remain
 Install the exact release candidate:
 
 ```sh
-pnpm add vueye-table@3.0.0-rc.1
+pnpm add vueye-table@3.0.0-rc.2
 ```
 
-Nuxt applications use `@vueye-table/nuxt@3.0.0-rc.1`. Keep directly installed vueye-table
+Nuxt applications use `@vueye-table/nuxt@3.0.0-rc.2`. Keep directly installed vueye-table
 packages on the same version.
 
 <!-- current-release:end -->

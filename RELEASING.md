@@ -6,7 +6,7 @@ packages that share one version: `@vueye-table/core`, `@vueye-table/vue`, `@vuey
 
 <!-- current-release:start -->
 
-The current package version is `3.0.0-rc.1`, published on `latest`. The `beta` channel remains
+The current package version is `3.0.0-rc.2`, published on `latest`. The `beta` channel remains
 on the last beta release. Before a stable 3.x exists, the automatic publisher uses `latest` for RCs.
 
 <!-- current-release:end -->

@@ -1,5 +1,16 @@
 # @vueye-table/styled
 
+## 3.0.0-rc.2
+
+### Patch Changes
+
+- 30e723f: Include visible spreadsheet column letters in sort-button names, retaining the next sort action
+  and current display order. Keep loading text and retained rows at full contrast instead of
+  fading the entire table body; the progress indicator and busy state continue to signal loading.
+  - @vueye-table/core@3.0.0-rc.2
+  - @vueye-table/vue@3.0.0-rc.2
+  - @vueye-table/headless@3.0.0-rc.2
+
 ## 3.0.0-rc.1
 
 ### Release candidate

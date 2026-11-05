@@ -1,5 +1,12 @@
 # @vueye-table/headless
 
+## 3.0.0-rc.2
+
+### Patch Changes
+
+- @vueye-table/core@3.0.0-rc.2
+- @vueye-table/vue@3.0.0-rc.2
+
 ## 3.0.0-rc.1
 
 ### Release candidate

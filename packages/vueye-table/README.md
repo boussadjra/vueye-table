@@ -21,7 +21,7 @@ one install covers every level.
 
 <!-- current-release:start -->
 
-> **Status:** `3.0.0-rc.1`, published on npm's `latest` channel. This release candidate freezes the
+> **Status:** `3.0.0-rc.2`, published on npm's `latest` channel. This release candidate freezes the
 > documented import paths, options, events and slot scopes for final application validation.
 > Any necessary breaking correction needs another prerelease, an ADR and migration notes.
 > It does not establish production readiness. See [the 3.0 contract](https://github.com/boussadjra/vueye-table/blob/main/docs/guide/beta.md).
@@ -32,7 +32,7 @@ one install covers every level.
 ## Install
 
 ```bash
-pnpm add vueye-table@3.0.0-rc.1
+pnpm add vueye-table@3.0.0-rc.2
 ```
 
 The exact version pins this release. `pnpm add vueye-table` follows `latest`; `@beta` remains on
