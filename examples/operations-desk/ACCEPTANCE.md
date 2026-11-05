@@ -194,3 +194,75 @@ passed Windows/Linux checks and all **36/36 Chromium, Firefox and WebKit cases**
 with zero retries. The [repository CI](https://github.com/boussadjra/vueye-table/actions/runs/37967992759)
 passed at the same commit. This completes the automated consumer retest of the published beta
 group. The manual screen-reader limitation remains unchanged.
+
+## Published RC.1 acceptance
+
+2026-11-05: all six exact npm `3.0.0-rc.1` packages are installed in this independent consumer,
+without workspace aliases, local archives or dependency overrides. Installed manifest paths and
+versions were checked. This supersedes the fixture's former beta.1 pins, not its historical record.
+
+Environment: Windows 11 25H2 (build 26200.9711), Node 24.22.1, pnpm 11.17.0, Nuxt 4.6.0,
+Vue 3.5.43, Playwright 1.64.0 and axe 4.14.0. Browser engines: Chromium 156.0.8078.4,
+Firefox 157.0 and WebKit 27.2 on Windows. WebKit here is an engine test, not a native Safari/iPhone run.
+
+| Check                                                                                                                         | Result                                                                                                                                      |
+| ----------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| Strict Nuxt types, seven SQLite/engine tests and production build                                                             | Passed against the published RC.1 group                                                                                                     |
+| Five SSR routes, 100k cursor/search, outage/retry, saves, 409/422 rejection, lazy branches, Unicode streams and abort cleanup | Passed on an isolated production server/database                                                                                            |
+| Original utility-column reproducer                                                                                            | Passed: numbered grid and selectable table both expose/render three columns                                                                 |
+| Warehouse and layout browser matrix                                                                                           | **54/54 passed**, across Chromium/Firefox/WebKit, with zero retries                                                                         |
+| Resizing                                                                                                                      | Pointer preview commits once on release; keyboard arrows/Home/End respect limits in LTR and RTL                                             |
+| Layout/grouping                                                                                                               | Both virtual axes retain pinned edges/totals; grid endpoints, weighted aggregates, filtering, collapse, selection and keyboard menus passed |
+| Desktop 1440px light / mobile 390px dark                                                                                      | Page chrome stays within the viewport; data and navigation scroll internally                                                                |
+| Automated WCAG 2.1 AA audit                                                                                                   | **12/12 failed** on published RC.1, consistently reproducing the two package blockers below                                                 |
+
+The first warehouse run stopped at an obsolete exact `Select row` test selector. RC.1 supplies
+numbered labels such as `Select row 2`; the scoped selector was updated before the passing matrix.
+This was a consumer-test migration, not a confirmed selection regression.
+
+### Interactive NVDA smoke session
+
+NVDA 2026.3 ran as an approved temporary portable copy, with Microsoft Edge 156.0.4314.58.
+The official NV Access executable hash was verified before running it. Actual native input and
+NVDA Speech Viewer output were used, rather than inferring speech from DOM attributes.
+
+- Resize Item announced its separator role, current value and keyboard help. In NVDA focus mode
+  (`NVDA+Space`), Arrow Right changed 200 to 210; End announced 300 and Home announced 140.
+- In grid focus mode, Ctrl+End announced the all-source bottom reference at **row 2007, column 14**.
+  Ctrl+Home returned to Priority reference at **row 2, column 2**. Structural group rows remain in
+  presentation indices while keyboard coordinates address data cells.
+- North's disclosure announced its 500-row group and collapsed state. Space expanded it again,
+  with the changed expanded state announced.
+
+These scoped checks passed. NVDA was stopped after the session. This is not a comprehensive
+end-user usability study or acceptance for JAWS, VoiceOver, every browser, or native devices.
+The current Linux hosted consumer matrix has not been rerun for RC.1 in this acceptance session.
+
+### Confirmed package blockers and unpublished correction
+
+1. Spreadsheet sort buttons omit visible A/B column letters from their accessible names
+   (`label-content-name-mismatch`). The correction includes letter, header and translated next
+   sort action, and follows the current display order. Its regression failed before the fix and
+   passed afterward.
+2. The loading body's `opacity: 0.55` fades loading text and retained rows. The initial light
+   loading state measured **2.21:1**, below the 4.5:1 requirement (`color-contrast`). The correction
+   removes the body fade while retaining the progress indicator and busy state.
+
+The same automated audit failed in all three engines and both themes against published RC.1.
+A separate consumer copy then installed a locally packed **unpublished styled correction** through
+an explicit workspace override; its types, seven tests and production build passed, and the same
+**12/12 accessibility cases passed** across all three engines and both themes. Candidate captures
+identify that override visibly. They do not certify the immutable published RC.1 distribution.
+
+The main consumer remains on exact npm RC.1 packages. `pnpm test:a11y` intentionally continues to
+report the published blockers until its pins are upgraded to a release containing the correction.
+The patch is recorded in `.changeset/rc-accessible-sort-loading.md`; a new RC and published-package
+retest are needed before promoting this candidate to stable.
+
+### Separate WCAG 2.2 target-size investigation
+
+An exploratory WCAG 2.2 scan flagged a row-action summary partially covered by the sticky bottom
+reference row in the virtual layout table: its unobscured fragment was about 69.4 by 10.4 pixels.
+This is an **unresolved separate investigation**, not a passed check. Inspect target size and spacing
+at that sticky intersection, including after scrolling/focusing the affected action. The repeated
+automated gate above covers WCAG 2.1 AA rules and does not resolve or establish WCAG 2.2 conformance.

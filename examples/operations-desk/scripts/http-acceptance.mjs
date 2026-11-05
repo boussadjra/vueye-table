@@ -51,7 +51,7 @@ try {
   const health = await json("/api/health");
   assert.equal(health.orders, 100_000);
   assert.equal(health.stock, 2_000);
-  for (const path of ["/", "/inventory", "/locations", "/receiving"]) {
+  for (const path of ["/", "/inventory", "/locations", "/receiving", "/layout"]) {
     const response = await fetch(base + path);
     const html = await response.text();
     assert.equal(response.status, 200, path);
@@ -118,7 +118,7 @@ try {
     "Aborted stream releases the server connection",
   );
   console.info(
-    "HTTP acceptance passed: four SSR routes, 100k cursor/search, outage/retry, persisted save, 409/422 recovery, lazy branches, 1k Unicode stream, abort cleanup.",
+    "HTTP acceptance passed: five SSR routes, 100k cursor/search, outage/retry, persisted save, 409/422 recovery, lazy branches, 1k Unicode stream, abort cleanup.",
   );
 } finally {
   server.kill();

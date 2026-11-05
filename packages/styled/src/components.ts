@@ -716,17 +716,39 @@ export const VtGrid = defineComponent({
                     : locale().messages.rowNumber,
               })
             : null,
-        header: ({ column }: { column: TableColumn<unknown> }) =>
-          props.columnLetters
-            ? [
-                h(
-                  "span",
-                  { class: "vt-column-letter" },
-                  columnLabel(props.table.columns.indexOf(column)),
-                ),
-                column.header,
-              ]
-            : column.header,
+        ...(props.columnLetters
+          ? Object.fromEntries(
+              props.table.columns.map((column, index) => [
+                `header.${column.id}`,
+                ({ sort }: { sort: SortInfo | undefined }) => {
+                  const letter = columnLabel(index);
+                  const content = [
+                    h("span", { class: "vt-column-letter" }, letter),
+                    " ",
+                    column.header,
+                  ];
+                  if (!column.sortable) return content;
+                  const next = !sort
+                    ? "ascending"
+                    : sort.direction === "asc"
+                      ? "descending"
+                      : "unsorted";
+                  return h(
+                    DataTableSortButton,
+                    {
+                      column,
+                      class: "vt-sort-button",
+                      "aria-label": locale().messages.sortBy(`${letter} ${column.header}`, next),
+                    },
+                    {
+                      default: () => content,
+                      indicator: () => [h(VtSortIndicator, { sort })],
+                    },
+                  );
+                },
+              ]),
+            )
+          : {}),
       });
     return () =>
       h(

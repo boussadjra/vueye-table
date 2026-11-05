@@ -37,8 +37,12 @@ layout examples. The documented imports, options, events and slots are frozen fo
 validation. Any necessary incompatible correction requires an ADR, migration notes and another
 prerelease before stable 3.0.
 
-The published candidate still needs a current Operations Desk consumer retest and manual
-screen-reader acceptance. The earlier beta.1 browser record below does not certify RC.1.
+The Windows Operations Desk consumer retest passed 54 functional cases across Chromium, Firefox
+and WebKit against published RC.1 packages. A scoped NVDA/Edge session covered separator values,
+group disclosure states and pinned grid coordinates. Automated accessibility checks found
+spreadsheet sort-name and loading-contrast blockers; their corrections remain unpublished.
+See the [current acceptance record](https://github.com/boussadjra/vueye-table/blob/main/examples/operations-desk/ACCEPTANCE.md).
+The earlier beta.1 browser record below does not certify RC.1.
 
 ## What changed in beta.7
 
