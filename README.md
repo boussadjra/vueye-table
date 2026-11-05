@@ -21,7 +21,7 @@ one install covers every level.
 
 <!-- current-release:start -->
 
-> **Status:** `3.0.0-beta.8`, published on npm's `beta` and `latest` channels. The beta is for application
+> **Status:** `3.0.0-beta.9`, published on npm's `beta` and `latest` channels. The beta is for application
 > feedback: documented import paths, options, events and slot scopes are kept stable, and a
 > necessary breaking change ships with an ADR and migration notes. It is not production ready.
 > See [the beta contract](./docs/guide/beta.md). The 2.x component lives on the
@@ -34,7 +34,7 @@ one install covers every level.
 pnpm add vueye-table@beta
 ```
 
-Install an exact version such as `3.0.0-beta.8` to pin a release. Both `pnpm add vueye-table` and
+Install an exact version such as `3.0.0-beta.9` to pin a release. Both `pnpm add vueye-table` and
 `pnpm add vueye-table@beta` follow the current beta. Vue 3.5 or newer is a peer dependency.
 
 <!-- current-release:end -->

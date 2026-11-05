@@ -1,5 +1,15 @@
 # @vueye-table/styled
 
+## 3.0.0-beta.9
+
+### Patch Changes
+
+- d0b2d35: Keep resize-handle pointer targets inside their own header so neighboring sticky headers cannot
+  cover the centre of the handle. Pointer dragging and keyboard resizing retain the same width rules.
+  - @vueye-table/core@3.0.0-beta.9
+  - @vueye-table/vue@3.0.0-beta.9
+  - @vueye-table/headless@3.0.0-beta.9
+
 ## 3.0.0-beta.8
 
 ### Patch Changes

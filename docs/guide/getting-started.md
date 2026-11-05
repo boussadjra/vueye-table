@@ -5,7 +5,7 @@
 <!-- current-release:start -->
 
 ```bash
-pnpm add vueye-table@3.0.0-beta.8
+pnpm add vueye-table@3.0.0-beta.9
 ```
 
 <!-- current-release:end -->

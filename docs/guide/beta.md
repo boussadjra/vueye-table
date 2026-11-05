@@ -2,8 +2,8 @@
 
 <!-- current-release:start -->
 
-**3.0.0-beta.8 is published** for all six packages on npm's `beta` and `latest` channels, with provenance and a
-[GitHub release](https://github.com/boussadjra/vueye-table/releases/tag/v3.0.0-beta.8).
+**3.0.0-beta.9 is published** for all six packages on npm's `beta` and `latest` channels, with provenance and a
+[GitHub release](https://github.com/boussadjra/vueye-table/releases/tag/v3.0.0-beta.9).
 Beta is a prerelease for application feedback and does not establish production readiness.
 The default install and `@beta` both follow the current beta; pin an exact version to keep a fixed release.
 
@@ -12,12 +12,12 @@ The default install and `@beta` both follow the current beta; pin an exact versi
 Install an exact version or opt into the beta channel:
 
 ```sh
-pnpm add vueye-table@3.0.0-beta.8
+pnpm add vueye-table@3.0.0-beta.9
 # To follow subsequent betas:
 pnpm add vueye-table@beta
 ```
 
-Nuxt applications use `@vueye-table/nuxt@3.0.0-beta.8`. Keep directly installed vueye-table
+Nuxt applications use `@vueye-table/nuxt@3.0.0-beta.9`. Keep directly installed vueye-table
 packages on the same version.
 
 <!-- current-release:end -->
