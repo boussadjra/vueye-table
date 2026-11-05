@@ -21,25 +21,26 @@ one install covers every level.
 
 <!-- current-release:start -->
 
-> **Status:** `3.0.0-beta.9`, published on npm's `beta` and `latest` channels. The beta is for application
-> feedback: documented import paths, options, events and slot scopes are kept stable, and a
-> necessary breaking change ships with an ADR and migration notes. It is not production ready.
-> See [the beta contract](https://github.com/boussadjra/vueye-table/blob/main/docs/guide/beta.md). The 2.x component lives on the
+> **Status:** `3.0.0-rc.1`, published on npm's `latest` channel. This release candidate freezes the
+> documented import paths, options, events and slot scopes for final application validation.
+> Any necessary breaking correction needs another prerelease, an ADR and migration notes.
+> It does not establish production readiness. See [the 3.0 contract](https://github.com/boussadjra/vueye-table/blob/main/docs/guide/beta.md).
+> The 2.x component lives on the
 > [`legacy`](https://github.com/boussadjra/vueye-table/tree/legacy) branch; see
 > [Upgrading from 2.x](https://github.com/boussadjra/vueye-table/blob/main/docs/guide/upgrading-from-2.md).
 
 ## Install
 
 ```bash
-pnpm add vueye-table@beta
+pnpm add vueye-table@3.0.0-rc.1
 ```
 
-Install an exact version such as `3.0.0-beta.9` to pin a release. Both `pnpm add vueye-table` and
-`pnpm add vueye-table@beta` follow the current beta. Vue 3.5 or newer is a peer dependency.
+The exact version pins this release. `pnpm add vueye-table` follows `latest`; `@beta` remains on
+the last beta release. Vue 3.5 or newer is a peer dependency.
 
 <!-- current-release:end -->
 
-## What the beta covers
+## What 3.0 covers
 
 - **Tables and spreadsheets**: search, column filters, multi-column sorting, pagination,
   selection, column visibility, CSV/TSV export, and a spreadsheet grid with clipboard and undo.

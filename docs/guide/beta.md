@@ -1,23 +1,21 @@
-# The 3.0 beta contract
+# The 3.0 release candidate contract
 
 <!-- current-release:start -->
 
-**3.0.0-beta.9 is published** for all six packages on npm's `beta` and `latest` channels, with provenance and a
-[GitHub release](https://github.com/boussadjra/vueye-table/releases/tag/v3.0.0-beta.9).
-Beta is a prerelease for application feedback and does not establish production readiness.
-The default install and `@beta` both follow the current beta; pin an exact version to keep a fixed release.
+**3.0.0-rc.1 is published** for all six packages on npm's `latest` channel, with provenance and a
+[GitHub release](https://github.com/boussadjra/vueye-table/releases/tag/v3.0.0-rc.1).
+This release candidate freezes the documented API for final application validation and does not
+establish production readiness. Default installs follow `latest`; `@beta` remains on the last beta.
 
 ## Install and upgrade
 
-Install an exact version or opt into the beta channel:
+Install the exact release candidate:
 
 ```sh
-pnpm add vueye-table@3.0.0-beta.9
-# To follow subsequent betas:
-pnpm add vueye-table@beta
+pnpm add vueye-table@3.0.0-rc.1
 ```
 
-Nuxt applications use `@vueye-table/nuxt@3.0.0-beta.9`. Keep directly installed vueye-table
+Nuxt applications use `@vueye-table/nuxt@3.0.0-rc.1`. Keep directly installed vueye-table
 packages on the same version.
 
 <!-- current-release:end -->
@@ -30,6 +28,17 @@ module adds the stylesheet itself. See [getting started](/guide/getting-started)
 Version 2 applications need the [2.x migration guide](/guide/upgrading-from-2). In particular,
 column definitions, selected row keys, slot scopes and immutable data updates changed in 3.0.
 Changing the dependency version alone does not migrate those contracts.
+
+## Release candidate scope
+
+RC.1 promotes the beta.9 implementation without another public API change. It includes column
+sizing and logical pinning, row grouping and aggregation, pinned row regions, and the completed
+layout examples. The documented imports, options, events and slots are frozen for release-candidate
+validation. Any necessary incompatible correction requires an ADR, migration notes and another
+prerelease before stable 3.0.
+
+The published candidate still needs a current Operations Desk consumer retest and manual
+screen-reader acceptance. The earlier beta.1 browser record below does not certify RC.1.
 
 ## What changed in beta.7
 
@@ -163,9 +172,9 @@ See [validation and saving](/guide/validation).
 
 ## Compatibility and acceptance
 
-The beta line preserves documented import paths, option names, event payloads and slot scopes.
+The prerelease line preserves documented import paths, option names, event payloads and slot scopes.
 Additive changes require docs, runnable examples and a changeset. A necessary breaking change
-requires an ADR, migration notes and a new beta version; read the release notes when upgrading.
+requires an ADR, migration notes and a new prerelease version; read the release notes when upgrading.
 
 The [Operations desk](/examples/operations-desk) tests the published package group with SQLite,
 100k orders, editable stock, lazy trees and real HTTP streams. Its acceptance log distinguishes

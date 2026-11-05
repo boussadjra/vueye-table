@@ -6,7 +6,8 @@ packages that share one version: `@vueye-table/core`, `@vueye-table/vue`, `@vuey
 
 <!-- current-release:start -->
 
-The current package version is `3.0.0-beta.9`. Both `beta` and `latest` follow the beta line.
+The current package version is `3.0.0-rc.1`, published on `latest`. The `beta` channel remains
+on the last beta release. Before a stable 3.x exists, the automatic publisher uses `latest` for RCs.
 
 <!-- current-release:end -->
 
@@ -39,12 +40,17 @@ packages. Re-running it repairs missing or outdated tags without republishing ex
 
 ## Prerelease line
 
-Changesets is in **pre mode** with the `beta` tag (`.changeset/pre.json`). As a historical
+Changesets is in **pre mode** with the `rc` tag (`.changeset/pre.json`). As a historical
 acceptance record, the first beta,
 [`3.0.0-beta.1`](https://github.com/boussadjra/vueye-table/releases/tag/v3.0.0-beta.1), was published
 for all six packages with provenance. Its [release run](https://github.com/boussadjra/vueye-table/actions/runs/37966067677)
 passed, and that version's tarballs and `beta` dist-tags were verified on npm.
-Subsequent Version PRs continue the beta sequence until pre mode is exited deliberately.
+Subsequent Version PRs now continue the RC sequence until pre mode is exited deliberately.
+
+RC.1 promotes the beta.9 implementation. The transition used `pnpm changeset pre exit`,
+`pnpm changeset pre enter rc`, and `pnpm version:set 3.0.0-rc.1` together, with matching changelog
+entries and synchronized docs. Already consumed changesets remain recorded in `pre.json`;
+do not run a second Version PR for this same transition. Future fixes use new changesets normally.
 
 For an alpha-to-beta transition, change the pre-mode tag and version together, in this order,
 committed as one:
@@ -63,9 +69,9 @@ changelog and refresh the root lockfile. Commit pre mode, manifests, changelogs 
 together. Verify the release plan and notes before merging; do not run another Version PR
 for the same beta transition.
 
-During an alpha-to-beta transition, `pnpm version:set` alone does not change the pre-mode tag.
-Leaving that tag at `alpha` makes the next Version PR generate an alpha again. For the current
-beta line, keep the tag at `beta`. The first stable release is `pnpm changeset pre exit`
+`pnpm version:set` alone does not change the pre-mode tag. Leaving that tag at `beta` during
+the RC transition would make the next Version PR generate a beta again. Keep the current tag
+at `rc`. The first stable release is `pnpm changeset pre exit`
 followed by a normal Version PR.
 
 ## Dist-tags
@@ -74,7 +80,7 @@ followed by a normal Version PR.
   makes both `pnpm add vueye-table` and `pnpm add vueye-table@beta` install that
   version. This policy also applies after a stable version exists; the default install follows
   the beta line. Applications can pin an exact version when they need a fixed release.
-- **Until a stable 3.x exists**, alpha publishes to `latest`. 1.x stays installable as
+- **Until a stable 3.x exists**, alpha and RC releases publish to `latest`. 1.x stays installable as
   `vueye-table@1`.
 - **Stable versions use `latest`**. Other prereleases use their own id (`alpha`, `rc`) once a
   stable version of the same major exists. Older majors never count toward this. Beta keeps the
