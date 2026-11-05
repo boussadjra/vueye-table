@@ -30,6 +30,7 @@
     "grouped-pinned-row-components",
     "host-language-and-themes",
     "inline-typed-editors",
+    "rc-accessible-sort-loading",
     "reactive-tree-filter",
     "rendered-column-coordinates",
     "resize-handle-header-hit-area",
